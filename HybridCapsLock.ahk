@@ -113,7 +113,7 @@ CapsLock & d::Send, {WheelUp}{WheelUp}{WheelUp}
 ; CapsLock & y:: ; Libre para uso futuro
 
 ; ----- Common Shortcuts (Ctrl Style) -----
-CapsLock & s::Send, ^s
+CapsLock & s::Send, ^s 
 CapsLock & c::
     Send, ^c
     ShowCopyNotification()
@@ -127,7 +127,14 @@ CapsLock & o::Send, ^o
 CapsLock & t::Send, ^t
 CapsLock & r::Send, {F5}
 CapsLock & /::Send, ^f
-CapsLock & g::Send, {F3}
+CapsLock & g::Send, ^!+g
+
+;Manage Windows in glazewm
+
+CapsLock & Left::Send, !+h
+CapsLock & Up::Send, !+k
+CapsLock & Down::Send, !+j
+CapsLock & Right::Send, !+l
 
 ; ----- Added Shortcuts (User Requests) -----
 CapsLock & b::
