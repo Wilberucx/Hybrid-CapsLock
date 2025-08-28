@@ -494,7 +494,7 @@ return
 ;----------------------------------
 ; SECTION 4B: NVIM LAYER MAIN KEYS
 ;----------------------------------
-m:: ; Visual Mode Toggle
+v:: ; Visual Mode Toggle
     VisualMode := !VisualMode
     if (VisualMode) {
         ShowVisualModeStatus(true)
@@ -571,7 +571,7 @@ return
 
 ; ----- Editing Actions -----
 x::Send, {Delete}
-8::Send, {End}{Enter}
+;8::Send, {End}{Enter}  ;está repetido 
 
 ; New line below/above similar to Vim o/O
 o::
@@ -680,7 +680,7 @@ l::Send, {Numpad3}
 m::Send, {Numpad0}
 
 ; Decimal and comma
-,::Send, {NumpadComma}  ; Numpad comma
+,::Send, {,}  ; Numpad comma
 .::Send, {NumpadDot}    ; Numpad dot
 
 ; Operations
@@ -693,7 +693,12 @@ p::Send, {NumpadAdd}    ; Plus
 w::Send, {Up}           ; Up arrow
 a::Send, {Left}         ; Left arrow  
 s::Send, {Down}         ; Down arrow
-d::Send, {Right}        ; Right arrow
+d::Send, {Right}        ; Right arrow 
+; Arrow keys with Shift
++w::Send, +{Up}           ; Up arrow with Shift
++a::Send, +{Left}         ; Left arrow with Shift
++s::Send, +{Down}         ; Down arrow with Shift
++d::Send, +{Right}        ; Right arrow with Shift
 
 ; Tab navigation
 [::Send, +{Tab}         ; Shift+Tab
@@ -717,8 +722,8 @@ x::Send, ^x             ; Ctrl+X (cut)
 z::Send, ^z             ; Ctrl+Z (undo)
 y::Send, ^y             ; Ctrl+Y (redo)
 
-; Escape to exit excel layer
-Esc::
+; Shift+N to exit excel layer
++n::
     excelLayerActive := false
     ShowExcelStatus(false)
     UpdateLayerStatus()
