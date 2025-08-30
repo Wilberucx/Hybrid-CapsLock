@@ -105,8 +105,18 @@ Si hay texto seleccionado (Modo Visual activo), presionar `y` copia inmediatamen
 | `E` (Shift+e) | **Scroll abajo** | 3 pasos de rueda hacia abajo |
 | `y` | **Scroll arriba** | 3 pasos de rueda hacia arriba |
 | `Y` (Shift+y) | **Scroll arriba** | 3 pasos de rueda hacia arriba |
+| `/` | **Scroll con touchpad** | Mantén `/` y mueve el touchpad para scroll trackball |
 
-> **Nota:** `y` tiene doble función: scroll cuando se presiona solo, yank cuando se usa como operador
+> **Nota:** `y` tiene doble función: scroll cuando se presiona solo, yank cuando se usa como operador. El scroll con touchpad (`/`) replica la funcionalidad de ratones trackball con ejes invertidos para mayor naturalidad.
+
+## 🖱️ Funciones de Mouse
+
+| Tecla | Acción | Descripción |
+|-------|--------|-------------|
+| `;` | **Click izquierdo sostenido** | Mantiene click izquierdo hasta soltar la tecla |
+| `'` | **Click derecho** | Click derecho simple |
+
+> **Nota:** Las funciones de mouse en la capa Nvim permiten control preciso sin salir del modo de navegación.
 
 ## ⏰ Timestamps en Capa Nvim
 

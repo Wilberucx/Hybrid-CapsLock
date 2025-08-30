@@ -38,6 +38,13 @@ Accede a un menú contextual con sub-capas organizadas:
 | `CapsLock + c/v/x` | Copiar/Pegar/Cortar |
 | `CapsLock + z` | Deshacer |
 
+### Funciones de Mouse
+| Atajo | Acción |
+|-------|--------|
+| `CapsLock + ;` | Click izquierdo sostenido |
+| `CapsLock + '` | Click derecho simple |
+| `CapsLock + /` | Scroll con touchpad (mantener `/` presionado) |
+
 ## 📚 Documentación Detallada
 
 - **[Modo Modificador](doc/MODIFIER_MODE.md)** - Todos los atajos con CapsLock mantenido
@@ -74,7 +81,14 @@ HybridCapsLock incluye integración nativa con [Zebar](https://github.com/glzr-i
 ### ⚙️ Configuración Automática
 El script genera automáticamente `layer_status.json` que se sincroniza con el widget de Zebar para mostrar el estado actual de todas las capas sin interrumpir el flujo de trabajo.
 
-## 📋 Versión Actual: 6.1
+## 📋 Versión Actual: 6.2
+
+### Novedades v6.2:
+- **🆕 Funciones de Mouse Reubicadas**: Click izquierdo sostenido (`;`) y click derecho (`'`) movidos de B/N
+- **🆕 Scroll con Touchpad**: Funcionalidad trackball con `CapsLock + /` y `/` en capa Nvim
+- **🆕 Ejes Invertidos**: Scroll más natural e intuitivo
+- **🔧 Supresión de Caracteres**: Evita escritura no deseada durante scroll
+- **🔧 Teclas Liberadas**: B y N ahora disponibles para nuevas funciones
 
 ### Novedades v6.1:
 - **🆕 Capa Excel/Accounting**: Numpad completo + navegación WASD + atajos específicos de Excel

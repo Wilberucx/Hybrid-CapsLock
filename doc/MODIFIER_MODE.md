@@ -44,8 +44,9 @@ El Modo Modificador convierte `CapsLock` en una tecla modificadora similar a `Ct
 |-------|--------|-------------|
 | `CapsLock + e` | **Scroll abajo** | 3 pasos de rueda hacia abajo |
 | `CapsLock + d` | **Scroll arriba** | 3 pasos de rueda hacia arriba |
+| `CapsLock + /` | **Scroll con touchpad** | Modo scroll trackball - mantén `/` y mueve el touchpad |
 
-> **Nota:** La navegación con scroll ahora es más ergonómica usando `e` (abajo) y `d` (arriba) que están adyacentes para facilitar el uso con una sola mano.
+> **Nota:** El scroll con touchpad (`CapsLock + /`) replica la funcionalidad de ratones trackball: mantén presionado `/` y desliza el dedo por el touchpad para hacer scroll en cualquier dirección. Los ejes están invertidos para mayor naturalidad.
 
 ## ✏️ Edición de Texto
 
@@ -62,22 +63,25 @@ El Modo Modificador convierte `CapsLock` en una tecla modificadora similar a `Ct
 ### Operaciones de Archivo
 | Atajo | Acción | Equivalente | Descripción |
 |-------|--------|-------------|-------------|
-| `CapsLock + n` | **Click derecho** | - | Click derecho simple |
 | `CapsLock + o` | **Abrir** | `Ctrl+O` | Abrir archivo |
 | `CapsLock + t` | **Nueva pestaña** | `Ctrl+T` | Nueva pestaña/tab |
 | `CapsLock + w` | **Cerrar pestaña** | `Ctrl+W` | Cerrar pestaña/archivo actual |
 
+### Funciones de Mouse
+| Atajo | Acción | Equivalente | Descripción |
+|-------|--------|-------------|-------------|
+| `CapsLock + ;` | **Click izquierdo sostenido** | - | Mantiene click izquierdo hasta soltar `CapsLock` o `;` |
+| `CapsLock + '` | **Click derecho** | - | Click derecho simple |
+
 ### Búsqueda y Navegación
 | Atajo | Acción | Equivalente | Descripción |
 |-------|--------|-------------|-------------|
-| `CapsLock + /` | **Buscar** | `Ctrl+F` | Abrir diálogo de búsqueda |
 | `CapsLock + g` | **Buscar siguiente** | `F3` | Ir al siguiente resultado |
 | `CapsLock + r` | **Actualizar** | `F5` | Refrescar/recargar |
 
 ### Formato de Texto
 | Atajo | Acción | Equivalente | Descripción |
 |-------|--------|-------------|-------------|
-| `CapsLock + b` | **Click izquierdo sostenido** | - | Mantiene click izquierdo presionado |
 | `CapsLock + i` | **Atajo personalizado** | `Ctrl+Alt+K` | Para aplicaciones específicas |
 
 ## 📑 Navegación de Pestañas
@@ -112,6 +116,8 @@ El Modo Modificador convierte `CapsLock` en una tecla modificadora similar a `Ct
 | Tecla | Estado | Descripción |
 |-------|--------|-------------|
 | `CapsLock + y` | **Disponible** | Libre para asignación futura |
+| `CapsLock + b` | **Disponible** | Libre para asignación futura (antes era click izquierdo) |
+| `CapsLock + n` | **Disponible** | Libre para asignación futura (antes era click derecho) |
 
 ## 💡 Consejos de Uso
 

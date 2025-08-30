@@ -20,6 +20,7 @@
 ; SECTION 1: INITIAL CONFIGURATION
 ;-------------------------------------------------------------------------------
 #SingleInstance, Force
+#NoEnv
 #Warn
 StringCaseSense, On
 SendMode, Input
@@ -53,8 +54,12 @@ global currentTempStatus := ""
 global tempStatusExpiry := 0
 ; Excel/Accounting layer state
 global excelLayerActive := false
+; Variable to track if CapsLock was held beyond the threshold
+global capsLockWasHeld := false
 ; Click derecho sostenido state
 global rightClickHeld := false
+; Scroll mode state
+global scrollModeActive := false
 ; Timestamp functionality moved to dedicated timestamps.ini system
 ; Persist settings across sessions
 global SettingsIni := A_ScriptDir . "\general.ini"
@@ -110,7 +115,63 @@ CapsLock & l::Send, {Right}
 ; ----- Smooth Scrolling (Added in Hold Mode) -----
 CapsLock & e::Send, {WheelDown}{WheelDown}{WheelDown}
 CapsLock & d::Send, {WheelUp}{WheelUp}{WheelUp}
-; CapsLock & y:: ; Libre para uso futuro
+; ----- Touchpad Scroll Mode -----
+CapsLock & /::
+    ; Activar modo scroll con touchpad
+    scrollModeActive := true
+    SetTempStatus("SCROLL MODE ACTIVE", 2000)
+    ShowScrollModeStatus(true)
+    SetTimer, RemoveToolTip, 1500
+    
+    ; Variables para tracking del mouse
+    MouseGetPos, startX, startY
+    
+    ; Loop mientras se mantenga presionada CapsLock o /
+    while (GetKeyState("CapsLock", "P") || GetKeyState("/", "P")) {
+        MouseGetPos, currentX, currentY
+        
+        ; Calcular diferencia desde la posición inicial
+        deltaX := currentX - startX
+        deltaY := currentY - startY
+        
+        ; Umbral mínimo para evitar scroll accidental
+        threshold := 3
+        
+        ; Scroll vertical (más sensible) - EJES INVERTIDOS
+        if (Abs(deltaY) > threshold) {
+            if (deltaY > 0) {
+                ; Movimiento hacia abajo = scroll up (invertido)
+                Send, {WheelUp}
+            } else {
+                ; Movimiento hacia arriba = scroll down (invertido)
+                Send, {WheelDown}
+            }
+            ; Actualizar posición de referencia para scroll continuo
+            startY := currentY
+        }
+        
+        ; Scroll horizontal (menos sensible) - EJES INVERTIDOS
+        if (Abs(deltaX) > threshold * 2) {
+            if (deltaX > 0) {
+                ; Movimiento hacia derecha = scroll left (invertido)
+                Send, {WheelLeft}
+            } else {
+                ; Movimiento hacia izquierda = scroll right (invertido)
+                Send, {WheelRight}
+            }
+            ; Actualizar posición de referencia para scroll continuo
+            startX := currentX
+        }
+        
+        Sleep, 10 ; Pequeña pausa para suavizar el scroll
+    }
+    
+    ; Cleanup al soltar las teclas
+    scrollModeActive := false
+    ShowScrollModeStatus(false)
+    SetTempStatus("SCROLL MODE OFF", 800)
+    SetTimer, RemoveToolTip, 800
+return
 
 ; ----- Common Shortcuts (Ctrl Style) -----
 CapsLock & s::Send, ^s 
@@ -126,7 +187,7 @@ CapsLock & a::Send, ^a
 CapsLock & o::Send, ^o
 CapsLock & t::Send, ^t
 CapsLock & r::Send, {F5}
-CapsLock & /::Send, ^f
+; CapsLock & /::Send, ^f  ; Moved to make space for scroll mode
 CapsLock & g::Send, ^!+g
 
 ;Manage Windows in glazewm
@@ -137,7 +198,7 @@ CapsLock & Down::Send, !+j
 CapsLock & Right::Send, !+l
 
 ; ----- Added Shortcuts (User Requests) -----
-CapsLock & b::
+CapsLock & `;::
     ; Inmediatamente iniciar click izquierdo sostenido
     Click, Left, Down
     rightClickHeld := true
@@ -145,9 +206,9 @@ CapsLock & b::
     SetTempStatus("LEFT CLICK HELD", 1200)
     SetTimer, RemoveToolTip, 1200
     
-    ; Esperar a que se suelte CapsLock o b
+    ; Esperar a que se suelte CapsLock o ;
     KeyWait, CapsLock
-    KeyWait, b
+    KeyWait, `;
     
     ; Soltar click izquierdo
     Click, Left, Up
@@ -157,7 +218,7 @@ CapsLock & b::
 return
 
 ; Click derecho simple en una tecla diferente
-CapsLock & n::
+CapsLock & '::
     Click, Right
     ShowRightClickStatus(true)
     SetTempStatus("RIGHT CLICK", 1200)
@@ -171,7 +232,7 @@ CapsLock & [::Send, ^!+{[}
 CapsLock & ]::Send, ^!+{]}
 
 ; ----- Other Utilities -----
-CapsLock & \::SendRaw, wilber.u.canto29@gmail.com
+CapsLock & \::SendRaw, your.email@example.com
 CapsLock & p::Send, +!p
 CapsLock & Enter::Send, ^{Enter}
 CapsLock & 9::Send, #+s
@@ -438,6 +499,17 @@ CapsLock & F12::
     }
 return
 
+; Suprimir escritura de / cuando scroll mode está activo
+/::
+    if (scrollModeActive) {
+        ; No hacer nada, suprimir el carácter
+        return
+    } else {
+        ; Comportamiento normal, enviar el carácter
+        Send, /
+    }
+return
+
 ;-------------------------------------------------------------------------------
 ; SECTION 3: HYBRID LOGIC (TAP VS HOLD)
 ;-------------------------------------------------------------------------------
@@ -446,11 +518,20 @@ CapsLock::
         Send, {CapsLock}
         return
     }
+    ; Reset the hold flag when key is pressed
+    capsLockWasHeld := false
     KeyWait, CapsLock, T0.2
-    if (ErrorLevel) { ; User is HOLDING the key
+    if (ErrorLevel) { ; User is HOLDING the key beyond threshold
+        capsLockWasHeld := true
+    }
+return
+
+CapsLock Up::
+    if (capsActsNormal) {
         return
     }
-    else { ; User performed a TAP
+    ; Only activate Nvim layer if it was a tap (not held beyond threshold)
+    if (!capsLockWasHeld) {
         isNvimLayerActive := !isNvimLayerActive
         if (isNvimLayerActive) {
             ShowNvimLayerStatus(true)
@@ -463,6 +544,8 @@ CapsLock::
         UpdateLayerStatus()
         SetTimer, RemoveToolTip, 1500
     }
+    ; Reset the flag for next use
+    capsLockWasHeld := false
 return
 
 ;-------------------------------------------------------------------------------
@@ -494,7 +577,7 @@ return
 ;----------------------------------
 ; SECTION 4B: NVIM LAYER MAIN KEYS
 ;----------------------------------
-v:: ; Visual Mode Toggle
+m:: ; Visual Mode Toggle
     VisualMode := !VisualMode
     if (VisualMode) {
         ShowVisualModeStatus(true)
@@ -571,7 +654,7 @@ return
 
 ; ----- Editing Actions -----
 x::Send, {Delete}
-;8::Send, {End}{Enter}  ;está repetido 
+8::Send, {End}{Enter}
 
 ; New line below/above similar to Vim o/O
 o::
@@ -582,7 +665,32 @@ return
     ; Insert new line above and move cursor there
     Send, {Home}{Enter}{Up}
 return
-'::Send, {Home}+{End}^c{End}{Enter}^v
+; ----- Click Functions (moved from B and N) -----
+`;::
+    ; Click izquierdo sostenido en capa nvim
+    Click, Left, Down
+    rightClickHeld := true
+    ShowLeftClickStatus(true)
+    SetTempStatus("LEFT CLICK HELD", 1200)
+    SetTimer, RemoveToolTip, 1200
+    
+    ; Esperar a que se suelte la tecla
+    KeyWait, `;
+    
+    ; Soltar click izquierdo
+    Click, Left, Up
+    rightClickHeld := false
+    ShowLeftClickStatus(false)
+    SetTimer, RemoveToolTip, 1200
+return
+
+'::
+    ; Click derecho simple en capa nvim
+    Click, Right
+    ShowRightClickStatus(true)
+    SetTempStatus("RIGHT CLICK", 1200)
+    SetTimer, RemoveToolTip, 1200
+return
 
 ; ----- Copy/Paste (Vim-like Yank/Paste) -----
 y::
@@ -629,6 +737,64 @@ return
 +e::Send, {WheelDown}{WheelDown}{WheelDown}
 +y::Send, {WheelUp}{WheelUp}{WheelUp}
 e::Send, {WheelDown}{WheelDown}{WheelDown}
+
+; ----- Touchpad Scroll Mode (Nvim Layer) -----
+/::
+    ; Activar modo scroll con touchpad en capa nvim
+    SetTempStatus("SCROLL MODE ACTIVE", 2000)
+    ShowScrollModeStatus(true)
+    SetTimer, RemoveToolTip, 1500
+    
+    ; Variables para tracking del mouse
+    MouseGetPos, startX, startY
+    scrollActive := true
+    
+    ; Loop mientras se mantenga presionada la tecla /
+    while (GetKeyState("/", "P")) {
+        MouseGetPos, currentX, currentY
+        
+        ; Calcular diferencia desde la posición inicial
+        deltaX := currentX - startX
+        deltaY := currentY - startY
+        
+        ; Umbral mínimo para evitar scroll accidental
+        threshold := 3
+        
+        ; Scroll vertical (más sensible) - EJES INVERTIDOS
+        if (Abs(deltaY) > threshold) {
+            if (deltaY > 0) {
+                ; Movimiento hacia abajo = scroll up (invertido)
+                Send, {WheelUp}
+            } else {
+                ; Movimiento hacia arriba = scroll down (invertido)
+                Send, {WheelDown}
+            }
+            ; Actualizar posición de referencia para scroll continuo
+            startY := currentY
+        }
+        
+        ; Scroll horizontal (menos sensible) - EJES INVERTIDOS
+        if (Abs(deltaX) > threshold * 2) {
+            if (deltaX > 0) {
+                ; Movimiento hacia derecha = scroll left (invertido)
+                Send, {WheelLeft}
+            } else {
+                ; Movimiento hacia izquierda = scroll right (invertido)
+                Send, {WheelRight}
+            }
+            ; Actualizar posición de referencia para scroll continuo
+            startX := currentX
+        }
+        
+        Sleep, 10 ; Pequeña pausa para suavizar el scroll
+    }
+    
+    ; Cleanup al soltar las teclas
+    scrollActive := false
+    ShowScrollModeStatus(false)
+    SetTempStatus("SCROLL MODE OFF", 800)
+    SetTimer, RemoveToolTip, 800
+return
 
 #If ; End of Nvim Layer context
 
@@ -680,7 +846,7 @@ l::Send, {Numpad3}
 m::Send, {Numpad0}
 
 ; Decimal and comma
-,::Send, {,}  ; Numpad comma
+,::Send, {NumpadComma}  ; Numpad comma
 .::Send, {NumpadDot}    ; Numpad dot
 
 ; Operations
@@ -693,12 +859,7 @@ p::Send, {NumpadAdd}    ; Plus
 w::Send, {Up}           ; Up arrow
 a::Send, {Left}         ; Left arrow  
 s::Send, {Down}         ; Down arrow
-d::Send, {Right}        ; Right arrow 
-; Arrow keys with Shift
-+w::Send, +{Up}           ; Up arrow with Shift
-+a::Send, +{Left}         ; Left arrow with Shift
-+s::Send, +{Down}         ; Down arrow with Shift
-+d::Send, +{Right}        ; Right arrow with Shift
+d::Send, {Right}        ; Right arrow
 
 ; Tab navigation
 [::Send, +{Tab}         ; Shift+Tab
@@ -722,8 +883,8 @@ x::Send, ^x             ; Ctrl+X (cut)
 z::Send, ^z             ; Ctrl+Z (undo)
 y::Send, ^y             ; Ctrl+Y (redo)
 
-; Shift+N to exit excel layer
-+n::
+; Escape to exit excel layer
+Esc::
     excelLayerActive := false
     ShowExcelStatus(false)
     UpdateLayerStatus()
@@ -803,6 +964,18 @@ ShowLeftClickStatus(isHeld) {
         ToolTip, `n LEFT CLICK HELD `n, %ToolTipX%, %ToolTipY%, 1
     } else {
         ToolTip, `n LEFT CLICK RELEASED `n, %ToolTipX%, %ToolTipY%, 1
+    }
+	return
+}
+
+ShowScrollModeStatus(isActive) {
+    ; Tooltip para Scroll Mode con estilo consistente
+    ToolTipX := A_ScreenWidth // 2 - 80
+    ToolTipY := A_ScreenHeight // 2 - 30
+    if (isActive) {
+        ToolTip, `n SCROLL MODE ACTIVE `n Move touchpad to scroll `n, %ToolTipX%, %ToolTipY%, 1
+    } else {
+        ToolTip, `n SCROLL MODE OFF `n, %ToolTipX%, %ToolTipY%, 1
     }
 	return
 }
@@ -1194,16 +1367,23 @@ LaunchApp(appName, exeNameOrUri) {
     _path := ""
 
     ; Handle special cases like "ms-settings:" which are URIs, not files.
-    if (!InStr(exeNameOrUri, ".exe")) {
+    if (!InStr(exeNameOrUri, ".exe") && !InStr(exeNameOrUri, ".lnk")) {
         Run, %exeNameOrUri%
         return
     }
 
     ; 1. Prioritize user-defined path from programs.ini file.
     IniRead, _userPath, %ProgramsIni%, Programs, %appName%
-    if (_userPath && FileExist(_userPath)) {
-        Run, "%_userPath%"
-        return
+    if (_userPath) {
+        ; Expand environment variables like %USERPROFILE%
+        _expandedPath := _userPath
+        ; Replace %USERPROFILE% with actual user profile path
+        EnvGet, UserProfilePath, USERPROFILE
+        StringReplace, _expandedPath, _expandedPath, `%USERPROFILE`%, %UserProfilePath%, All
+        if (FileExist(_expandedPath)) {
+            Run, "%_expandedPath%"
+            return
+        }
     }
 
     ; 2. If no user path, try to resolve the executable automatically.
