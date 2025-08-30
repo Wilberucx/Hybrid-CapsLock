@@ -43,10 +43,11 @@ Accede a un menú contextual con sub-capas organizadas:
 |-------|--------|
 | `CapsLock + ;` | Click izquierdo sostenido |
 | `CapsLock + '` | Click derecho simple |
-| `CapsLock + /` | Scroll con touchpad (mantener `/` presionado) |
+| `CapsLock + Shift` | Scroll con touchpad (mantener `Shift` presionado) |
 
 ## 📚 Documentación Detallada
 
+### Funcionalidades Principales
 - **[Modo Modificador](doc/MODIFIER_MODE.md)** - Todos los atajos con CapsLock mantenido
 - **[Capa Nvim](doc/NVIM_LAYER.md)** - Navegación y edición estilo Vim
 - **[Modo Líder](doc/LEADER_MODE.md)** - Menús contextuales y sub-capas
@@ -55,17 +56,29 @@ Accede a un menú contextual con sub-capas organizadas:
   - **[Capa Timestamp](doc/TIMESTAMP_LAYER.md)** - Herramientas de fecha/hora
   - **[Capa Excel](doc/EXCEL_LAYER.md)** - Capa especializada para Excel con numpad, navegación y atajos
 
+### Instalación y Configuración
+- **[Instalación como Servicio](doc/SERVICE_INSTALLATION.md)** - Servicio de Windows para compatibilidad completa
+
 ## ⚙️ Instalación y Uso
 
+### Opción A: Ejecución Normal
 1. **Requisito:** [AutoHotkey v1.1+](https://www.autohotkey.com/)
 2. **Ejecutar:** Doble click en `HybridCapsLock.ahk`
 3. **Inicio automático:** Crear acceso directo en `shell:startup`
 
+### Opción B: Servicio de Windows (Recomendado)
+1. **Requisito:** [AutoHotkey v1.1+](https://www.autohotkey.com/)
+2. **Instalación:** Clic derecho en `install_elevated_service.bat` → "Ejecutar como administrador"
+3. **Ventajas:** 
+   - Funciona con aplicaciones elevadas
+   - Lanza aplicaciones con privilegios normales
+   - Inicio automático con Windows
+
 ## 🔧 Configuración
 
-- **Archivo de configuración:** `HybridCapsLock.ini`
+- **Archivos de configuración:** `programs.ini`, `general.ini`, `timestamps.ini`
 - **Personalización:** Ver documentación específica de cada capa
-- **Ejecutar como administrador:** Recomendado para evitar problemas de permisos
+- **Servicio:** Ver [Instalación como Servicio](doc/SERVICE_INSTALLATION.md) para gestión del servicio
 
 ## 📊 Integración con Zebar
 

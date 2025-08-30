@@ -116,7 +116,7 @@ CapsLock & l::Send, {Right}
 CapsLock & e::Send, {WheelDown}{WheelDown}{WheelDown}
 CapsLock & d::Send, {WheelUp}{WheelUp}{WheelUp}
 ; ----- Touchpad Scroll Mode -----
-CapsLock & /::
+CapsLock & Shift::
     ; Activar modo scroll con touchpad
     scrollModeActive := true
     SetTempStatus("SCROLL MODE ACTIVE", 2000)
@@ -126,8 +126,8 @@ CapsLock & /::
     ; Variables para tracking del mouse
     MouseGetPos, startX, startY
     
-    ; Loop mientras se mantenga presionada CapsLock o /
-    while (GetKeyState("CapsLock", "P") || GetKeyState("/", "P")) {
+    ; Loop mientras se mantenga presionada CapsLock o Shift
+    while (GetKeyState("CapsLock", "P") || GetKeyState("Shift", "P")) {
         MouseGetPos, currentX, currentY
         
         ; Calcular diferencia desde la posición inicial
@@ -499,16 +499,16 @@ CapsLock & F12::
     }
 return
 
-; Suprimir escritura de / cuando scroll mode está activo
-/::
-    if (scrollModeActive) {
-        ; No hacer nada, suprimir el carácter
-        return
-    } else {
-        ; Comportamiento normal, enviar el carácter
-        Send, /
-    }
-return
+; Suprimir escritura de '/' cuando scroll mode está activo
+;/::
+;    if (scrollModeActive) {
+;        ; No hacer nada, suprimir el carácter
+;        return
+;    } else {
+;        ; Comportamiento normal, enviar el carácter
+;        Send, /
+;    }
+;return
 
 ;-------------------------------------------------------------------------------
 ; SECTION 3: HYBRID LOGIC (TAP VS HOLD)
@@ -577,7 +577,7 @@ return
 ;----------------------------------
 ; SECTION 4B: NVIM LAYER MAIN KEYS
 ;----------------------------------
-m:: ; Visual Mode Toggle
+v:: ; Visual Mode Toggle
     VisualMode := !VisualMode
     if (VisualMode) {
         ShowVisualModeStatus(true)
@@ -739,18 +739,35 @@ return
 e::Send, {WheelDown}{WheelDown}{WheelDown}
 
 ; ----- Touchpad Scroll Mode (Nvim Layer) -----
-/::
+LShift::
+RShift::
+    ; Verificar que estamos en la capa NVIM y no hay otras capas activas
+    if (!isNvimLayerActive || excelLayerActive || leaderActive) {
+        ; Si no estamos en NVIM o hay conflictos, comportamiento normal de Shift
+        if (A_ThisHotkey = "LShift")
+            Send, {LShift down}
+        else
+            Send, {RShift down}
+        KeyWait, % SubStr(A_ThisHotkey, 1)
+        if (A_ThisHotkey = "LShift")
+            Send, {LShift up}
+        else
+            Send, {RShift up}
+        return
+    }
+    
     ; Activar modo scroll con touchpad en capa nvim
+    scrollModeActive := true
     SetTempStatus("SCROLL MODE ACTIVE", 2000)
     ShowScrollModeStatus(true)
+    UpdateLayerStatus()
     SetTimer, RemoveToolTip, 1500
     
     ; Variables para tracking del mouse
     MouseGetPos, startX, startY
-    scrollActive := true
     
-    ; Loop mientras se mantenga presionada la tecla /
-    while (GetKeyState("/", "P")) {
+    ; Loop mientras se mantenga presionada cualquier tecla Shift
+    while (GetKeyState("LShift", "P") || GetKeyState("RShift", "P")) {
         MouseGetPos, currentX, currentY
         
         ; Calcular diferencia desde la posición inicial
@@ -790,9 +807,10 @@ e::Send, {WheelDown}{WheelDown}{WheelDown}
     }
     
     ; Cleanup al soltar las teclas
-    scrollActive := false
+    scrollModeActive := false
     ShowScrollModeStatus(false)
     SetTempStatus("SCROLL MODE OFF", 800)
+    UpdateLayerStatus()
     SetTimer, RemoveToolTip, 800
 return
 
@@ -852,7 +870,7 @@ m::Send, {Numpad0}
 ; Operations
 p::Send, {NumpadAdd}    ; Plus
 `;::Send, {NumpadSub}   ; Minus (semicolon)
-/::Send, {NumpadDiv}    ; Divide
+/::Send, {NumpadDiv}    ; Divide (moved from Shift to avoid conflicts)
 
 ; === NAVIGATION SECTION ===
 ; Arrow keys (WASD)
@@ -1020,6 +1038,7 @@ UpdateLayerStatus() {
     JsonContent .= """leader_active"": " . (leaderActive ? "true" : "false") . ","
     JsonContent .= """yank_await"": " . (_yankAwait ? "true" : "false") . ","
     JsonContent .= """right_click_held"": " . (rightClickHeld ? "true" : "false") . ","
+    JsonContent .= """scroll_mode"": " . (scrollModeActive ? "true" : "false") . ","
     JsonContent .= """caps_normal"": " . (capsActsNormal ? "true" : "false") . ","
     JsonContent .= """temp_status"": """ . currentTempStatus . ""","
     JsonContent .= """temp_status_active"": " . (currentTempStatus != "" ? "true" : "false") . ","

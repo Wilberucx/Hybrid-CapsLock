@@ -18,7 +18,7 @@ La Capa Nvim incluye un **Modo Visual** para seleccionar texto mientras navegas:
 
 | Tecla | Acción | Estado Visual |
 |-------|--------|---------------|
-| `m` | **Toggle Modo Visual** | `VISUAL MODE ON/OFF` |
+| `v` | **Toggle Modo Visual** | `VISUAL MODE ON/OFF` |
 
 Cuando el Modo Visual está activo, todas las teclas de navegación extienden la selección.
 
@@ -105,9 +105,9 @@ Si hay texto seleccionado (Modo Visual activo), presionar `y` copia inmediatamen
 | `E` (Shift+e) | **Scroll abajo** | 3 pasos de rueda hacia abajo |
 | `y` | **Scroll arriba** | 3 pasos de rueda hacia arriba |
 | `Y` (Shift+y) | **Scroll arriba** | 3 pasos de rueda hacia arriba |
-| `/` | **Scroll con touchpad** | Mantén `/` y mueve el touchpad para scroll trackball |
+| `Shift` | **Scroll con touchpad** | Mantén `Shift` y mueve el touchpad para scroll trackball |
 
-> **Nota:** `y` tiene doble función: scroll cuando se presiona solo, yank cuando se usa como operador. El scroll con touchpad (`/`) replica la funcionalidad de ratones trackball con ejes invertidos para mayor naturalidad.
+> **Nota:** `y` tiene doble función: scroll cuando se presiona solo, yank cuando se usa como operador. El scroll con touchpad (`Shift`) replica la funcionalidad de ratones trackball con ejes invertidos para mayor naturalidad.
 
 ## 🖱️ Funciones de Mouse
 
@@ -147,7 +147,7 @@ Esta función es útil para aplicaciones que usan `Ctrl+Alt+K` como atajo, permi
 ```
 1. CapsLock (activar capa)
 2. hjkl (navegar al texto)
-3. m (activar visual)
+3. v (activar visual)
 4. w/b (seleccionar palabras)
 5. y (copiar selección)
 6. o (nueva línea)
