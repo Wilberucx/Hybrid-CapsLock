@@ -6,7 +6,7 @@ La Capa Excel es una capa persistente especializada para trabajo con hojas de c�
 
 **Combinación:** `CapsLock + Space` → `n`
 
-Al activar la capa Excel, aparece una notificación visual confirmando que está activa. La capa permanece activa hasta que se desactive manualmente.
+Al activar la capa Excel, aparece una notificación visual confirmando que está activa. La capa permanece activa hasta que se desactive manualmente (`Shift+n`).
 
 ## 🔢 Distribución de la Capa Excel
 
@@ -205,4 +205,5 @@ CapsLock + Space → Menú Principal
 ---
 
 **¿Necesitas más funciones numéricas?** Esta capa se puede extender fácilmente para incluir más operaciones matemáticas o funciones especializadas.
+
 
