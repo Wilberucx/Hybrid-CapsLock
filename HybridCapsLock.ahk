@@ -62,9 +62,11 @@ global rightClickHeld := false
 global scrollModeActive := false
 ; Timestamp functionality moved to dedicated timestamps.ini system
 ; Persist settings across sessions
-global SettingsIni := A_ScriptDir . "\general.ini"
+global ConfigIni := A_ScriptDir . "\configuration.ini"
 global ProgramsIni := A_ScriptDir . "\programs.ini"
 global TimestampsIni := A_ScriptDir . "\timestamps.ini"
+global InfoIni := A_ScriptDir . "\information.ini"
+global CommandsIni := A_ScriptDir . "\commands.ini"
 ; Layer status file for Zebar integration
 global LayerStatusFile := A_ScriptDir . "\layer_status.json"
 ; Guard para operador yank secuencial
@@ -445,7 +447,7 @@ CapsLock & Space::
         ; ----- LEVEL 2: Commands Mode -----
         if (_leaderKey = "c") {
             ShowCommandsMenu()
-            Input, _cmdCategory, L1 T10, {Escape}{Backspace}, s,n,g,m,f,w
+            Input, _cmdCategory, L1 T10, {Escape}{Backspace}, s,n,g,m,f,w,v,o,a
 
             if (ErrorLevel = "Timeout" || ErrorLevel = "EndKey:Escape") {
                 break ; Exit loop
@@ -534,12 +536,68 @@ CapsLock & Space::
                         ExecuteWindowsCommand(_winCmd)
                         _exitLeader := true
                     }
+
+                Case "v": ; VaultFlow Commands
+                    ShowVaultFlowCommandsMenu()
+                    Input, _vaultCmd, L1 T10, {Escape}{Backspace}, v
+                    
+                    if (ErrorLevel = "Timeout" || ErrorLevel = "EndKey:Escape") {
+                        _exitLeader := true
+                    } else if (ErrorLevel = "EndKey:Backspace") {
+                        continue ; Back to commands menu
+                    } else {
+                        ExecuteVaultFlowCommand(_vaultCmd)
+                        _exitLeader := true
+                    }
+
+                Case "o": ; Power Options Commands
+                    ShowPowerOptionsCommandsMenu()
+                    Input, _powerCmd, L1 T10, {Escape}{Backspace}, s,h,r,u
+                    
+                    if (ErrorLevel = "Timeout" || ErrorLevel = "EndKey:Escape") {
+                        _exitLeader := true
+                    } else if (ErrorLevel = "EndKey:Backspace") {
+                        continue ; Back to commands menu
+                    } else {
+                        ExecutePowerOptionsCommand(_powerCmd)
+                        _exitLeader := true
+                    }
+
+                Case "a": ; ADB Tools Commands (Simple ones only)
+                    ShowADBCommandsMenu()
+                    Input, _adbCmd, L1 T10, {Escape}{Backspace}, d,x,s,l,r
+                    
+                    if (ErrorLevel = "Timeout" || ErrorLevel = "EndKey:Escape") {
+                        _exitLeader := true
+                    } else if (ErrorLevel = "EndKey:Backspace") {
+                        continue ; Back to commands menu
+                    } else {
+                        ExecuteADBCommand(_adbCmd)
+                        _exitLeader := true
+                    }
             }
 
             if (_exitLeader)
                 break
             else
                 continue
+        }
+
+        ; ----- LEVEL 2: Information Mode -----
+        if (_leaderKey = "i") {
+            ShowInformationMenu()
+            Input, _infoKey, L1 T10, {Escape}{Backspace}, e,n,p,a,c,w,g,l
+
+            if (ErrorLevel = "Timeout" || ErrorLevel = "EndKey:Escape") {
+                break ; Exit loop
+            }
+            if (ErrorLevel = "EndKey:Backspace") {
+                continue ; Go back to main leader menu
+            }
+
+            ; Insert information snippet dynamically from information.ini
+            InsertInformationFromKey(_infoKey)
+            break ; Action taken, exit loop
         }
 
         ; ----- LEVEL 2: Excel/Accounting Mode -----
@@ -1191,13 +1249,14 @@ ShowProcessTerminated() {
 ShowLeaderMenu() {
     ; Menu principal del Leader centrado
     ToolTipX := A_ScreenWidth // 2 - 80
-    ToolTipY := A_ScreenHeight // 2 - 70
+    ToolTipY := A_ScreenHeight // 2 - 80
     MenuText := "LEADER MENU`n"
     MenuText .= "`n"
     MenuText .= "w - Windows`n"
     MenuText .= "p - Programs`n"
     MenuText .= "t - Time`n"
     MenuText .= "c - Commands`n"
+    MenuText .= "i - Information`n"
     MenuText .= "n - Excel`n"
     MenuText .= "`n"
     MenuText .= "[Esc: Exit]"
@@ -1637,17 +1696,19 @@ LaunchProgramFromKey(keyPressed) {
 ; ----- Commands Layer Functions -----
 
 ShowCommandsMenu() {
-    ; Menu principal de comandos centrado
-    ToolTipX := A_ScreenWidth // 2 - 100
-    ToolTipY := A_ScreenHeight // 2 - 80
+    global CommandsIni
+    ToolTipX := A_ScreenWidth // 2 - 110
+    ToolTipY := A_ScreenHeight // 2 - 100
     MenuText := "COMMAND PALETTE`n"
     MenuText .= "`n"
-    MenuText .= "s - System Commands`n"
-    MenuText .= "n - Network Commands`n"
-    MenuText .= "g - Git Commands`n"
-    MenuText .= "m - Monitoring Commands`n"
-    MenuText .= "f - Folder Access`n"
-    MenuText .= "w - Windows Commands`n"
+    
+    Loop, 20 {
+        IniRead, lineContent, %CommandsIni%, MenuDisplay, main_line%A_Index%
+        if (lineContent != "ERROR" && lineContent != "") {
+            MenuText .= lineContent . "`n"
+        }
+    }
+    
     MenuText .= "`n"
     MenuText .= "[Backspace: Back] [Esc: Exit]"
     ToolTip, %MenuText%, %ToolTipX%, %ToolTipY%, 2
@@ -1655,16 +1716,19 @@ ShowCommandsMenu() {
 }
 
 ShowSystemCommandsMenu() {
+    global CommandsIni
     ToolTipX := A_ScreenWidth // 2 - 120
     ToolTipY := A_ScreenHeight // 2 - 90
     MenuText := "SYSTEM COMMANDS`n"
     MenuText .= "`n"
-    MenuText .= "s - System Info`n"
-    MenuText .= "t - Task Manager`n"
-    MenuText .= "v - Services`n"
-    MenuText .= "e - Event Viewer`n"
-    MenuText .= "d - Device Manager`n"
-    MenuText .= "c - Disk Cleanup`n"
+    
+    Loop, 10 {
+        IniRead, lineContent, %CommandsIni%, MenuDisplay, system_line%A_Index%
+        if (lineContent != "ERROR" && lineContent != "") {
+            MenuText .= lineContent . "`n"
+        }
+    }
+    
     MenuText .= "`n"
     MenuText .= "[Backspace: Back] [Esc: Exit]"
     ToolTip, %MenuText%, %ToolTipX%, %ToolTipY%, 2
@@ -1672,13 +1736,19 @@ ShowSystemCommandsMenu() {
 }
 
 ShowNetworkCommandsMenu() {
+    global CommandsIni
     ToolTipX := A_ScreenWidth // 2 - 120
     ToolTipY := A_ScreenHeight // 2 - 70
     MenuText := "NETWORK COMMANDS`n"
     MenuText .= "`n"
-    MenuText .= "i - IP Config`n"
-    MenuText .= "p - Ping Test`n"
-    MenuText .= "n - Network Info`n"
+    
+    Loop, 10 {
+        IniRead, lineContent, %CommandsIni%, MenuDisplay, network_line%A_Index%
+        if (lineContent != "ERROR" && lineContent != "") {
+            MenuText .= lineContent . "`n"
+        }
+    }
+    
     MenuText .= "`n"
     MenuText .= "[Backspace: Back] [Esc: Exit]"
     ToolTip, %MenuText%, %ToolTipX%, %ToolTipY%, 2
@@ -1686,16 +1756,19 @@ ShowNetworkCommandsMenu() {
 }
 
 ShowGitCommandsMenu() {
+    global CommandsIni
     ToolTipX := A_ScreenWidth // 2 - 120
     ToolTipY := A_ScreenHeight // 2 - 90
     MenuText := "GIT COMMANDS`n"
     MenuText .= "`n"
-    MenuText .= "s - Git Status`n"
-    MenuText .= "l - Git Log`n"
-    MenuText .= "b - Git Branches`n"
-    MenuText .= "d - Git Diff`n"
-    MenuText .= "a - Git Add All`n"
-    MenuText .= "p - Git Pull`n"
+    
+    Loop, 10 {
+        IniRead, lineContent, %CommandsIni%, MenuDisplay, git_line%A_Index%
+        if (lineContent != "ERROR" && lineContent != "") {
+            MenuText .= lineContent . "`n"
+        }
+    }
+    
     MenuText .= "`n"
     MenuText .= "[Backspace: Back] [Esc: Exit]"
     ToolTip, %MenuText%, %ToolTipX%, %ToolTipY%, 2
@@ -1703,15 +1776,19 @@ ShowGitCommandsMenu() {
 }
 
 ShowMonitoringCommandsMenu() {
+    global CommandsIni
     ToolTipX := A_ScreenWidth // 2 - 120
     ToolTipY := A_ScreenHeight // 2 - 90
     MenuText := "MONITORING COMMANDS`n"
     MenuText .= "`n"
-    MenuText .= "p - Process List`n"
-    MenuText .= "s - Service List`n"
-    MenuText .= "d - Disk Space`n"
-    MenuText .= "m - Memory Usage`n"
-    MenuText .= "c - CPU Usage`n"
+    
+    Loop, 10 {
+        IniRead, lineContent, %CommandsIni%, MenuDisplay, monitoring_line%A_Index%
+        if (lineContent != "ERROR" && lineContent != "") {
+            MenuText .= lineContent . "`n"
+        }
+    }
+    
     MenuText .= "`n"
     MenuText .= "[Backspace: Back] [Esc: Exit]"
     ToolTip, %MenuText%, %ToolTipX%, %ToolTipY%, 2
@@ -1719,16 +1796,19 @@ ShowMonitoringCommandsMenu() {
 }
 
 ShowFolderCommandsMenu() {
+    global CommandsIni
     ToolTipX := A_ScreenWidth // 2 - 120
     ToolTipY := A_ScreenHeight // 2 - 90
     MenuText := "FOLDER ACCESS`n"
     MenuText .= "`n"
-    MenuText .= "t - Temp Folder`n"
-    MenuText .= "a - AppData`n"
-    MenuText .= "p - Program Files`n"
-    MenuText .= "u - User Profile`n"
-    MenuText .= "d - Desktop`n"
-    MenuText .= "s - System32`n"
+    
+    Loop, 10 {
+        IniRead, lineContent, %CommandsIni%, MenuDisplay, folder_line%A_Index%
+        if (lineContent != "ERROR" && lineContent != "") {
+            MenuText .= lineContent . "`n"
+        }
+    }
+    
     MenuText .= "`n"
     MenuText .= "[Backspace: Back] [Esc: Exit]"
     ToolTip, %MenuText%, %ToolTipX%, %ToolTipY%, 2
@@ -1736,13 +1816,19 @@ ShowFolderCommandsMenu() {
 }
 
 ShowWindowsCommandsMenu() {
+    global CommandsIni
     ToolTipX := A_ScreenWidth // 2 - 120
     ToolTipY := A_ScreenHeight // 2 - 70
     MenuText := "WINDOWS COMMANDS`n"
     MenuText .= "`n"
-    MenuText .= "h - Toggle Hidden Files`n"
-    MenuText .= "r - Registry Editor`n"
-    MenuText .= "e - Environment Variables`n"
+    
+    Loop, 10 {
+        IniRead, lineContent, %CommandsIni%, MenuDisplay, windows_line%A_Index%
+        if (lineContent != "ERROR" && lineContent != "") {
+            MenuText .= lineContent . "`n"
+        }
+    }
+    
     MenuText .= "`n"
     MenuText .= "[Backspace: Back] [Esc: Exit]"
     ToolTip, %MenuText%, %ToolTipX%, %ToolTipY%, 2
@@ -1889,5 +1975,243 @@ ShowCommandExecuted(category, cmd) {
     ToolTip, `n %category% COMMAND EXECUTED `n, %ToolTipX%, %ToolTipY%, 1
     SetTimer, RemoveToolTip, 1500
     return
+}
+
+; ----- Custom Commands Layer Functions -----
+
+ShowVaultFlowCommandsMenu() {
+    global CommandsIni
+    ToolTipX := A_ScreenWidth // 2 - 120
+    ToolTipY := A_ScreenHeight // 2 - 50
+    MenuText := "VAULTFLOW COMMANDS`n"
+    MenuText .= "`n"
+    
+    Loop, 10 {
+        IniRead, lineContent, %CommandsIni%, MenuDisplay, vaultflow_line%A_Index%
+        if (lineContent != "ERROR" && lineContent != "") {
+            MenuText .= lineContent . "`n"
+        }
+    }
+    
+    MenuText .= "`n"
+    MenuText .= "[Backspace: Back] [Esc: Exit]"
+    ToolTip, %MenuText%, %ToolTipX%, %ToolTipY%, 2
+    return
+}
+
+ShowPowerOptionsCommandsMenu() {
+    global CommandsIni
+    ToolTipX := A_ScreenWidth // 2 - 120
+    ToolTipY := A_ScreenHeight // 2 - 80
+    MenuText := "POWER OPTIONS`n"
+    MenuText .= "`n"
+    
+    Loop, 10 {
+        IniRead, lineContent, %CommandsIni%, MenuDisplay, power_line%A_Index%
+        if (lineContent != "ERROR" && lineContent != "") {
+            MenuText .= lineContent . "`n"
+        }
+    }
+    
+    MenuText .= "`n"
+    MenuText .= "[Backspace: Back] [Esc: Exit]"
+    ToolTip, %MenuText%, %ToolTipX%, %ToolTipY%, 2
+    return
+}
+
+ShowADBCommandsMenu() {
+    global CommandsIni
+    ToolTipX := A_ScreenWidth // 2 - 120
+    ToolTipY := A_ScreenHeight // 2 - 90
+    MenuText := "ADB TOOLS`n"
+    MenuText .= "`n"
+    
+    Loop, 10 {
+        IniRead, lineContent, %CommandsIni%, MenuDisplay, adb_line%A_Index%
+        if (lineContent != "ERROR" && lineContent != "") {
+            MenuText .= lineContent . "`n"
+        }
+    }
+    
+    MenuText .= "`n"
+    MenuText .= "[Backspace: Back] [Esc: Exit]"
+    ToolTip, %MenuText%, %ToolTipX%, %ToolTipY%, 2
+    return
+}
+
+; ----- Custom Command Execution Functions -----
+
+ExecuteVaultFlowCommand(cmd) {
+    Switch cmd {
+        Case "v":
+            Run, powershell.exe -Command "vaultflow"
+    }
+    ShowCommandExecuted("VaultFlow", cmd)
+    return
+}
+
+ExecutePowerOptionsCommand(cmd) {
+    Switch cmd {
+        Case "s":
+            Run, rundll32.exe powrprof.dll`,SetSuspendState 0`,1`,0
+            ShowCommandExecuted("Power", "Sleep")
+        Case "h":
+            Run, rundll32.exe powrprof.dll`,SetSuspendState Hibernate
+            ShowCommandExecuted("Power", "Hibernate")
+        Case "r":
+            Run, shutdown /r /t 0
+            ShowCommandExecuted("Power", "Restart")
+        Case "u":
+            Run, shutdown /s /t 0
+            ShowCommandExecuted("Power", "Shutdown")
+    }
+    return
+}
+
+ExecuteADBCommand(cmd) {
+    Switch cmd {
+        Case "d":
+            Run, cmd.exe /k adb devices
+        Case "x":
+            Run, cmd.exe /k adb disconnect
+        Case "s":
+            Run, cmd.exe /k adb shell
+        Case "l":
+            Run, cmd.exe /k adb logcat
+        Case "r":
+            Run, cmd.exe /k adb reboot
+    }
+    ShowCommandExecuted("ADB", cmd)
+    return
+}
+
+; ----- Information Layer Functions -----
+
+ShowInformationMenu() {
+    ; Menu de información dinámico que lee desde information.ini
+    global InfoIni
+    ToolTipX := A_ScreenWidth // 2 - 110
+    ToolTipY := A_ScreenHeight // 2 - 80
+    MenuText := "PERSONAL INFORMATION`n"
+    MenuText .= "`n"
+    
+    ; Read menu lines dynamically from information.ini
+    Loop, 10 {
+        IniRead, lineContent, %InfoIni%, MenuDisplay, line%A_Index%
+        if (lineContent != "ERROR" && lineContent != "") {
+            MenuText .= lineContent . "`n"
+        }
+    }
+    
+    MenuText .= "`n"
+    MenuText .= "[Backspace: Back] [Esc: Exit]"
+    ToolTip, %MenuText%, %ToolTipX%, %ToolTipY%, 2
+    return
+}
+
+InsertInformationFromKey(keyPressed) {
+    ; Dynamic information inserter that reads mapping from information.ini file
+    global InfoIni
+    
+    ; Read the information name mapped to this key
+    keyName := "key_" . keyPressed
+    IniRead, infoName, %InfoIni%, InfoMapping, %keyName%
+    
+    ; If no mapping found, show error
+    if (infoName = "ERROR" || infoName = "") {
+        ShowCenteredToolTip("Key '" . keyPressed . "' not mapped.\nAdd to information.ini\n[InfoMapping]")
+        SetTimer, RemoveToolTip, 3500
+        return
+    }
+    
+    ; Read the information content for this key
+    IniRead, infoContent, %InfoIni%, PersonalInfo, %infoName%
+    if (infoContent = "ERROR" || infoContent = "") {
+        ShowCenteredToolTip(infoName . " not found in [PersonalInfo].\nAdd content to information.ini")
+        SetTimer, RemoveToolTip, 3500
+        return
+    }
+    
+    ; Insert the information content
+    SendRaw, %infoContent%
+    ShowInformationInserted(infoName)
+    return
+}
+
+ShowInformationInserted(infoName) {
+    ToolTipX := A_ScreenWidth // 2 - 80
+    ToolTipY := A_ScreenHeight // 2 - 30
+    ToolTip, `n %infoName% INSERTED `n, %ToolTipX%, %ToolTipY%, 1
+    SetTimer, RemoveToolTip, 1500
+    return
+}
+
+; ----- Configuration Management Functions -----
+
+ReadConfigValue(section, key, defaultValue := "") {
+    ; Read configuration values from configuration.ini
+    global ConfigIni
+    IniRead, value, %ConfigIni%, %section%, %key%
+    if (value = "ERROR" || value = "") {
+        return defaultValue
+    }
+    return value
+}
+
+ReadLayerSettings(layerIni, settingKey, defaultValue := "") {
+    ; Read settings from layer-specific .ini files
+    IniRead, value, %layerIni%, Settings, %settingKey%
+    if (value = "ERROR" || value = "") {
+        return defaultValue
+    }
+    return value
+}
+
+GetTooltipDuration(layerType := "default") {
+    ; Get tooltip duration based on configuration
+    global ConfigIni
+    
+    ; Try to get layer-specific duration first
+    if (layerType != "default") {
+        layerFile := A_ScriptDir . "\" . layerType . ".ini"
+        duration := ReadLayerSettings(layerFile, "feedback_duration", "")
+        if (duration != "") {
+            return duration
+        }
+    }
+    
+    ; Fall back to global configuration
+    return ReadConfigValue("UI", "tooltip_duration_default", 1500)
+}
+
+GetLayerTimeout(layerType := "leader") {
+    ; Get timeout for specific layer
+    global ConfigIni
+    
+    ; Try layer-specific timeout first
+    if (layerType != "leader") {
+        layerFile := A_ScriptDir . "\" . layerType . ".ini"
+        timeout := ReadLayerSettings(layerFile, "timeout_seconds", "")
+        if (timeout != "") {
+            return timeout
+        }
+    }
+    
+    ; Fall back to global configuration
+    if (layerType = "leader") {
+        return ReadConfigValue("Behavior", "leader_timeout_seconds", 7)
+    } else {
+        return ReadConfigValue("Behavior", "global_timeout_seconds", 7)
+    }
+}
+
+IsLayerEnabled(layerName) {
+    ; Check if a specific layer is enabled
+    return ReadConfigValue("Layers", layerName . "_layer_enabled", "true") = "true"
+}
+
+IsFeatureEnabled(featureName) {
+    ; Check if a specific feature is enabled
+    return ReadConfigValue("General", featureName, "true") = "true"
 }
 

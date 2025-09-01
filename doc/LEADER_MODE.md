@@ -16,6 +16,8 @@ LEADER MENU
 w - Windows
 p - Programs  
 t - Time
+c - Commands
+i - Information
 n - Excel
 
 [Esc: Exit]
@@ -49,6 +51,26 @@ Herramientas para insertar y formatear fechas/horas.
 - Cambio de formatos de fecha y hora
 - Configuración de separadores
 - Formatos persistentes entre sesiones
+
+### ⚡ [Capa Comandos](COMMAND_LAYER.md) - Tecla `c`
+Paleta de comandos jerárquica para ejecutar scripts y herramientas del sistema.
+
+**Funciones principales:**
+- Comandos del sistema (Task Manager, Services, etc.)
+- Herramientas de red (IP Config, Ping, etc.)
+- Comandos Git integrados
+- Monitoreo del sistema
+- Acceso rápido a carpetas
+- Toggle de archivos ocultos
+
+### 📝 Capa Information - Tecla `i`
+Inserción rápida de información personal y snippets configurables desde archivo .ini.
+
+**Funciones principales:**
+- Información personal (email, nombre, teléfono, dirección)
+- Datos de empresa y redes sociales
+- Snippets personalizados y plantillas
+- Configuración fácil desde information.ini
 
 ### 📊 [Capa Excel](EXCEL_LAYER.md) - Tecla `n`
 Capa persistente especializada para trabajo con hojas de cálculo y aplicaciones contables.

@@ -15,6 +15,8 @@ Accede a un menú contextual con sub-capas organizadas:
 - **`w`** - Gestión de ventanas y herramientas de zoom
 - **`p`** - Lanzador rápido de programas
 - **`t`** - Herramientas de timestamp
+- **`c`** - Paleta de comandos del sistema
+- **`i`** - Información personal y snippets
 - **`n`** - Capa Excel/Accounting persistente
 
 ## 🚀 Atajos Principales
@@ -54,9 +56,12 @@ Accede a un menú contextual con sub-capas organizadas:
   - **[Capa Windows](doc/WINDOWS_LAYER.md)** - Gestión de ventanas y zoom
   - **[Capa Programas](doc/PROGRAM_LAYER.md)** - Lanzador de aplicaciones
   - **[Capa Timestamp](doc/TIMESTAMP_LAYER.md)** - Herramientas de fecha/hora
+  - **[Capa Comandos](doc/COMMAND_LAYER.md)** - Paleta de comandos y utilidades del sistema
+  - **[Capa Information](doc/INFORMATION_LAYER.md)** - Inserción rápida de información personal
   - **[Capa Excel](doc/EXCEL_LAYER.md)** - Capa especializada para Excel con numpad, navegación y atajos
 
 ### Instalación y Configuración
+- **[Sistema de Configuración](doc/CONFIGURATION.md)** - Guía completa del sistema de configuración modular
 - **[Instalación como Servicio](doc/SERVICE_INSTALLATION.md)** - Servicio de Windows para compatibilidad completa
 
 ## ⚙️ Instalación y Uso
@@ -76,8 +81,23 @@ Accede a un menú contextual con sub-capas organizadas:
 
 ## 🔧 Configuración
 
-- **Archivos de configuración:** `programs.ini`, `general.ini`, `timestamps.ini`
-- **Personalización:** Ver documentación específica de cada capa
+### 📁 Sistema de Configuración Modular
+- **`configuration.ini`** - Configuración global y comportamiento general
+- **`programs.ini`** - Lanzador de programas con configuración específica
+- **`timestamps.ini`** - Formatos de fecha/hora y configuración temporal
+- **`commands.ini`** - Paleta de comandos del sistema con timeouts personalizables
+- **`information.ini`** - Información personal y snippets con configuración de inserción
+
+### ⚙️ Configuración Avanzada
+Cada archivo `.ini` incluye una sección `[Settings]` para personalizar:
+- **Timeouts específicos** por capa
+- **Feedback visual** personalizable
+- **Comportamientos automáticos** configurables
+- **Integración con aplicaciones** específicas
+
+### 🔧 Personalización
+- **Por capa:** Ver documentación específica de cada capa
+- **Global:** Editar `configuration.ini` para ajustes generales
 - **Servicio:** Ver [Instalación como Servicio](doc/SERVICE_INSTALLATION.md) para gestión del servicio
 
 ## 📊 Integración con Zebar
