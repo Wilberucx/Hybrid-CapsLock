@@ -118,7 +118,15 @@ CapsLock & l::Send, {Right}
 CapsLock & e::Send, {WheelDown}{WheelDown}{WheelDown}
 CapsLock & d::Send, {WheelUp}{WheelUp}{WheelUp}
 ; ----- Touchpad Scroll Mode -----
-CapsLock & Shift::
+CapsLock & /::
+    ; Check if CapsLock+/ touchpad scroll is enabled in configuration
+    holdCapslockSlashScroll := ReadConfigValue("Advanced", "hold_capslock_slash_scroll", "true")
+    if (holdCapslockSlashScroll != "true") {
+        ; If disabled, just send the normal / key
+        Send, /
+        return
+    }
+    
     ; Activar modo scroll con touchpad
     scrollModeActive := true
     SetTempStatus("SCROLL MODE ACTIVE", 2000)
@@ -128,8 +136,8 @@ CapsLock & Shift::
     ; Variables para tracking del mouse
     MouseGetPos, startX, startY
     
-    ; Loop mientras se mantenga presionada CapsLock o Shift
-    while (GetKeyState("CapsLock", "P") || GetKeyState("Shift", "P")) {
+    ; Loop mientras se mantenga presionada CapsLock o /
+    while (GetKeyState("CapsLock", "P") || GetKeyState("/", "P")) {
         MouseGetPos, currentX, currentY
         
         ; Calcular diferencia desde la posición inicial
@@ -899,9 +907,12 @@ e::Send, {WheelDown}{WheelDown}{WheelDown}
 ; ----- Touchpad Scroll Mode (Nvim Layer) -----
 LShift::
 RShift::
+    ; Check if Shift touchpad scroll is enabled in Nvim layer configuration
+    nvimShiftTouchpadScroll := ReadConfigValue("Advanced", "nvim_shift_touchpad_scroll", "false")
+    
     ; Verificar que estamos en la capa NVIM y no hay otras capas activas
-    if (!isNvimLayerActive || excelLayerActive || leaderActive) {
-        ; Si no estamos en NVIM o hay conflictos, comportamiento normal de Shift
+    if (!isNvimLayerActive || excelLayerActive || leaderActive || nvimShiftTouchpadScroll != "true") {
+        ; Si no estamos en NVIM, hay conflictos, o la función está desactivada, comportamiento normal de Shift
         if (A_ThisHotkey = "LShift")
             Send, {LShift down}
         else
@@ -2168,7 +2179,7 @@ ReadLayerSettings(layerIni, settingKey, defaultValue := "") {
 }
 
 GetTooltipDuration(layerType := "default") {
-    ; Get tooltip duration based on configuration
+    ; Get tooltip duration based on configuration with application profile support
     global ConfigIni
     
     ; Try to get layer-specific duration first
@@ -2180,12 +2191,12 @@ GetTooltipDuration(layerType := "default") {
         }
     }
     
-    ; Fall back to global configuration
-    return ReadConfigValue("UI", "tooltip_duration_default", 1500)
+    ; Check for application-specific tooltip duration
+    return GetApplicationSpecificSetting("ui", "tooltip_duration_default", 1500)
 }
 
 GetLayerTimeout(layerType := "leader") {
-    ; Get timeout for specific layer
+    ; Get timeout for specific layer with application profile support
     global ConfigIni
     
     ; Try layer-specific timeout first
@@ -2197,21 +2208,111 @@ GetLayerTimeout(layerType := "leader") {
         }
     }
     
-    ; Fall back to global configuration
+    ; Check for application-specific timeout
     if (layerType = "leader") {
-        return ReadConfigValue("Behavior", "leader_timeout_seconds", 7)
+        settingName := "leader_timeout_seconds"
+        return GetApplicationSpecificSetting("behavior", settingName, 7)
     } else {
-        return ReadConfigValue("Behavior", "global_timeout_seconds", 7)
+        settingName := "global_timeout_seconds"
+        return GetApplicationSpecificSetting("behavior", settingName, 7)
     }
 }
 
 IsLayerEnabled(layerName) {
-    ; Check if a specific layer is enabled
-    return ReadConfigValue("Layers", layerName . "_layer_enabled", "true") = "true"
+    ; Check if a specific layer is enabled with application profile support
+    settingName := layerName . "_layer_enabled"
+    value := GetApplicationSpecificSetting("layer", settingName, "true")
+    return value = "true"
 }
 
 IsFeatureEnabled(featureName) {
     ; Check if a specific feature is enabled
     return ReadConfigValue("General", featureName, "true") = "true"
+}
+
+; ----- Application Profile Functions -----
+
+GetActiveApplicationName() {
+    ; Get the friendly name from programs.ini or fallback to executable name
+    WinGet, processName, ProcessName, A
+    if (processName = "") {
+        return ""
+    }
+    
+    ; First, try to find a friendly name in programs.ini
+    global ProgramsIni
+    IniRead, sections, %ProgramsIni%, Programs
+    if (sections != "ERROR") {
+        Loop, Parse, sections, `n
+        {
+            if (A_LoopField = "") continue
+            IniRead, executablePath, %ProgramsIni%, Programs, %A_LoopField%
+            if (executablePath != "ERROR") {
+                ; Extract just the executable name from the path
+                SplitPath, executablePath, executableName
+                ; Remove quotes if present
+                executableName := StrReplace(executableName, """", "")
+                if (executableName = processName) {
+                    return A_LoopField  ; Return the friendly name
+                }
+            }
+        }
+    }
+    
+    ; If no friendly name found, return the executable name
+    return processName
+}
+
+ReadApplicationProfile(appName, settingName, defaultValue := "") {
+    ; Read application-specific configuration
+    global ConfigIni
+    
+    ; Try to read the profile for this application
+    IniRead, profileSettings, %ConfigIni%, ApplicationProfiles, %appName%
+    if (profileSettings = "ERROR" || profileSettings = "") {
+        return defaultValue
+    }
+    
+    ; Parse the settings string (format: setting1=value1,setting2=value2)
+    Loop, Parse, profileSettings, `,
+    {
+        if (A_LoopField = "") continue
+        
+        ; Split each setting into name=value
+        StringSplit, settingParts, A_LoopField, =
+        if (settingParts0 >= 2) {
+            currentSettingName := Trim(settingParts1)
+            currentSettingValue := Trim(settingParts2)
+            
+            if (currentSettingName = settingName) {
+                return currentSettingValue
+            }
+        }
+    }
+    
+    return defaultValue
+}
+
+GetApplicationSpecificSetting(settingType, settingName, defaultValue := "") {
+    ; Get setting with application profile override
+    activeApp := GetActiveApplicationName()
+    if (activeApp != "") {
+        ; Try application-specific setting first
+        appValue := ReadApplicationProfile(activeApp, settingName, "")
+        if (appValue != "") {
+            return appValue
+        }
+    }
+    
+    ; Fall back to global setting
+    if (settingType = "layer") {
+        return ReadConfigValue("Layers", settingName, defaultValue)
+    } else if (settingType = "behavior") {
+        return ReadConfigValue("Behavior", settingName, defaultValue)
+    } else if (settingType = "ui") {
+        return ReadConfigValue("UI", settingName, defaultValue)
+    } else {
+        return ReadConfigValue("General", settingName, defaultValue)
+    }
 }
 
