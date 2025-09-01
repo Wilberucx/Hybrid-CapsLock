@@ -1,6 +1,6 @@
-# Hybrid CapsLock - Script de Productividad para AutoHotkey
+# Hybrid CapsLock - Sistema de Productividad Avanzado para AutoHotkey
 
-Este script transforma la tecla `CapsLock` en una potente herramienta de productividad con un comportamiento híbrido, inspirado en la eficiencia de editores como Vim.
+Este script transforma la tecla `CapsLock` en una potente herramienta de productividad con un comportamiento híbrido, inspirado en la eficiencia de editores como Vim. Con más de 2300 líneas de código y un sistema de configuración modular de 5 archivos .ini, ofrece un entorno de trabajo completamente personalizable.
 
 ## ✨ Conceptos Clave
 
@@ -27,11 +27,15 @@ Accede a un menú contextual con sub-capas organizadas:
 | `CapsLock + q` | Cerrar ventana |
 | `CapsLock + f` | Maximizar/Restaurar |
 | `CapsLock + Tab` | Navegador de ventanas mejorado |
+| `CapsLock + 6/7` | Ajustar ventana izquierda/derecha |
+| `CapsLock + F12` | Forzar cierre de proceso |
 
 ### Navegación Rápida
 | Atajo | Acción |
 |-------|--------|
-| `CapsLock + h/j/k/l` | Flechas direccionales |
+| `CapsLock + h/j/k/l` | Flechas direccionales (estilo Vim) |
+| `CapsLock + e/d` | Scroll suave abajo/arriba |
+| `CapsLock + /` | Scroll con touchpad (modo trackball) |
 
 ### Edición de Texto
 | Atajo | Acción |
@@ -39,13 +43,22 @@ Accede a un menú contextual con sub-capas organizadas:
 | `CapsLock + s` | Guardar (`Ctrl+S`) |
 | `CapsLock + c/v/x` | Copiar/Pegar/Cortar |
 | `CapsLock + z` | Deshacer |
+| `CapsLock + a` | Seleccionar todo |
+| `CapsLock + o/t/w` | Abrir/Nueva pestaña/Cerrar pestaña |
 
 ### Funciones de Mouse
 | Atajo | Acción |
 |-------|--------|
 | `CapsLock + ;` | Click izquierdo sostenido |
 | `CapsLock + '` | Click derecho simple |
-| `CapsLock + Shift` | Scroll con touchpad (mantener `Shift` presionado) |
+
+### Utilidades Especiales
+| Atajo | Acción |
+|-------|--------|
+| `CapsLock + 5` | Copiar ruta/URL actual |
+| `CapsLock + 9` | Captura de pantalla |
+| `CapsLock + \` | Insertar email configurado |
+| `CapsLock + F10` | Toggle CapsLock original |
 
 ## 📚 Documentación Detallada
 
@@ -81,24 +94,42 @@ Accede a un menú contextual con sub-capas organizadas:
 
 ## 🔧 Configuración
 
-### 📁 Sistema de Configuración Modular
-- **`configuration.ini`** - Configuración global y comportamiento general
-- **`programs.ini`** - Lanzador de programas con configuración específica
-- **`timestamps.ini`** - Formatos de fecha/hora y configuración temporal
-- **`commands.ini`** - Paleta de comandos del sistema con timeouts personalizables
-- **`information.ini`** - Información personal y snippets con configuración de inserción
+### 📁 Sistema de Configuración Modular (5 Archivos .ini)
+- **`configuration.ini`** - Configuración principal con 75+ opciones
+  - UI y temas (tooltips, animaciones, posicionamiento)
+  - Rendimiento (optimización, memoria, caché)
+  - Seguridad (permisos, logging, backups)
+  - Capas (habilitar/deshabilitar funcionalidades)
+  - Perfiles por aplicación
+- **`programs.ini`** - Lanzador de programas completamente configurable
+  - Mapeo dinámico de teclas a programas
+  - Rutas de ejecutables y variables de entorno
+  - Tooltips personalizables
+- **`timestamps.ini`** - Sistema de timestamps de 3 niveles
+  - Formatos de fecha, hora y datetime ilimitados
+  - Selección de formato por defecto
+  - Timeouts de 20 segundos para mejor usabilidad
+- **`commands.ini`** - Paleta de comandos jerárquica
+  - Comandos personalizados PowerShell/CMD
+  - Organización por categorías
+  - Timeouts específicos por categoría
+- **`information.ini`** - Información personal y snippets
+  - Datos personales configurables
+  - Mapeo de teclas personalizable
+  - Soporte para texto multilínea
 
 ### ⚙️ Configuración Avanzada
-Cada archivo `.ini` incluye una sección `[Settings]` para personalizar:
-- **Timeouts específicos** por capa
-- **Feedback visual** personalizable
-- **Comportamientos automáticos** configurables
-- **Integración con aplicaciones** específicas
+Cada archivo `.ini` incluye secciones especializadas:
+- **`[Settings]`** - Configuración específica de cada capa
+- **`[MenuDisplay]`** - Personalización de tooltips y menús
+- **`[ApplicationProfiles]`** - Comportamiento por aplicación
+- **`[Advanced]`** - Funciones experimentales y optimización
 
 ### 🔧 Personalización
-- **Por capa:** Ver documentación específica de cada capa
-- **Global:** Editar `configuration.ini` para ajustes generales
-- **Servicio:** Ver [Instalación como Servicio](doc/SERVICE_INSTALLATION.md) para gestión del servicio
+- **Por capa:** Cada .ini controla una funcionalidad específica
+- **Global:** `configuration.ini` para ajustes del sistema
+- **Aplicaciones:** Perfiles específicos para diferentes programas
+- **Servicio:** Ver [Instalación como Servicio](doc/SERVICE_INSTALLATION.md)
 
 ## 📊 Integración con Zebar
 
@@ -114,25 +145,58 @@ HybridCapsLock incluye integración nativa con [Zebar](https://github.com/glzr-i
 ### ⚙️ Configuración Automática
 El script genera automáticamente `layer_status.json` que se sincroniza con el widget de Zebar para mostrar el estado actual de todas las capas sin interrumpir el flujo de trabajo.
 
-## 📋 Versión Actual: 6.2
+## 📋 Versión Actual: 6.3
 
-### Novedades v6.2:
-- **🆕 Funciones de Mouse Reubicadas**: Click izquierdo sostenido (`;`) y click derecho (`'`) movidos de B/N
-- **🆕 Scroll con Touchpad**: Funcionalidad trackball con `CapsLock + /` y `/` en capa Nvim
-- **🆕 Ejes Invertidos**: Scroll más natural e intuitivo
-- **🔧 Supresión de Caracteres**: Evita escritura no deseada durante scroll
-- **🔧 Teclas Liberadas**: B y N ahora disponibles para nuevas funciones
+### Novedades v6.3 - MAJOR CONFIGURATION REFACTOR:
+- **🏗️ Sistema de Configuración Modular**: 5 archivos .ini especializados con 75+ opciones
+- **🆕 configuration.ini**: Configuración principal con UI, rendimiento, seguridad y perfiles por aplicación
+- **🆕 Configuración Dinámica**: Todos los menús y funciones ahora configurables sin tocar código
+- **🔧 Funciones de Mouse Reubicadas**: Click izquierdo (`;`) y derecho (`'`) para mejor ergonomía
+- **⚡ Sistema de Timestamps Avanzado**: 3 niveles de navegación con formatos ilimitados
+- **🎯 Paleta de Comandos Completa**: Comandos PowerShell/CMD organizados por categorías
+- **📝 Capa Information**: Snippets personales configurables con mapeo de teclas
+- **🔧 Optimización de Rendimiento**: Gestión de memoria, caché y limpieza automática
+- **🛡️ Configuración de Seguridad**: Controles de privacidad y backup automático
 
-### Novedades v6.1:
-- **🆕 Capa Excel/Accounting**: Numpad completo + navegación WASD + atajos específicos de Excel
-- **🆕 Integración con Zebar**: Indicadores visuales en tiempo real del estado de las capas
-- **🆕 Modo Visual**: Indicador visual para el modo de selección en capa Nvim
-- **🔧 Mejoras en feedback visual**: Notificaciones más consistentes y limpias
+### Características Heredadas v6.1-6.2:
+- **📊 Capa Excel/Accounting**: Numpad completo + navegación WASD + atajos específicos
+- **📱 Integración con Zebar**: Indicadores visuales en tiempo real del estado de las capas
+- **👁️ Modo Visual**: Indicador visual para el modo de selección en capa Nvim
+- **🖱️ Scroll con Touchpad**: Funcionalidad trackball con `CapsLock + /`
+- **🔧 Feedback Visual Mejorado**: Notificaciones consistentes y limpias
 
-### Características v6.0:
-- Búsqueda automática de ejecutables via Windows Registry
-- Mejoras en el lanzador de programas
-- Soporte robusto para ejecución como administrador
+### Base Sólida v6.0:
+- **🔍 Búsqueda Automática**: Ejecutables via Windows Registry
+- **🚀 Lanzador Robusto**: Manejo avanzado de errores y permisos
+- **🛡️ Soporte Administrativo**: Ejecución como servicio de Windows
+
+## 🚧 Características en Desarrollo
+
+### 🔧 Sistema de Elevación de Privilegios (En Progreso)
+- **Estado**: Implementación parcial disponible
+- **Archivos**: `HybridCapsLock_Elevated.ahk`, `install_elevated_service.bat/ps1`, `privilege_dropper.ahk`
+- **Objetivo**: Compatibilidad completa con aplicaciones que requieren permisos de administrador
+- **Desafíos actuales**:
+  - Estabilidad del servicio de Windows con NSSM
+  - Manejo de permisos entre procesos elevados y normales
+  - Sincronización de estado entre instancias
+- **Funcionalidad actual**: Instalación básica como servicio, requiere refinamiento
+
+### ⚡ Funciones Experimentales (configuration.ini)
+```ini
+[Advanced]
+hold_capslock_slash_scroll=false    ; Scroll con CapsLock+/ en modo Hold
+nvim_shift_touchpad_scroll=false    ; Scroll con Shift en capa Nvim
+```
+- **Estado**: Implementación básica, puede interferir con funcionalidad normal
+- **Advertencia**: Pueden afectar combinaciones de teclas estándar como Shift+letras
+
+### 🎯 Próximas Mejoras Planificadas
+- **Estabilización del servicio elevado**: Resolver problemas de sincronización
+- **Mejora del scroll con touchpad**: Refinamiento de la detección de gestos
+- **Temas visuales**: Sistema de temas para tooltips y notificaciones
+- **Integración mejorada con Zebar**: Más indicadores y personalización
+- **Backup automático**: Sistema robusto de respaldo de configuraciones
 
 ---
 

@@ -1,76 +1,133 @@
 # Changelog - HybridCapsLock
 
-## v7.0.0 (2024-12-XX) - MAJOR ARCHITECTURE REFACTOR
+## v6.3.0 (2024-12-XX) - MAJOR CONFIGURATION REFACTOR
 
 ### 🏗️ **BREAKING CHANGES**
-- **Configuration files restructured** - Layer-specific configurations moved to dedicated files
-- **Timestamps system completely redesigned** - New 3-level navigation system
-- **Programs configuration centralized** - All program settings now in single file
+- **Configuration system completely restructured** - Modular .ini files replace single configuration
+- **Mouse functions relocated** - Click functions moved from B/N keys to semicolon/quote
+- **Timestamps system redesigned** - New 3-level navigation with unlimited formats
+- **Programs layer centralized** - All program settings moved to dedicated configuration file
 
 ### ✨ **Added**
-- **`programs.ini`** - Centralized configuration for Programs Layer
+- **`configuration.ini`** - Comprehensive main configuration with 75+ settings
+  - UI customization (tooltips, themes, animations)
+  - Performance optimization settings
+  - Security and privacy controls
+  - Layer enable/disable toggles
+  - Application-specific profiles
+  - Advanced experimental features
+- **`programs.ini`** - Complete Programs Layer configuration
   - Dynamic program mapping from configuration file
   - Centralized tooltip management
   - Easy program addition without code changes
-- **`timestamps.ini`** - Comprehensive timestamp configuration
+  - Support for complex paths and environment variables
+- **`timestamps.ini`** - Advanced timestamp configuration
   - Configurable date, time, and datetime formats
   - Default format selection per category
   - 20-second timeouts for better usability
   - 3-level navigation: Type → Format → Insert
-- **`general.ini`** - General application settings (replaces HybridCapsLock.ini)
+- **`commands.ini`** - Commands Layer configuration
+  - Custom command definitions
+  - Category organization
+  - Timeout settings per category
+  - PowerShell and CMD command support
+- **`information.ini`** - Personal Information Layer configuration
+  - Personal snippets and data
+  - Custom key mappings
+  - Multi-line text support
 - **Enhanced mouse functionality**
-  - `CapsLock + b` - Left click hold (perfect for drag & drop)
-  - `CapsLock + n` - Right click (context menus)
+  - `CapsLock + ;` - Left click hold (perfect for drag & drop)
+  - `CapsLock + '` - Right click (context menus)
+  - Improved click duration control
+- **Advanced system integration**
+  - Zebar status integration with JSON export
+  - Application-specific behavior profiles
+  - Memory management and performance optimization
+  - Automatic configuration backup system
 - **Improved navigation**
   - Backspace support for going back in menus
   - Extended timeouts for complex operations
   - Better error messages with file references
+  - Escape key support throughout all menus
 
 ### 🔄 **Changed**
+- **Configuration architecture**
+  - Old: Single configuration file with limited options
+  - New: Modular system with 5 specialized .ini files
+  - Established pattern for layer-specific configurations
+  - Clear separation of concerns
 - **Programs Layer workflow**
   - Old: Hardcoded program list requiring code changes
-  - New: Fully configurable via `programs.ini`
+  - New: Fully configurable via `programs.ini` with dynamic loading
 - **Timestamps Layer workflow**
-  - Old: `CapsLock + Space → t → d/h/s` (limited formats)
+  - Old: `CapsLock + Space → t → d/h/s` (3 fixed formats)
   - New: `CapsLock + Space → t → d/t/h → number/default` (unlimited formats)
-- **Configuration architecture**
-  - Established pattern for layer-specific configuration files
-  - Clear separation of concerns
-  - Better documentation and examples
+- **Mouse functions**
+  - Old: `CapsLock + b/n` for mouse clicks
+  - New: `CapsLock + ;/'` for better ergonomics
+- **System performance**
+  - Optimized hotkey processing
+  - Memory cleanup intervals
+  - Cached program paths for faster launches
 
 ### 🗑️ **Removed**
 - **Hardcoded program mappings** - Now fully configurable
-- **Fixed timestamp formats** - Replaced with configurable system
-- **HybridCapsLock.ini** - Renamed to `general.ini` for consistency
+- **Fixed timestamp formats** - Replaced with unlimited configurable system
+- **Mouse functions on B/N keys** - Relocated to semicolon/quote keys
+- **Single configuration file** - Split into specialized modules
 
 ### 🐛 **Fixed**
 - **Mouse click conflicts** - Separated left/right click to different keys
 - **Program launcher reliability** - Better error handling and user feedback
 - **Tooltip updates** - Dynamic generation from configuration files
+- **Memory leaks** - Implemented automatic cleanup routines
+- **Configuration validation** - Better error handling for invalid settings
 
 ### 📁 **New File Structure**
 ```
-HybridCapsLock.ahk          # Main script
-general.ini                 # General settings
+HybridCapsLock.ahk          # Main script (2300+ lines)
+configuration.ini           # Main configuration (130+ settings)
 programs.ini                # Programs Layer configuration
-timestamps.ini              # Timestamps Layer configuration
-layer_status.json           # Zebar integration
-menu_selection.json         # Menu state
-menu_status.json           # Menu status
-doc/                       # Documentation
+timestamps.ini              # Timestamps Layer configuration  
+commands.ini                # Commands Layer configuration
+information.ini             # Information Layer configuration
+layer_status.json           # Zebar integration status
+menu_status.json           # Menu state tracking
+doc/                       # Comprehensive documentation
 ```
 
 ### 🔧 **Migration Guide**
-1. **Programs**: Edit `programs.ini` instead of modifying script code
-2. **Timestamps**: Use new 3-level navigation system
-3. **Configuration**: General settings moved to `general.ini`
+1. **Configuration**: Settings now distributed across specialized .ini files
+2. **Programs**: Edit `programs.ini` instead of modifying script code
+3. **Timestamps**: Use new 3-level navigation system
+4. **Mouse**: Update muscle memory for new `;` and `'` click functions
+5. **Commands**: Customize command palette via `commands.ini`
 
 ### 🎯 **Benefits**
 - **Easier maintenance** - No code changes needed for common customizations
-- **Better organization** - Clear separation of layer configurations
+- **Better organization** - Clear separation of layer configurations  
 - **Scalable architecture** - Pattern established for future layers
 - **User-friendly** - Better error messages and longer timeouts
-- **More powerful** - Unlimited format configurations
+- **More powerful** - Unlimited format configurations and advanced settings
+- **Performance optimized** - Memory management and caching systems
+- **Highly customizable** - 75+ configuration options across all layers
+
+### 🚧 **Known Issues & In Development**
+- **Elevated Service System** - Partial implementation available but requires stability improvements
+  - Files: `HybridCapsLock_Elevated.ahk`, `install_elevated_service.bat/ps1`, `privilege_dropper.ahk`
+  - Issues: NSSM service stability, permission synchronization between elevated/normal processes
+  - Status: Basic installation works, needs refinement for production use
+- **Experimental Scroll Features** - Basic implementation with potential interference
+  - `hold_capslock_slash_scroll` and `nvim_shift_touchpad_scroll` in configuration.ini
+  - May affect normal Shift+letter combinations when enabled
+  - Recommended to keep disabled until further development
+
+### 🔮 **Future Roadmap**
+- Stabilize elevated service system for seamless admin app compatibility
+- Improve touchpad scroll gesture detection and reliability
+- Implement visual theme system for tooltips and notifications
+- Enhance Zebar integration with more status indicators
+- Develop robust automatic configuration backup system
 
 ---
 
