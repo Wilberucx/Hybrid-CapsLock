@@ -86,22 +86,25 @@
 ### 📁 **New File Structure**
 ```
 HybridCapsLock.ahk          # Main script (2300+ lines)
-configuration.ini           # Main configuration (130+ settings)
-programs.ini                # Programs Layer configuration
-timestamps.ini              # Timestamps Layer configuration  
-commands.ini                # Commands Layer configuration
-information.ini             # Information Layer configuration
-layer_status.json           # Zebar integration status
-menu_status.json           # Menu state tracking
-doc/                       # Comprehensive documentation
+config/                     # Configuration files directory
+  ├── configuration.ini     # Main configuration (130+ settings)
+  ├── programs.ini          # Programs Layer configuration
+  ├── timestamps.ini        # Timestamps Layer configuration
+  ├── commands.ini          # Commands Layer configuration
+  └── information.ini       # Information Layer configuration
+data/                       # Runtime data files
+  ├── layer_status.json     # Zebar integration status
+  └── menu_status.json      # Menu state tracking
+doc/                        # Comprehensive documentation
 ```
 
 ### 🔧 **Migration Guide**
-1. **Configuration**: Settings now distributed across specialized .ini files
-2. **Programs**: Edit `programs.ini` instead of modifying script code
+1. **Configuration**: Settings now organized in `config/` directory
+2. **Programs**: Edit `config/programs.ini` instead of modifying script code
 3. **Timestamps**: Use new 3-level navigation system
 4. **Mouse**: Update muscle memory for new `;` and `'` click functions
-5. **Commands**: Customize command palette via `commands.ini`
+5. **Commands**: Customize command palette via `config/commands.ini`
+6. **File Organization**: All .ini files moved to `config/`, JSON files to `data/`
 
 ### 🎯 **Benefits**
 - **Easier maintenance** - No code changes needed for common customizations

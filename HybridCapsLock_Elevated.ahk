@@ -62,9 +62,9 @@ global ExcelLayerActive := false
 global YankMode := false
 
 ; Configuration file paths
-global ProgramsIni := A_ScriptDir . "\programs.ini"
-global TimestampsIni := A_ScriptDir . "\timestamps.ini"
-global GeneralIni := A_ScriptDir . "\general.ini"
+global ProgramsIni := A_ScriptDir . "\config\programs.ini"
+global TimestampsIni := A_ScriptDir . "\config\timestamps.ini"
+global GeneralIni := A_ScriptDir . "\config\configuration.ini"
 
 ServiceLog("Initialization complete. Elevated script ready.")
 

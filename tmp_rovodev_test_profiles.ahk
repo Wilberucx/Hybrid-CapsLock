@@ -2,8 +2,8 @@
 ; Este script temporal prueba las nuevas funciones
 
 ; Incluir las funciones del script principal (simuladas para testing)
-ConfigIni := A_ScriptDir . "\configuration.ini"
-ProgramsIni := A_ScriptDir . "\programs.ini"
+ConfigIni := A_ScriptDir . "\config\configuration.ini"
+ProgramsIni := A_ScriptDir . "\config\programs.ini"
 
 ; Simular algunas funciones básicas para el test
 ReadConfigValue(section, key, defaultValue := "") {

@@ -94,26 +94,26 @@ Accede a un menú contextual con sub-capas organizadas:
 
 ## 🔧 Configuración
 
-### 📁 Sistema de Configuración Modular (5 Archivos .ini)
-- **`configuration.ini`** - Configuración principal con 75+ opciones
+### 📁 Sistema de Configuración Modular (Carpeta `config/`)
+- **`config/configuration.ini`** - Configuración principal con 75+ opciones
   - UI y temas (tooltips, animaciones, posicionamiento)
   - Rendimiento (optimización, memoria, caché)
   - Seguridad (permisos, logging, backups)
   - Capas (habilitar/deshabilitar funcionalidades)
   - Perfiles por aplicación
-- **`programs.ini`** - Lanzador de programas completamente configurable
+- **`config/programs.ini`** - Lanzador de programas completamente configurable
   - Mapeo dinámico de teclas a programas
   - Rutas de ejecutables y variables de entorno
   - Tooltips personalizables
-- **`timestamps.ini`** - Sistema de timestamps de 3 niveles
+- **`config/timestamps.ini`** - Sistema de timestamps de 3 niveles
   - Formatos de fecha, hora y datetime ilimitados
   - Selección de formato por defecto
   - Timeouts de 20 segundos para mejor usabilidad
-- **`commands.ini`** - Paleta de comandos jerárquica
+- **`config/commands.ini`** - Paleta de comandos jerárquica
   - Comandos personalizados PowerShell/CMD
   - Organización por categorías
   - Timeouts específicos por categoría
-- **`information.ini`** - Información personal y snippets
+- **`config/information.ini`** - Información personal y snippets
   - Datos personales configurables
   - Mapeo de teclas personalizable
   - Soporte para texto multilínea
@@ -126,10 +126,11 @@ Cada archivo `.ini` incluye secciones especializadas:
 - **`[Advanced]`** - Funciones experimentales y optimización
 
 ### 🔧 Personalización
-- **Por capa:** Cada .ini controla una funcionalidad específica
-- **Global:** `configuration.ini` para ajustes del sistema
+- **Por capa:** Cada archivo en `config/` controla una funcionalidad específica
+- **Global:** `config/configuration.ini` para ajustes del sistema
 - **Aplicaciones:** Perfiles específicos para diferentes programas
 - **Servicio:** Ver [Instalación como Servicio](doc/SERVICE_INSTALLATION.md)
+- **Datos:** Archivos de estado en `data/` (JSON para Zebar)
 
 ## 📊 Integración con Zebar
 

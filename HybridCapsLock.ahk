@@ -62,13 +62,13 @@ global rightClickHeld := false
 global scrollModeActive := false
 ; Timestamp functionality moved to dedicated timestamps.ini system
 ; Persist settings across sessions
-global ConfigIni := A_ScriptDir . "\configuration.ini"
-global ProgramsIni := A_ScriptDir . "\programs.ini"
-global TimestampsIni := A_ScriptDir . "\timestamps.ini"
-global InfoIni := A_ScriptDir . "\information.ini"
-global CommandsIni := A_ScriptDir . "\commands.ini"
+global ConfigIni := A_ScriptDir . "\config\configuration.ini"
+global ProgramsIni := A_ScriptDir . "\config\programs.ini"
+global TimestampsIni := A_ScriptDir . "\config\timestamps.ini"
+global InfoIni := A_ScriptDir . "\config\information.ini"
+global CommandsIni := A_ScriptDir . "\config\commands.ini"
 ; Layer status file for Zebar integration
-global LayerStatusFile := A_ScriptDir . "\layer_status.json"
+global LayerStatusFile := A_ScriptDir . "\data\layer_status.json"
 ; Guard para operador yank secuencial
 global _yankAwait := false
 ; Toggle to let CapsLock behave as original toggle key
@@ -2184,7 +2184,7 @@ GetTooltipDuration(layerType := "default") {
     
     ; Try to get layer-specific duration first
     if (layerType != "default") {
-        layerFile := A_ScriptDir . "\" . layerType . ".ini"
+        layerFile := A_ScriptDir . "\config\" . layerType . ".ini"
         duration := ReadLayerSettings(layerFile, "feedback_duration", "")
         if (duration != "") {
             return duration
@@ -2201,7 +2201,7 @@ GetLayerTimeout(layerType := "leader") {
     
     ; Try layer-specific timeout first
     if (layerType != "leader") {
-        layerFile := A_ScriptDir . "\" . layerType . ".ini"
+        layerFile := A_ScriptDir . "\config\" . layerType . ".ini"
         timeout := ReadLayerSettings(layerFile, "timeout_seconds", "")
         if (timeout != "") {
             return timeout
