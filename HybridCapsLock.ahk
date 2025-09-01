@@ -1071,7 +1071,7 @@ z::Send, ^z             ; Ctrl+Z (undo)
 y::Send, ^y             ; Ctrl+Y (redo)
 
 ; Escape to exit excel layer
-Esc::
++n::
     excelLayerActive := false
     ShowExcelStatus(false)
     UpdateLayerStatus()
