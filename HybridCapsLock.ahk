@@ -442,6 +442,106 @@ CapsLock & Space::
             }
         }
 
+        ; ----- LEVEL 2: Commands Mode -----
+        if (_leaderKey = "c") {
+            ShowCommandsMenu()
+            Input, _cmdCategory, L1 T10, {Escape}{Backspace}, s,n,g,m,f,w
+
+            if (ErrorLevel = "Timeout" || ErrorLevel = "EndKey:Escape") {
+                break ; Exit loop
+            }
+            if (ErrorLevel = "EndKey:Backspace") {
+                continue ; Go back to main leader menu
+            }
+
+            ; ----- LEVEL 3: Category-specific commands -----
+            _exitLeader := false
+            Switch _cmdCategory {
+                Case "s": ; System Commands
+                    ShowSystemCommandsMenu()
+                    Input, _sysCmd, L1 T10, {Escape}{Backspace}, s,t,v,e,d,c
+                    
+                    if (ErrorLevel = "Timeout" || ErrorLevel = "EndKey:Escape") {
+                        _exitLeader := true
+                    } else if (ErrorLevel = "EndKey:Backspace") {
+                        continue ; Back to commands menu
+                    } else {
+                        ExecuteSystemCommand(_sysCmd)
+                        _exitLeader := true
+                    }
+
+                Case "n": ; Network Commands
+                    ShowNetworkCommandsMenu()
+                    Input, _netCmd, L1 T10, {Escape}{Backspace}, i,p,n
+                    
+                    if (ErrorLevel = "Timeout" || ErrorLevel = "EndKey:Escape") {
+                        _exitLeader := true
+                    } else if (ErrorLevel = "EndKey:Backspace") {
+                        continue ; Back to commands menu
+                    } else {
+                        ExecuteNetworkCommand(_netCmd)
+                        _exitLeader := true
+                    }
+
+                Case "g": ; Git Commands
+                    ShowGitCommandsMenu()
+                    Input, _gitCmd, L1 T10, {Escape}{Backspace}, s,l,b,d,a,p
+                    
+                    if (ErrorLevel = "Timeout" || ErrorLevel = "EndKey:Escape") {
+                        _exitLeader := true
+                    } else if (ErrorLevel = "EndKey:Backspace") {
+                        continue ; Back to commands menu
+                    } else {
+                        ExecuteGitCommand(_gitCmd)
+                        _exitLeader := true
+                    }
+
+                Case "m": ; Monitoring Commands
+                    ShowMonitoringCommandsMenu()
+                    Input, _monCmd, L1 T10, {Escape}{Backspace}, p,s,d,m,c
+                    
+                    if (ErrorLevel = "Timeout" || ErrorLevel = "EndKey:Escape") {
+                        _exitLeader := true
+                    } else if (ErrorLevel = "EndKey:Backspace") {
+                        continue ; Back to commands menu
+                    } else {
+                        ExecuteMonitoringCommand(_monCmd)
+                        _exitLeader := true
+                    }
+
+                Case "f": ; Folder Access Commands
+                    ShowFolderCommandsMenu()
+                    Input, _folderCmd, L1 T10, {Escape}{Backspace}, t,a,p,u,d,s
+                    
+                    if (ErrorLevel = "Timeout" || ErrorLevel = "EndKey:Escape") {
+                        _exitLeader := true
+                    } else if (ErrorLevel = "EndKey:Backspace") {
+                        continue ; Back to commands menu
+                    } else {
+                        ExecuteFolderCommand(_folderCmd)
+                        _exitLeader := true
+                    }
+
+                Case "w": ; Windows Commands
+                    ShowWindowsCommandsMenu()
+                    Input, _winCmd, L1 T10, {Escape}{Backspace}, h,r,e
+                    
+                    if (ErrorLevel = "Timeout" || ErrorLevel = "EndKey:Escape") {
+                        _exitLeader := true
+                    } else if (ErrorLevel = "EndKey:Backspace") {
+                        continue ; Back to commands menu
+                    } else {
+                        ExecuteWindowsCommand(_winCmd)
+                        _exitLeader := true
+                    }
+            }
+
+            if (_exitLeader)
+                break
+            else
+                continue
+        }
+
         ; ----- LEVEL 2: Excel/Accounting Mode -----
         if (_leaderKey = "n") {
             ; Toggle excel layer
@@ -1091,12 +1191,13 @@ ShowProcessTerminated() {
 ShowLeaderMenu() {
     ; Menu principal del Leader centrado
     ToolTipX := A_ScreenWidth // 2 - 80
-    ToolTipY := A_ScreenHeight // 2 - 60
+    ToolTipY := A_ScreenHeight // 2 - 70
     MenuText := "LEADER MENU`n"
     MenuText .= "`n"
     MenuText .= "w - Windows`n"
     MenuText .= "p - Programs`n"
     MenuText .= "t - Time`n"
+    MenuText .= "c - Commands`n"
     MenuText .= "n - Excel`n"
     MenuText .= "`n"
     MenuText .= "[Esc: Exit]"
@@ -1531,5 +1632,262 @@ LaunchProgramFromKey(keyPressed) {
     
     ; Launch the program using the universal launcher
     LaunchApp(programName, executablePath)
+}
+
+; ----- Commands Layer Functions -----
+
+ShowCommandsMenu() {
+    ; Menu principal de comandos centrado
+    ToolTipX := A_ScreenWidth // 2 - 100
+    ToolTipY := A_ScreenHeight // 2 - 80
+    MenuText := "COMMAND PALETTE`n"
+    MenuText .= "`n"
+    MenuText .= "s - System Commands`n"
+    MenuText .= "n - Network Commands`n"
+    MenuText .= "g - Git Commands`n"
+    MenuText .= "m - Monitoring Commands`n"
+    MenuText .= "f - Folder Access`n"
+    MenuText .= "w - Windows Commands`n"
+    MenuText .= "`n"
+    MenuText .= "[Backspace: Back] [Esc: Exit]"
+    ToolTip, %MenuText%, %ToolTipX%, %ToolTipY%, 2
+    return
+}
+
+ShowSystemCommandsMenu() {
+    ToolTipX := A_ScreenWidth // 2 - 120
+    ToolTipY := A_ScreenHeight // 2 - 90
+    MenuText := "SYSTEM COMMANDS`n"
+    MenuText .= "`n"
+    MenuText .= "s - System Info`n"
+    MenuText .= "t - Task Manager`n"
+    MenuText .= "v - Services`n"
+    MenuText .= "e - Event Viewer`n"
+    MenuText .= "d - Device Manager`n"
+    MenuText .= "c - Disk Cleanup`n"
+    MenuText .= "`n"
+    MenuText .= "[Backspace: Back] [Esc: Exit]"
+    ToolTip, %MenuText%, %ToolTipX%, %ToolTipY%, 2
+    return
+}
+
+ShowNetworkCommandsMenu() {
+    ToolTipX := A_ScreenWidth // 2 - 120
+    ToolTipY := A_ScreenHeight // 2 - 70
+    MenuText := "NETWORK COMMANDS`n"
+    MenuText .= "`n"
+    MenuText .= "i - IP Config`n"
+    MenuText .= "p - Ping Test`n"
+    MenuText .= "n - Network Info`n"
+    MenuText .= "`n"
+    MenuText .= "[Backspace: Back] [Esc: Exit]"
+    ToolTip, %MenuText%, %ToolTipX%, %ToolTipY%, 2
+    return
+}
+
+ShowGitCommandsMenu() {
+    ToolTipX := A_ScreenWidth // 2 - 120
+    ToolTipY := A_ScreenHeight // 2 - 90
+    MenuText := "GIT COMMANDS`n"
+    MenuText .= "`n"
+    MenuText .= "s - Git Status`n"
+    MenuText .= "l - Git Log`n"
+    MenuText .= "b - Git Branches`n"
+    MenuText .= "d - Git Diff`n"
+    MenuText .= "a - Git Add All`n"
+    MenuText .= "p - Git Pull`n"
+    MenuText .= "`n"
+    MenuText .= "[Backspace: Back] [Esc: Exit]"
+    ToolTip, %MenuText%, %ToolTipX%, %ToolTipY%, 2
+    return
+}
+
+ShowMonitoringCommandsMenu() {
+    ToolTipX := A_ScreenWidth // 2 - 120
+    ToolTipY := A_ScreenHeight // 2 - 90
+    MenuText := "MONITORING COMMANDS`n"
+    MenuText .= "`n"
+    MenuText .= "p - Process List`n"
+    MenuText .= "s - Service List`n"
+    MenuText .= "d - Disk Space`n"
+    MenuText .= "m - Memory Usage`n"
+    MenuText .= "c - CPU Usage`n"
+    MenuText .= "`n"
+    MenuText .= "[Backspace: Back] [Esc: Exit]"
+    ToolTip, %MenuText%, %ToolTipX%, %ToolTipY%, 2
+    return
+}
+
+ShowFolderCommandsMenu() {
+    ToolTipX := A_ScreenWidth // 2 - 120
+    ToolTipY := A_ScreenHeight // 2 - 90
+    MenuText := "FOLDER ACCESS`n"
+    MenuText .= "`n"
+    MenuText .= "t - Temp Folder`n"
+    MenuText .= "a - AppData`n"
+    MenuText .= "p - Program Files`n"
+    MenuText .= "u - User Profile`n"
+    MenuText .= "d - Desktop`n"
+    MenuText .= "s - System32`n"
+    MenuText .= "`n"
+    MenuText .= "[Backspace: Back] [Esc: Exit]"
+    ToolTip, %MenuText%, %ToolTipX%, %ToolTipY%, 2
+    return
+}
+
+ShowWindowsCommandsMenu() {
+    ToolTipX := A_ScreenWidth // 2 - 120
+    ToolTipY := A_ScreenHeight // 2 - 70
+    MenuText := "WINDOWS COMMANDS`n"
+    MenuText .= "`n"
+    MenuText .= "h - Toggle Hidden Files`n"
+    MenuText .= "r - Registry Editor`n"
+    MenuText .= "e - Environment Variables`n"
+    MenuText .= "`n"
+    MenuText .= "[Backspace: Back] [Esc: Exit]"
+    ToolTip, %MenuText%, %ToolTipX%, %ToolTipY%, 2
+    return
+}
+
+; ----- Command Execution Functions -----
+
+ExecuteSystemCommand(cmd) {
+    Switch cmd {
+        Case "s":
+            Run, cmd.exe /k systeminfo
+        Case "t":
+            Run, taskmgr.exe
+        Case "v":
+            Run, services.msc
+        Case "e":
+            Run, eventvwr.msc
+        Case "d":
+            Run, devmgmt.msc
+        Case "c":
+            Run, cleanmgr.exe
+    }
+    ShowCommandExecuted("System", cmd)
+    return
+}
+
+ExecuteNetworkCommand(cmd) {
+    Switch cmd {
+        Case "i":
+            Run, cmd.exe /k ipconfig /all
+        Case "p":
+            Run, cmd.exe /k ping google.com
+        Case "n":
+            Run, cmd.exe /k netstat -an
+    }
+    ShowCommandExecuted("Network", cmd)
+    return
+}
+
+ExecuteGitCommand(cmd) {
+    Switch cmd {
+        Case "s":
+            Run, cmd.exe /k git status
+        Case "l":
+            Run, cmd.exe /k git log --oneline -10
+        Case "b":
+            Run, cmd.exe /k git branch -a
+        Case "d":
+            Run, cmd.exe /k git diff
+        Case "a":
+            Run, cmd.exe /k git add .
+        Case "p":
+            Run, cmd.exe /k git pull
+    }
+    ShowCommandExecuted("Git", cmd)
+    return
+}
+
+ExecuteMonitoringCommand(cmd) {
+    Switch cmd {
+        Case "p":
+            Run, powershell.exe -Command "Get-Process | Sort-Object CPU -Descending | Select-Object -First 20 | Format-Table -AutoSize; Read-Host 'Press Enter to exit'"
+        Case "s":
+            Run, powershell.exe -Command "Get-Service | Sort-Object Status,Name | Format-Table -AutoSize; Read-Host 'Press Enter to exit'"
+        Case "d":
+            Run, powershell.exe -Command "Get-WmiObject -Class Win32_LogicalDisk | Select-Object DeviceID,Size,FreeSpace | Format-Table -AutoSize; Read-Host 'Press Enter to exit'"
+        Case "m":
+            Run, powershell.exe -Command "Get-WmiObject -Class Win32_OperatingSystem | Select-Object TotalVisibleMemorySize,FreePhysicalMemory | Format-Table -AutoSize; Read-Host 'Press Enter to exit'"
+        Case "c":
+            Run, powershell.exe -Command "Get-WmiObject -Class Win32_Processor | Select-Object Name,LoadPercentage | Format-Table -AutoSize; Read-Host 'Press Enter to exit'"
+    }
+    ShowCommandExecuted("Monitoring", cmd)
+    return
+}
+
+ExecuteFolderCommand(cmd) {
+    Switch cmd {
+        Case "t":
+            Run, explorer.exe "%TEMP%"
+        Case "a":
+            Run, explorer.exe "%APPDATA%"
+        Case "p":
+            Run, explorer.exe "C:\Program Files"
+        Case "u":
+            Run, explorer.exe "%USERPROFILE%"
+        Case "d":
+            Run, explorer.exe "%USERPROFILE%\Desktop"
+        Case "s":
+            Run, explorer.exe "C:\Windows\System32"
+    }
+    ShowCommandExecuted("Folder", cmd)
+    return
+}
+
+ExecuteWindowsCommand(cmd) {
+    Switch cmd {
+        Case "h":
+            ToggleHiddenFiles()
+        Case "r":
+            Run, regedit.exe
+            ShowCommandExecuted("Windows", "Registry Editor")
+        Case "e":
+            Run, rundll32.exe sysdm.cpl`,EditEnvironmentVariables
+            ShowCommandExecuted("Windows", "Environment Variables")
+    }
+    return
+}
+
+ToggleHiddenFiles() {
+    ; Toggle hidden files in Windows Explorer
+    RegRead, HiddenFiles, HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced, Hidden
+    
+    if (HiddenFiles = 1) {
+        ; Hide hidden files
+        RegWrite, REG_DWORD, HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced, Hidden, 2
+        ShowHiddenFilesStatus(false)
+    } else {
+        ; Show hidden files
+        RegWrite, REG_DWORD, HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced, Hidden, 1
+        ShowHiddenFilesStatus(true)
+    }
+    
+    ; Refresh all explorer windows
+    Send, {F5}
+    return
+}
+
+ShowHiddenFilesStatus(isVisible) {
+    ToolTipX := A_ScreenWidth // 2 - 80
+    ToolTipY := A_ScreenHeight // 2 - 30
+    if (isVisible) {
+        ToolTip, `n HIDDEN FILES: VISIBLE `n, %ToolTipX%, %ToolTipY%, 1
+    } else {
+        ToolTip, `n HIDDEN FILES: HIDDEN `n, %ToolTipX%, %ToolTipY%, 1
+    }
+    SetTimer, RemoveToolTip, 2000
+    return
+}
+
+ShowCommandExecuted(category, cmd) {
+    ToolTipX := A_ScreenWidth // 2 - 80
+    ToolTipY := A_ScreenHeight // 2 - 30
+    ToolTip, `n %category% COMMAND EXECUTED `n, %ToolTipX%, %ToolTipY%, 1
+    SetTimer, RemoveToolTip, 1500
+    return
 }
 
