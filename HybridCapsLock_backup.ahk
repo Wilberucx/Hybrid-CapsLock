@@ -67,7 +67,6 @@ global ProgramsIni := A_ScriptDir . "\config\programs.ini"
 global TimestampsIni := A_ScriptDir . "\config\timestamps.ini"
 global InfoIni := A_ScriptDir . "\config\information.ini"
 global CommandsIni := A_ScriptDir . "\config\commands.ini"
-global ObsidianIni := A_ScriptDir . "\config\obsidian.ini"
 ; Layer status file for Zebar integration
 global LayerStatusFile := A_ScriptDir . "\data\layer_status.json"
 ; Guard para operador yank secuencial
@@ -638,20 +637,12 @@ CapsLock & Space::
             Input, _obsidianKey, L1 T10, {Escape}{Backspace}
 
             if (ErrorLevel = "Timeout" || ErrorLevel = "EndKey:Escape") {
-                ShowCenteredToolTip("DEBUG: Obsidian layer timeout/escape")
-                SetTimer, RemoveToolTip, 2000
                 break ; Exit loop
             }
             if (ErrorLevel = "EndKey:Backspace") {
-                ShowCenteredToolTip("DEBUG: Obsidian layer backspace")
-                SetTimer, RemoveToolTip, 2000
                 continue ; Go back to main leader menu
             }
 
-            ; DEBUG: Show what key was pressed
-            ShowCenteredToolTip("DEBUG: Obsidian key pressed: " . _obsidianKey)
-            SetTimer, RemoveToolTip, 2000
-            
             ; Execute Obsidian command
             ExecuteObsidianLayerCommand(_obsidianKey)
             break ; Action taken, exit loop
@@ -2357,9 +2348,319 @@ GetApplicationSpecificSetting(settingType, settingName, defaultValue := "") {
 }
 
 ; ==============================================================================
-; OBSIDIAN INTEGRATION - INCLUDE SIMPLE VERSION
+; OBSIDIAN LAYER FUNCTIONS
 ; ==============================================================================
-#Include obsidian_integration_simple.ahk
+
+ShowObsidianLayerMenu() {
+    ; Show Obsidian layer menu with commands from obsidian.ini
+    global
+    obsidianIni := A_ScriptDir . "\config\obsidian.ini"
+    
+    ToolTipX := A_ScreenWidth // 2 - 150
+    ToolTipY := A_ScreenHeight // 2 - 100
+    MenuText := "OBSIDIAN LAYER`n"
+    MenuText .= "`n"
+    
+    ; Read tooltip lines from obsidian.ini
+    Loop, 10 {
+        IniRead, lineContent, %obsidianIni%, TooltipDisplay, line%A_Index%
+        if (lineContent != "ERROR" && lineContent != "") {
+            MenuText .= lineContent . "`n"
+        }
+    }
+    
+    ; If no tooltip lines found, show default message
+    if (MenuText = "OBSIDIAN LAYER`n`n") {
+        MenuText .= "No commands configured yet`n"
+        MenuText .= "Use <leader>+c+h+i to import from hotkeys.json`n"
+    }
+    
+    MenuText .= "`n"
+    MenuText .= "[Backspace: Back] [Esc: Exit]"
+    ToolTip, %MenuText%, %ToolTipX%, %ToolTipY%, 2
+}
+
+ExecuteObsidianLayerCommand(key) {
+    ; Execute Obsidian command based on key pressed
+    global
+    obsidianIni := A_ScriptDir . "\config\obsidian.ini"
+    
+    ; Check if Obsidian integration is enabled
+    IniRead, enabled, %obsidianIni%, Settings, enable_obsidian_layer
+    if (enabled != "true") {
+        ShowObsidianLayerStatus("Obsidian layer disabled")
+        return
+    }
+    
+    ; Handle special keys
+    if (key = "`") {
+        ; Show overflow menu
+        ShowObsidianOverflowMenu()
+        return
+    }
+    
+    ; Read the key combination from obsidian.ini
+    IniRead, combination, %obsidianIni%, ObsidianCommands, %key%
+    if (combination = "ERROR" || combination = "") {
+        ShowObsidianLayerStatus("Key '" . key . "' not configured")
+        return
+    }
+    
+    ; Only execute if Obsidian is active
+    if (!WinActive("ahk_exe Obsidian.exe")) {
+        ShowObsidianLayerStatus("Obsidian not active")
+        return
+    }
+    
+    ; Send the combination
+    Send, %combination%
+    
+    ; Show feedback
+    IniRead, showFeedback, %obsidianIni%, Settings, show_autohotkey_syntax
+    if (showFeedback = "true") {
+        ShowObsidianLayerStatus("Obsidian: " . key . " → " . combination)
+    }
+}
+
+ShowObsidianOverflowMenu() {
+    ; Show overflow menu for additional commands
+    global
+    obsidianIni := A_ScriptDir . "\config\obsidian.ini"
+    
+    ToolTipX := A_ScreenWidth // 2 - 120
+    ToolTipY := A_ScreenHeight // 2 - 80
+    MenuText := "OBSIDIAN - MORE COMMANDS`n"
+    MenuText .= "`n"
+    
+    ; Read overflow commands
+    IniRead, sections, %obsidianIni%, OverflowCommands
+    if (sections != "ERROR" && sections != "") {
+        Loop, Parse, sections, `n
+        {
+            if (A_LoopField = "") continue
+            IniRead, command, %obsidianIni%, OverflowCommands, %A_LoopField%
+            if (command != "ERROR" && command != "") {
+                ; Extract description from comment
+                if (InStr(command, ";")) {
+                    StringSplit, parts, command, `;
+                    if (parts0 >= 2) {
+                        description := Trim(parts2)
+                        MenuText .= A_LoopField . " - " . description . "`n"
+                    }
+                }
+            }
+        }
+    } else {
+        MenuText .= "No overflow commands available`n"
+    }
+    
+    MenuText .= "`n"
+    MenuText .= "[Backspace: Back] [Esc: Exit]"
+    ToolTip, %MenuText%, %ToolTipX%, %ToolTipY%, 2
+}
+
+ShowObsidianLayerStatus(message) {
+    ; Show status message for Obsidian layer
+    global
+    obsidianIni := A_ScriptDir . "\config\obsidian.ini"
+    
+    ; Get feedback duration
+    IniRead, duration, %obsidianIni%, Settings, feedback_duration
+    if (duration = "ERROR" || duration = "") {
+        duration := 1500
+    }
+    
+    ToolTipX := A_ScreenWidth // 2 - 100
+    ToolTipY := A_ScreenHeight // 2 - 30
+    ToolTip, %message%, %ToolTipX%, %ToolTipY%, 1
+    SetTimer, RemoveObsidianLayerTooltip, %duration%
+}
+
+RemoveObsidianLayerTooltip:
+    SetTimer, RemoveObsidianLayerTooltip, Off
+    ToolTip, , , , 1
+return
+
+; ==============================================================================
+; HYBRID-CAPSLOCK MANAGEMENT FUNCTIONS
+; ==============================================================================
+
+ShowHybridManagementMenu() {
+    ; Show Hybrid-CapsLock management menu
+    ToolTipX := A_ScreenWidth // 2 - 120
+    ToolTipY := A_ScreenHeight // 2 - 80
+    MenuText := "HYBRID-CAPSLOCK MANAGEMENT`n"
+    MenuText .= "`n"
+    MenuText .= "i - Import Obsidian Hotkeys`n"
+    MenuText .= "u - Update Obsidian Hotkeys`n"
+    MenuText .= "r - Reload HybridCapsLock`n"
+    MenuText .= "f - Open HybridCapsLock Folder`n"
+    MenuText .= "s - Show System Status`n"
+    MenuText .= "e - Edit Obsidian Config`n"
+    MenuText .= "`n"
+    MenuText .= "[Backspace: Back] [Esc: Exit]"
+    ToolTip, %MenuText%, %ToolTipX%, %ToolTipY%, 2
+}
+
+ExecuteHybridManagementCommand(cmd) {
+    ; Execute Hybrid-CapsLock management commands
+    
+    Switch cmd {
+        Case "i":
+            ImportObsidianHotkeys()
+        Case "u":
+            UpdateObsidianHotkeys()
+        Case "r":
+            ReloadHybridCapsLock()
+        Case "f":
+            OpenHybridCapsLockFolder()
+        Case "s":
+            ShowHybridSystemStatus()
+        Case "e":
+            EditObsidianConfig()
+    }
+}
+
+ImportObsidianHotkeys() {
+    ; Import Obsidian hotkeys from hotkeys.json
+    scriptDir := A_ScriptDir
+    hotkeyFile := scriptDir . "\hotkeys.json"
+    pythonScript := scriptDir . "\obsidian_manager.py"
+    
+    ; Check if required files exist
+    if (!FileExist(hotkeyFile)) {
+        ShowHybridStatus("ERROR: hotkeys.json not found!`nPlace your Obsidian hotkeys.json in:`n" . scriptDir)
+        return
+    }
+    
+    if (!FileExist(pythonScript)) {
+        ShowHybridStatus("ERROR: obsidian_manager.py not found!")
+        return
+    }
+    
+    ; Show progress
+    ShowHybridStatus("Importing Obsidian hotkeys...`nThis may take a moment...")
+    
+    ; Run Python script
+    RunWait, python.exe "%pythonScript%" --import --script-dir "%scriptDir%", %scriptDir%, Hide
+    
+    if (ErrorLevel = 0) {
+        ShowHybridStatus("✅ Import completed successfully!`nObsidian layer is now available.`n`nReloading HybridCapsLock...")
+        Sleep, 2000
+        ReloadHybridCapsLock()
+    } else {
+        ShowHybridStatus("❌ Import failed!`nCheck that Python is installed and`nhotkeys.json is valid.")
+    }
+}
+
+UpdateObsidianHotkeys() {
+    ; Update existing Obsidian hotkeys configuration
+    scriptDir := A_ScriptDir
+    hotkeyFile := scriptDir . "\hotkeys.json"
+    pythonScript := scriptDir . "\obsidian_manager.py"
+    
+    ; Check if required files exist
+    if (!FileExist(hotkeyFile)) {
+        ShowHybridStatus("ERROR: hotkeys.json not found!`nPlace your updated Obsidian hotkeys.json in:`n" . scriptDir)
+        return
+    }
+    
+    ; Show progress
+    ShowHybridStatus("Updating Obsidian hotkeys...`nPreserving your customizations...")
+    
+    ; Run Python script
+    RunWait, python.exe "%pythonScript%" --update --script-dir "%scriptDir%", %scriptDir%, Hide
+    
+    if (ErrorLevel = 0) {
+        ShowHybridStatus("✅ Update completed successfully!`nCustomizations preserved.`n`nReloading HybridCapsLock...")
+        Sleep, 2000
+        ReloadHybridCapsLock()
+    } else {
+        ShowHybridStatus("❌ Update failed!`nCheck that Python is installed and`nhotkeys.json is valid.")
+    }
+}
+
+ReloadHybridCapsLock() {
+    ; Reload the HybridCapsLock script
+    ShowHybridStatus("Reloading HybridCapsLock...")
+    Sleep, 1000
+    Reload
+}
+
+OpenHybridCapsLockFolder() {
+    ; Open the HybridCapsLock folder in Explorer
+    Run, explorer.exe "%A_ScriptDir%"
+    ShowHybridStatus("Opened HybridCapsLock folder")
+}
+
+ShowHybridSystemStatus() {
+    ; Show system status information
+    scriptDir := A_ScriptDir
+    obsidianIni := scriptDir . "\config\obsidian.ini"
+    hotkeyFile := scriptDir . "\hotkeys.json"
+    pythonScript := scriptDir . "\obsidian_manager.py"
+    
+    statusText := "HYBRID-CAPSLOCK SYSTEM STATUS`n"
+    statusText .= "================================`n`n"
+    
+    ; Check files
+    statusText .= "📁 Files:`n"
+    statusText .= "HybridCapsLock.ahk: ✅ Running`n"
+    statusText .= "hotkeys.json: " . (FileExist(hotkeyFile) ? "✅ Found" : "❌ Missing") . "`n"
+    statusText .= "obsidian_manager.py: " . (FileExist(pythonScript) ? "✅ Found" : "❌ Missing") . "`n"
+    statusText .= "obsidian.ini: " . (FileExist(obsidianIni) ? "✅ Found" : "❌ Missing") . "`n`n"
+    
+    ; Check Obsidian integration
+    if (FileExist(obsidianIni)) {
+        IniRead, enabled, %obsidianIni%, Settings, enable_obsidian_layer
+        statusText .= "🎯 Obsidian Integration: " . (enabled = "true" ? "✅ Enabled" : "❌ Disabled") . "`n"
+        
+        ; Count commands
+        FileRead, iniContent, %obsidianIni%
+        commands := 0
+        locked := 0
+        Loop, Parse, iniContent, `n
+        {
+            if (InStr(A_LoopField, "=") && !RegExMatch(A_LoopField, "^\s*;")) {
+                commands++
+            }
+            if (InStr(A_LoopField, ";lock")) {
+                locked++
+            }
+        }
+        statusText .= "📋 Commands configured: " . commands . "`n"
+        statusText .= "🔒 Locked customizations: " . locked . "`n"
+    }
+    
+    statusText .= "`n📍 Script location:`n" . scriptDir
+    
+    ShowHybridStatus(statusText)
+}
+
+EditObsidianConfig() {
+    ; Open obsidian.ini for editing
+    obsidianIni := A_ScriptDir . "\config\obsidian.ini"
+    
+    if (FileExist(obsidianIni)) {
+        Run, notepad.exe "%obsidianIni%"
+        ShowHybridStatus("Opened obsidian.ini for editing")
+    } else {
+        ShowHybridStatus("obsidian.ini not found!`nUse Import to create it first.")
+    }
+}
+
+ShowHybridStatus(message) {
+    ; Show status message for Hybrid management
+    ToolTipX := A_ScreenWidth // 2 - 150
+    ToolTipY := A_ScreenHeight // 2 - 50
+    ToolTip, %message%, %ToolTipX%, %ToolTipY%, 1
+    SetTimer, RemoveHybridStatusTooltip, 5000
+}
+
+RemoveHybridStatusTooltip:
+    SetTimer, RemoveHybridStatusTooltip, Off
+    ToolTip, , , , 1
+return
 
 
 
