@@ -46,6 +46,7 @@ SetCapsLockState, AlwaysOff
 
 ; _DOC: Global variables to control layer states.
 global isNvimLayerActive := false
+global _tempEditMode := false
 global VisualMode := false
 ; Leader state flags
 global leaderActive := false
@@ -788,6 +789,12 @@ b::
         Send, ^{Left}
 return
 w::
+    if (_deleteAwait) {
+        _deleteAwait := false
+        DeleteCurrentWord()
+        Gosub, RemoveToolTip
+        return
+    }
     if (VisualMode)
         Send, ^+{Right}
     else
@@ -799,28 +806,71 @@ return
     else
         Send, {Home}
 return
-4::
++4::
     if (VisualMode)
         Send, +{End}
     else
         Send, {End}
 return
 u::
-    if (VisualMode)
-        Send, +{PgUp}
-    else
-        Send, {PgUp}
+    ; u = undo in nvim
+    Send, ^z
+return
++u::
+    ; U = redo in nvim (Ctrl+R in vim, but Ctrl+Y in most editors)
+    Send, ^y
 return
 d::
-    if (VisualMode)
-        Send, +{PgDn}
-    else
-        Send, {PgDn}
+   if (VisualMode) {
+       Send, {Delete}
+       _deleteAwait := false
+       return
+   }
+   if (_deleteAwait) {
+       _deleteAwait := false
+       DeleteCurrentLine()
+       Gosub, RemoveToolTip
+       return
+   }
+   _deleteAwait := true
+   ShowDeleteMenu()
+   SetTimer, __DeleteTimeout, -600
 return
 
 ; ----- Editing Actions -----
 x::Send, {Delete}
-8::Send, {End}{Enter}
++x::Send, {Backspace}  ; X = delete backwards in nvim
+r::
+    ; r = replace character in nvim - simplified approach
+    Send, {Delete}
+    ; Temporarily disable nvim layer to allow normal typing
+    isNvimLayerActive := false
+    _tempEditMode := true
+    ShowNvimLayerStatus(false)
+    SetTempStatus("REPLACE: Type character then press ESC", 3000)
+    UpdateLayerStatus()
+    ; Set a timer to reactivate nvim layer
+    SetTimer, ReactivateNvimAfterReplace, 3000
+return
+i::
+    ; i = insert mode in nvim (temporarily disable nvim layer)
+    isNvimLayerActive := false
+    _tempEditMode := true
+    ShowNvimLayerStatus(false)
+    SetTempStatus("INSERT MODE", 3000)
+    UpdateLayerStatus()
+    SetTimer, ReactivateNvimAfterReplace, 3000
+return
++a::
+    ; A = append at end of line in nvim
+    Send, {End}
+    isNvimLayerActive := false
+    _tempEditMode := true
+    ShowNvimLayerStatus(false)
+    SetTempStatus("APPEND MODE", 3000)
+    UpdateLayerStatus()
+    SetTimer, ReactivateNvimAfterReplace, 3000
+return
 
 ; New line below/above similar to Vim o/O
 o::
@@ -891,6 +941,12 @@ p::
 return
 
 a::
+    if (_deleteAwait) {
+        _deleteAwait := false
+        DeleteAll()
+        Gosub, RemoveToolTip
+        return
+    }
     if (_yankAwait) {
         _yankAwait := false
         Send, ^a^c
@@ -902,7 +958,11 @@ return
 ; ----- Smooth Scrolling -----
 +e::Send, {WheelDown}{WheelDown}{WheelDown}
 +y::Send, {WheelUp}{WheelUp}{WheelUp}
-e::Send, {WheelDown}{WheelDown}{WheelDown}
+e::
+    ; e = end of word in nvim (like w but to end)
+    Send, ^{Right}{Left}
+return
+
 
 ; ----- Touchpad Scroll Mode (Nvim Layer) -----
 LShift::
@@ -982,6 +1042,7 @@ RShift::
     UpdateLayerStatus()
     SetTimer, RemoveToolTip, 800
 return
+
 
 #If ; End of Nvim Layer context
 
@@ -1083,6 +1144,39 @@ return
 __YankTimeout:
     _yankAwait := false
     Gosub, RemoveToolTip
+return
+
+__DeleteTimeout:
+    _deleteAwait := false
+    Gosub, RemoveToolTip
+return
+
+ReactivateNvimAfterReplace:
+    SetTimer, ReactivateNvimAfterReplace, Off
+    _tempEditMode := false
+    isNvimLayerActive := true
+    ShowNvimLayerStatus(true)
+    SetTempStatus("NVIM LAYER ON", 1000)
+    UpdateLayerStatus()
+    SetTimer, RemoveToolTip, 1000
+return
+
+; ESC hotkey to reactivate nvim layer after replace/insert modes
+; Only when we're in a temporary edit mode
+~Esc::
+    ; Only reactivate if we're in a temporary edit mode
+    if (!isNvimLayerActive && _tempEditMode) {
+        ; Cancel the auto-reactivation timer
+        SetTimer, ReactivateNvimAfterReplace, Off
+        ; Clear temp edit mode flag
+        _tempEditMode := false
+        ; Reactivate nvim layer immediately
+        isNvimLayerActive := true
+        ShowNvimLayerStatus(true)
+        SetTempStatus("NVIM LAYER ON", 1000)
+        UpdateLayerStatus()
+        SetTimer, RemoveToolTip, 1000
+    }
 return
 
 ;-------------------------------------------------------------------------------
@@ -1248,6 +1342,20 @@ ShowYankMenu() {
     ToolTip, %MenuText%, %ToolTipX%, %ToolTipY%, 1
 	return
 }
+
+ShowDeleteMenu() {
+    ; Menu de delete en capa Nvim con estilo centrado
+    ToolTipX := A_ScreenWidth // 2 - 80
+    ToolTipY := A_ScreenHeight // 2 - 60
+    MenuText := "DELETE MODE`n"
+    MenuText .= "`n"
+    MenuText .= "d - Line`n"
+    MenuText .= "w - Word`n"
+    MenuText .= "a - All`n"
+    ToolTip, %MenuText%, %ToolTipX%, %ToolTipY%, 1
+	return
+}
+
 
 ShowProcessTerminated() {
     ; Tooltip para proceso terminado
@@ -1447,6 +1555,30 @@ CopyCurrentParagraph() {
     ClipWait, 0.3
     Sleep, 60
     ShowCopyNotification()
+	return
+}
+
+DeleteCurrentLine() {
+    Send, {Home}+{End}{Delete}
+    ShowDeleteNotification()
+	return
+}
+
+DeleteCurrentWord() {
+    Send, ^+{Right}{Delete}
+    ShowDeleteNotification()
+	return
+}
+
+DeleteAll() {
+    Send, ^a{Delete}
+    ShowDeleteNotification()
+	return
+}
+
+ShowDeleteNotification() {
+    SetTempStatus("DELETED", 800)
+    SetTimer, RemoveToolTip, 800
 	return
 }
 

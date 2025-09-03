@@ -38,26 +38,34 @@ Cuando el Modo Visual está activo, todas las teclas de navegación extienden la
 |-------|-------------|-------------|-------------|
 | `w` | `Ctrl+→` | `Ctrl+Shift+→` | Siguiente palabra |
 | `b` | `Ctrl+←` | `Ctrl+Shift+←` | Palabra anterior |
+| `e` | `Ctrl+→ + ←` | - | Final de palabra actual |
 
 ### Movimiento por Líneas
 | Tecla | Modo Normal | Modo Visual | Descripción |
 |-------|-------------|-------------|-------------|
 | `0` | `Home` | `Shift+Home` | Inicio de línea |
-| `4` | `End` | `Shift+End` | Fin de línea |
+| `$` (Shift+4) | `End` | `Shift+End` | Fin de línea |
 
-### Movimiento por Páginas
-| Tecla | Modo Normal | Modo Visual | Descripción |
-|-------|-------------|-------------|-------------|
-| `u` | `PageUp` | `Shift+PageUp` | Página arriba |
-| `d` | `PageDown` | `Shift+PageDown` | Página abajo |
+### Historial de Cambios
+| Tecla | Acción | Descripción |
+|-------|--------|-------------|
+| `u` | `Ctrl+Z` | **Undo** - Deshacer último cambio |
+| `U` (Shift+u) | `Ctrl+Y` | **Redo** - Rehacer cambio deshecho |
 
 ## ✏️ Edición de Texto
 
-### Operaciones Básicas
+### Eliminación de Caracteres
 | Tecla | Acción | Descripción |
 |-------|--------|-------------|
-| `x` | `Delete` | Eliminar carácter bajo cursor |
-| `8` | `End + Enter` | Nueva línea al final |
+| `x` | `Delete` | Eliminar carácter hacia adelante |
+| `X` (Shift+x) | `Backspace` | Eliminar carácter hacia atrás |
+
+### Reemplazo de Caracteres
+| Tecla | Acción | Descripción |
+|-------|--------|-------------|
+| `r` | **Replace Mode** | Elimina carácter actual y permite escribir cualquier carácter |
+
+> **Replace Mode:** Después de presionar `r`, escribe cualquier carácter para reemplazar. Presiona `ESC` para volver a la capa nvim o espera 3 segundos para reactivación automática.
 
 ### Inserción de Líneas (Estilo Vim)
 | Tecla | Acción | Descripción |
@@ -65,10 +73,13 @@ Cuando el Modo Visual está activo, todas las teclas de navegación extienden la
 | `o` | `End + Enter` | Nueva línea debajo del cursor |
 | `O` (Shift+o) | `Home + Enter + ↑` | Nueva línea arriba del cursor |
 
-### Duplicación
+### Modos de Inserción
 | Tecla | Acción | Descripción |
 |-------|--------|-------------|
-| `'` | **Duplicar línea** | Selecciona línea actual, copia y pega debajo |
+| `i` | **Insert Mode** | Desactiva capa nvim temporalmente para escribir |
+| `A` (Shift+a) | **Append Mode** | Va al final de línea y desactiva capa nvim |
+
+> **Insert/Append Mode:** Presiona `ESC` para reactivar la capa nvim o espera 3 segundos para reactivación automática.
 
 ## 📋 Sistema Yank/Paste (Copiar/Pegar)
 
@@ -97,17 +108,34 @@ Si hay texto seleccionado (Modo Visual activo), presionar `y` copia inmediatamen
 
 > **Nota:** Si estás en modo yank y presionas `p`, copiará el párrafo actual en lugar de pegar
 
+## 🗑️ Sistema Delete (Eliminar)
+
+### Operador Delete
+| Tecla | Acción | Descripción |
+|-------|--------|-------------|
+| `d` | **Activar Delete** | Espera segunda tecla para definir qué eliminar |
+
+**Después de presionar `d`:**
+| Segunda Tecla | Acción | Descripción |
+|---------------|--------|-------------|
+| `d` | **Eliminar línea** | Elimina la línea actual completa |
+| `w` | **Eliminar palabra** | Elimina la palabra actual |
+| `a` | **Eliminar todo** | Elimina todo el contenido |
+
+> **Timeout:** Si no presionas una segunda tecla en 600ms, el modo delete se cancela
+
+### Delete en Modo Visual
+Si hay texto seleccionado (Modo Visual activo), presionar `d` elimina inmediatamente la selección.
+
 ## 📜 Desplazamiento Suave
 
 | Tecla | Acción | Descripción |
 |-------|--------|-------------|
-| `e` | **Scroll abajo** | 3 pasos de rueda hacia abajo |
 | `E` (Shift+e) | **Scroll abajo** | 3 pasos de rueda hacia abajo |
-| `y` | **Scroll arriba** | 3 pasos de rueda hacia arriba |
 | `Y` (Shift+y) | **Scroll arriba** | 3 pasos de rueda hacia arriba |
 | `Shift` | **Scroll con touchpad** | Mantén `Shift` y mueve el touchpad para scroll trackball |
 
-> **Nota:** `y` tiene doble función: scroll cuando se presiona solo, yank cuando se usa como operador. El scroll con touchpad (`Shift`) replica la funcionalidad de ratones trackball con ejes invertidos para mayor naturalidad.
+> **Nota:** El scroll con touchpad (`Shift`) replica la funcionalidad de ratones trackball con ejes invertidos para mayor naturalidad. La tecla `e` ahora se usa para navegación (final de palabra) y `y` para el sistema yank.
 
 ## 🖱️ Funciones de Mouse
 
@@ -118,20 +146,9 @@ Si hay texto seleccionado (Modo Visual activo), presionar `y` copia inmediatamen
 
 > **Nota:** Las funciones de mouse en la capa Nvim permiten control preciso sin salir del modo de navegación.
 
-## ⏰ Timestamps en Capa Nvim
+## ⏰ Timestamps
 
-| Tecla | Acción | Descripción |
-|-------|--------|-------------|
-| `,` | **Escribir timestamp** | Inserta timestamp con formato actual |
-| `.` | **Cambiar formato** | Cicla entre formatos predefinidos |
-
-### Formatos Disponibles
-1. `yyyy-MM-dd HH:mm:ss` → `2024-01-15 14:30:25`
-2. `dd/MM/yyyy HH:mm` → `15/01/2024 14:30`
-3. `yyyyMMdd_HHmmss` → `20240115_143025`
-4. `HH:mm:ss` → `14:30:25`
-5. `yyyy-MM-dd` → `2024-01-15`
-6. `yyyy-MM-ddTHH:mm:ssZ` → `2024-01-15T14:30:25Z` (ISO 8601)
+> **Nota:** La funcionalidad de timestamps fue movida al Modo Líder. Usa `CapsLock + Space → t` para acceder a las opciones de timestamp.
 
 ## 🔧 Función Especial
 
@@ -148,10 +165,22 @@ Esta función es útil para aplicaciones que usan `Ctrl+Alt+K` como atajo, permi
 1. CapsLock (activar capa)
 2. hjkl (navegar al texto)
 3. v (activar visual)
-4. w/b (seleccionar palabras)
+4. w/b/e (seleccionar palabras)
 5. y (copiar selección)
 6. o (nueva línea)
 7. p (pegar)
+```
+
+### 🔄 Replace y Delete
+```
+1. CapsLock (activar capa)
+2. hjkl (navegar al carácter)
+3. r (replace mode)
+4. [escribir nuevo carácter]
+5. ESC (volver a capa nvim)
+
+O para eliminar:
+3. d → d (eliminar línea completa)
 ```
 
 ### 📋 Copia Masiva
@@ -168,8 +197,15 @@ Esta función es útil para aplicaciones que usan `Ctrl+Alt+K` como atajo, permi
 1. CapsLock (activar capa)
 2. 0 (inicio de línea)
 3. w w w (tres palabras adelante)
-4. m (activar visual)
-5. 4 (seleccionar hasta fin de línea)
+4. v (activar visual)
+5. $ (seleccionar hasta fin de línea)
+```
+
+### ↩️ Undo/Redo
+```
+1. CapsLock (activar capa)
+2. u (undo - deshacer)
+3. U (redo - rehacer)
 ```
 
 ## ⚙️ Configuración y Estados
