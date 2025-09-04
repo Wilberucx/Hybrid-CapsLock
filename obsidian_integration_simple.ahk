@@ -5,15 +5,18 @@
 ; Include this file in HybridCapsLock.ahk instead of the complex version
 
 ; Note: Global variables are declared in main HybridCapsLock.ahk file
+; Ensure ObsidianIni is available in functions that need it
 
 ; ==============================================================================
 ; OBSIDIAN LAYER FUNCTIONS (SIMPLIFIED)
 ; ==============================================================================
 
 ShowObsidianLayerMenu() {
+    global ObsidianIni
     ToolTipX := A_ScreenWidth // 2 - 150
     ToolTipY := A_ScreenHeight // 2 - 100
-    MenuText := "OBSIDIAN LAYER`n"
+    MenuText := "🚧 OBSIDIAN LAYER - EN DESARROLLO 🚧`n"
+    MenuText .= "⚠️ Esta funcionalidad está siendo depurada ⚠️`n"
     MenuText .= "`n"
     
     ; Read tooltip lines from obsidian.ini
@@ -37,8 +40,9 @@ ShowObsidianLayerMenu() {
 }
 
 ExecuteObsidianLayerCommand(key) {
-    ; DEBUG: Always show that function was called
-    ShowObsidianStatus("DEBUG: ExecuteObsidianLayerCommand called with key: " . key)
+    global ObsidianIni
+    ; DEVELOPMENT MODE: Show clear status
+    ShowObsidianStatus("🚧 DESARROLLO: Procesando tecla '" . key . "'`n⚠️ Funcionalidad en depuración")
     
     ; Check if Obsidian integration is enabled
     IniRead, enabled, %ObsidianIni%, Settings, enable_obsidian_layer
@@ -69,10 +73,10 @@ ExecuteObsidianLayerCommand(key) {
 }
 
 ShowObsidianStatus(message) {
-    ToolTipX := A_ScreenWidth // 2 - 100
-    ToolTipY := A_ScreenHeight // 2 - 30
-    ToolTip, %message%, %ToolTipX%, %ToolTipY%, 1
-    SetTimer, RemoveObsidianTooltip, 2000
+    ToolTipX := A_ScreenWidth // 2 - 200
+    ToolTipY := A_ScreenHeight // 2 - 50
+    ToolTip, OBSIDIAN DEBUG:`n%message%, %ToolTipX%, %ToolTipY%, 1
+    SetTimer, RemoveObsidianTooltip, 5000
     return
 }
 
@@ -89,6 +93,7 @@ ShowHybridManagementMenu() {
     ToolTipX := A_ScreenWidth // 2 - 120
     ToolTipY := A_ScreenHeight // 2 - 80
     MenuText := "HYBRID-CAPSLOCK MANAGEMENT`n"
+    MenuText .= "🚧 Obsidian Layer: EN DESARROLLO 🚧`n"
     MenuText .= "`n"
     MenuText .= "i - Import Obsidian Hotkeys`n"
     MenuText .= "u - Update Obsidian Hotkeys`n"
@@ -185,6 +190,7 @@ OpenHybridCapsLockFolder() {
 }
 
 ShowHybridSystemStatus() {
+    global ObsidianIni
     scriptDir := A_ScriptDir
     obsidianIni := scriptDir . "\config\obsidian.ini"
     hotkeyFile := scriptDir . "\hotkeys.json"
@@ -201,7 +207,12 @@ ShowHybridSystemStatus() {
     
     if (FileExist(obsidianIni)) {
         IniRead, enabled, %obsidianIni%, Settings, enable_obsidian_layer
-        statusText .= "🎯 Obsidian Integration: " . (enabled = "true" ? "✅ Enabled" : "❌ Disabled") . "`n"
+        IniRead, devMode, %obsidianIni%, Settings, development_mode
+        if (devMode = "true") {
+            statusText .= "🚧 Obsidian Integration: EN DESARROLLO - NO FUNCIONAL`n"
+        } else {
+            statusText .= "🎯 Obsidian Integration: " . (enabled = "true" ? "✅ Enabled" : "❌ Disabled") . "`n"
+        }
     }
     
     statusText .= "`n📍 Script location:`n" . scriptDir
@@ -211,6 +222,7 @@ ShowHybridSystemStatus() {
 }
 
 EditObsidianConfig() {
+    global ObsidianIni
     obsidianIni := A_ScriptDir . "\config\obsidian.ini"
     
     if (FileExist(obsidianIni)) {

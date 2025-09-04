@@ -635,7 +635,7 @@ CapsLock & Space::
         ; ----- LEVEL 2: Obsidian Layer Mode -----
         if (_leaderKey = "o") {
             ShowObsidianLayerMenu()
-            Input, _obsidianKey, L1 T10, {Escape}{Backspace}
+            Input, _obsidianKey, L1 T10, {Escape}{Backspace}, 0,1,2,3,4,5,6,A,B,C,D,F,J,O,P,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,`
 
             if (ErrorLevel = "Timeout" || ErrorLevel = "EndKey:Escape") {
                 ShowCenteredToolTip("DEBUG: Obsidian layer timeout/escape")
