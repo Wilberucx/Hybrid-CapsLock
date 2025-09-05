@@ -1,0 +1,59 @@
+<Window x:Class="TooltipApp.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="HybridCapsLock Tooltip"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        Topmost="True"
+        ShowInTaskbar="False"
+        ResizeMode="NoResize"
+        SizeToContent="WidthAndHeight"
+        WindowStartupLocation="Manual">
+    
+    <Border Name="TooltipBorder"
+            Background="#1e1e1e"
+            BorderBrush="#404040"
+            BorderThickness="1"
+            CornerRadius="4"
+            Padding="16,12"
+            Margin="0">
+        
+        <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
+            <!-- Title -->
+            <TextBlock Name="TitleText"
+                       Text="TEST TOOLTIP"
+                       FontFamily="Consolas"
+                       FontSize="14"
+                       FontWeight="Bold"
+                       Foreground="#ffffff"
+                       HorizontalAlignment="Center"
+                       Margin="0,0,0,8"/>
+            
+            <!-- Items Grid (4 columns) -->
+            <Grid Name="ItemsGrid" Margin="0,0,0,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+            </Grid>
+            
+            <!-- Navigation -->
+            <StackPanel Name="NavigationPanel" 
+                        Orientation="Horizontal" 
+                        HorizontalAlignment="Center"
+                        Margin="0,8,0,0">
+                <Border Background="#6c958e" 
+                        CornerRadius="2" 
+                        Padding="4,2">
+                    <TextBlock Text="ESC: Exit"
+                               FontFamily="Consolas"
+                               FontSize="10"
+                               Foreground="#ffffff"/>
+                </Border>
+            </StackPanel>
+        </StackPanel>
+    </Border>
+</Window>
