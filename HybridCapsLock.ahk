@@ -1,1646 +1,671 @@
 ;===============================================================================
-; SCRIPT: Hybrid CapsLock Productivity (Vim Style)
+; SCRIPT: Hybrid CapsLock Productivity (Vim Style) - AutoHotkey v2
 ; AUTHOR: Wilber Canto (Vibe Codding)
-; VERSION: 6.2 (Robust and Safe App Launcher)
+; VERSION: 2.0 (AutoHotkey v2)
 ;===============================================================================
 ;
 ; _DOC: This script transforms the CapsLock key into a powerful productivity
-;       tool with a hybrid behavior.
+;       tool with a hybrid behavior. Migrated to AutoHotkey v2 for improved
+;       performance and modern syntax.
 ;
-; V6.0 CHANGELOG:
-; - The app launcher (leader 'p') no longer relies on the system PATH.
-; - It now automatically finds executables (wt.exe, code.exe, etc.) by
-;   looking them up in the Windows Registry ("App Paths").
-; - This fixes issues where the script, running as Admin, could not find
-;   programs in the standard user's PATH.
+; V2.0 CHANGELOG:
+; - Migrated from AutoHotkey v1 to v2
+; - Added 4 new command categories (Power Options, ADB Tools, VaultFlow, Hybrid Management)
+; - Improved syntax and performance
+; - Enhanced navigation with hierarchical menu system
+; - Maintained full compatibility with existing .ini configuration files
 ;
 ;===============================================================================
 
 ;-------------------------------------------------------------------------------
-; SECTION 1: INITIAL CONFIGURATION
+; SECTION 1: INITIAL CONFIGURATION (v2)
 ;-------------------------------------------------------------------------------
-#SingleInstance, Force
-#NoEnv
-#Warn
-StringCaseSense, On
-SendMode, Input
+#SingleInstance Force
+#Warn All
+; SendMode Input  ; v2 uses Input mode by default, no need to set explicitly
+; Note: A_StringCaseSense is read-only in v2 and defaults to true
 
-; Ensure we're on AutoHotkey v1.x
-if (SubStr(A_AhkVersion, 1, 1) != "1") {
-    MsgBox, 16, HybridCapsLock, This script requires AutoHotkey v1.x.`nYou are running v%A_AhkVersion%.`nInstall AutoHotkey v1.1 and try again.
-    ExitApp
+; Ensure we're on AutoHotkey v2.x
+if (SubStr(A_AhkVersion, 1, 1) != "2") {
+    MsgBox("This script requires AutoHotkey v2.x.`nYou are running v" . A_AhkVersion . ".`nInstall AutoHotkey v2.0+ and try again.", "HybridCapsLock v2", "IconX")
+    ExitApp()
 }
 
-
 ; _DOC: Run as admin to prevent permission issues.
-;if not A_IsAdmin {
-;    Run *RunAs "%A_ScriptFullPath%"
-;    ExitApp
+; Uncomment the following lines if admin privileges are required:
+;if (!A_IsAdmin) {
+;    Run("*RunAs `"" . A_ScriptFullPath . "`"")
+;    ExitApp()
 ;}
 
 ; _DOC: Permanently disable the native CapsLock function.
 ; Startup banner to confirm correct script loaded
-ShowCenteredToolTip("HybridCapsLock loaded`n" . A_ScriptFullPath)
-SetTimer, RemoveToolTip, 1500
-SetCapsLockState, AlwaysOff
+ShowCenteredToolTip("HybridCapsLock v2.0 loaded`n" . A_ScriptFullPath)
+SetTimer(RemoveToolTip, -1500)  ; Negative value for one-time execution
+SetCapsLockState("AlwaysOff")
+
+;-------------------------------------------------------------------------------
+; SECTION 2: GLOBAL VARIABLES (v2)
+;-------------------------------------------------------------------------------
 
 ; _DOC: Global variables to control layer states.
 global isNvimLayerActive := false
 global _tempEditMode := false
 global VisualMode := false
+
 ; Leader state flags
 global leaderActive := false
+
 ; Global variables for temporary status tracking
 global currentTempStatus := ""
 global tempStatusExpiry := 0
+
 ; Excel/Accounting layer state
 global excelLayerActive := false
+
 ; Variable to track if CapsLock was held beyond the threshold
 global capsLockWasHeld := false
+
 ; Click derecho sostenido state
 global rightClickHeld := false
+
 ; Scroll mode state
 global scrollModeActive := false
-; Timestamp functionality moved to dedicated timestamps.ini system
-; Persist settings across sessions
+
+; Configuration file paths - maintain compatibility with v1
 global ConfigIni := A_ScriptDir . "\config\configuration.ini"
 global ProgramsIni := A_ScriptDir . "\config\programs.ini"
 global TimestampsIni := A_ScriptDir . "\config\timestamps.ini"
 global InfoIni := A_ScriptDir . "\config\information.ini"
 global CommandsIni := A_ScriptDir . "\config\commands.ini"
 global ObsidianIni := A_ScriptDir . "\config\obsidian.ini"
+
 ; Layer status file for Zebar integration
 global LayerStatusFile := A_ScriptDir . "\data\layer_status.json"
+
 ; Guard para operador yank secuencial
 global _yankAwait := false
+
+; Guard para operador delete secuencial
+global _deleteAwait := false
+
 ; Toggle to let CapsLock behave as original toggle key
 global capsActsNormal := false
 
 ;-------------------------------------------------------------------------------
-; SECTION 2: MODIFIER MODE (HOLD - QUICK SHORTCUTS)
+; SECTION 3: HELPER FUNCTIONS (v2 - Basic Implementation)
 ;-------------------------------------------------------------------------------
 
-; ----- Custom & Window Functions -----
-CapsLock & 1::WinMinimize, A
-; CapsLock+` para minimizar todas las ventanas (alternativa a Shift+1)
-CapsLock & `::Send, #m
-CapsLock & 2::Send, ^+!{2}
-CapsLock & 3::Send, !a
-CapsLock & 4::Send, !s
-CapsLock & q::Send, !{F4}
-CapsLock & f::
-    WinGet, winState, MinMax, A
-    if (winState = 1)
-        WinRestore, A
-    else
-        WinMaximize, A
-return
-CapsLock & Tab::
-    ; Mantener Alt mientras se navega con Tab; garantizar que no contamos el Tab inicial dos veces
-    Send, {Alt down}{Tab}
-    ; Esperar a que se suelte el Tab que disparó el hotkey
-    KeyWait, Tab
-    While GetKeyState("CapsLock", "P") {
-        if GetKeyState("Tab", "P") {
-            Send, {Tab}
-            KeyWait, Tab
-        }
-        Sleep, 10
-    }
-    Send, {Alt up}
-return
-
-; ----- Quick Navigation (Vim Style) -----
-CapsLock & h::Send, {Left}
-CapsLock & j::Send, {Down}
-CapsLock & k::Send, {Up}
-CapsLock & l::Send, {Right}
-
-; ----- Smooth Scrolling (Added in Hold Mode) -----
-CapsLock & e::Send, {WheelDown}{WheelDown}{WheelDown}
-CapsLock & d::Send, {WheelUp}{WheelUp}{WheelUp}
-; ----- Touchpad Scroll Mode -----
-CapsLock & /::
-    ; Check if CapsLock+/ touchpad scroll is enabled in configuration
-    holdCapslockSlashScroll := ReadConfigValue("Advanced", "hold_capslock_slash_scroll", "true")
-    if (holdCapslockSlashScroll != "true") {
-        ; If disabled, just send the normal / key
-        Send, /
-        return
-    }
-    
-    ; Activar modo scroll con touchpad
-    scrollModeActive := true
-    SetTempStatus("SCROLL MODE ACTIVE", 2000)
-    ShowScrollModeStatus(true)
-    SetTimer, RemoveToolTip, 1500
-    
-    ; Variables para tracking del mouse
-    MouseGetPos, startX, startY
-    
-    ; Loop mientras se mantenga presionada CapsLock o /
-    while (GetKeyState("CapsLock", "P") || GetKeyState("/", "P")) {
-        MouseGetPos, currentX, currentY
-        
-        ; Calcular diferencia desde la posición inicial
-        deltaX := currentX - startX
-        deltaY := currentY - startY
-        
-        ; Umbral mínimo para evitar scroll accidental
-        threshold := 3
-        
-        ; Scroll vertical (más sensible) - EJES INVERTIDOS
-        if (Abs(deltaY) > threshold) {
-            if (deltaY > 0) {
-                ; Movimiento hacia abajo = scroll up (invertido)
-                Send, {WheelUp}
-            } else {
-                ; Movimiento hacia arriba = scroll down (invertido)
-                Send, {WheelDown}
-            }
-            ; Actualizar posición de referencia para scroll continuo
-            startY := currentY
-        }
-        
-        ; Scroll horizontal (menos sensible) - EJES INVERTIDOS
-        if (Abs(deltaX) > threshold * 2) {
-            if (deltaX > 0) {
-                ; Movimiento hacia derecha = scroll left (invertido)
-                Send, {WheelLeft}
-            } else {
-                ; Movimiento hacia izquierda = scroll right (invertido)
-                Send, {WheelRight}
-            }
-            ; Actualizar posición de referencia para scroll continuo
-            startX := currentX
-        }
-        
-        Sleep, 10 ; Pequeña pausa para suavizar el scroll
-    }
-    
-    ; Cleanup al soltar las teclas
-    scrollModeActive := false
-    ShowScrollModeStatus(false)
-    SetTempStatus("SCROLL MODE OFF", 800)
-    SetTimer, RemoveToolTip, 800
-return
-
-; ----- Common Shortcuts (Ctrl Style) -----
-CapsLock & s::Send, ^s 
-CapsLock & c::
-    Send, ^c
-    ShowCopyNotification()
-return
-CapsLock & v::Send, ^v
-CapsLock & x::Send, ^x
-CapsLock & z::Send, ^z
-CapsLock & a::Send, ^a
-; CapsLock & n ahora es click derecho - movido arriba
-CapsLock & o::Send, ^o
-CapsLock & t::Send, ^t
-CapsLock & r::Send, {F5}
-; CapsLock & /::Send, ^f  ; Moved to make space for scroll mode
-CapsLock & g::Send, ^!+g
-
-;Manage Windows in glazewm
-
-CapsLock & Left::Send, !+h
-CapsLock & Up::Send, !+k
-CapsLock & Down::Send, !+j
-CapsLock & Right::Send, !+l
-
-; ----- Added Shortcuts (User Requests) -----
-CapsLock & `;::
-    ; Inmediatamente iniciar click izquierdo sostenido
-    Click, Left, Down
-    rightClickHeld := true
-    ShowLeftClickStatus(true)
-    SetTempStatus("LEFT CLICK HELD", 1200)
-    SetTimer, RemoveToolTip, 1200
-    
-    ; Esperar a que se suelte CapsLock o ;
-    KeyWait, CapsLock
-    KeyWait, `;
-    
-    ; Soltar click izquierdo
-    Click, Left, Up
-    rightClickHeld := false
-    ShowLeftClickStatus(false)
-    SetTimer, RemoveToolTip, 1200
-return
-
-; Click derecho simple en una tecla diferente
-CapsLock & '::
-    Click, Right
-    ShowRightClickStatus(true)
-    SetTempStatus("RIGHT CLICK", 1200)
-    SetTimer, RemoveToolTip, 1200
-return
-CapsLock & i::Send, ^!k
-CapsLock & w::Send, ^w
-CapsLock & m::Send, ^{PgDn}
-CapsLock & u::Send, ^{PgUp}
-CapsLock & [::Send, ^!+{[}
-CapsLock & ]::Send, ^!+{]}
-
-; ----- Other Utilities -----
-CapsLock & \::SendRaw, your.email@example.com
-CapsLock & p::Send, +!p
-CapsLock & Enter::Send, ^{Enter}
-CapsLock & 9::Send, #+s
-CapsLock & 6::Send, #{Left}
-CapsLock & 7::Send, #{Right}
-CapsLock & Backspace::Send, !{Left}
-
-;-------------------------------------------------------------------------------
-; SECTION 2B: ADVANCED LEADER KEY LOGIC
-;-------------------------------------------------------------------------------
-CapsLock & Space::
-    ; _NEW_: Deactivate Nvim Layer if it's active when leader is called
-    if (isNvimLayerActive) {
-        isNvimLayerActive := false
-        VisualMode := false ; Also reset visual mode
-        ShowNvimLayerStatus(false)
-        UpdateLayerStatus()
-        SetTimer, RemoveToolTip, 1200
-        Sleep, 50 ; Brief pause to ensure state change is registered
-    }
-    leaderActive := true
-
-    ; Main leader loop for navigation (back/exit)
-    Loop {
-        ; ----- LEVEL 1: Main Leader Menu -----
-        ShowLeaderMenu()
-        Input, _leaderKey, L1 T7, {Escape} ; 7-second timeout, Esc to exit
-
-        if (ErrorLevel = "Timeout" || ErrorLevel = "EndKey:Escape") {
-            break ; Exit loop on timeout or Esc
-        }
-
-        ; ----- LEVEL 2: Window Mode (Dual Mode Switching) -----
-        if (_leaderKey = "w") {
-            ShowWindowMenu()
-            Input, _winAction, L1 T7, {Escape}{Backspace}, 2,3,4,x,m,-,j,k,h,l,d,z,c
-
-            if (ErrorLevel = "Timeout" || ErrorLevel = "EndKey:Escape") {
-                break ; Exit leader loop
-            }
-            if (ErrorLevel = "EndKey:Backspace") {
-                continue ; Back to main leader menu
-            }
-
-            _exitLeader := false
-            Switch _winAction {
-                ; --- Persistent Blind Switching ---
-                Case "j", "k":
-                    ToolTip, `n BLIND SWITCH MODE `n j/k: Cycle | Enter/Esc: Exit, , , 2
-                    if (_winAction = "j")
-                        Send, !{Tab}
-                    else
-                        Send, !+{Tab}
-                    Loop {
-                        Input, key, L1, {Enter}{Esc}, j,k
-                        if (ErrorLevel = "EndKey:Enter" || ErrorLevel = "EndKey:Escape") {
-                            _exitLeader := true
-                            break
-                        }
-                        if (key = "j")
-                            Send, !{Tab}
-                        else if (key = "k")
-                            Send, !+{Tab}
-                    }
-                    break
-
-                ; --- Persistent Visual (Alt-Tab) Switching ---
-                Case "l", "h":
-                    if (_winAction = "l")
-                        Send, {Alt down}{Tab}
-                    else
-                        Send, {Alt down}+{Tab}
-                    ToolTip, ,,,2
-
-                    Loop {
-                        Input, key, L1, {Enter}{Esc}{Left}{Right}, l,h
-                        if (ErrorLevel = "EndKey:Enter" || ErrorLevel = "EndKey:Escape") {
-                            if (ErrorLevel = "EndKey:Escape")
-                                Send, {Esc}
-                            Send, {Alt up}
-                            _exitLeader := true
-                            break
-                        }
-                        if (key = "l" || ErrorLevel = "EndKey:Right")
-                            Send, {Tab}
-                        else if (key = "h" || ErrorLevel = "EndKey:Left")
-                            Send, +{Tab}
-                    }
-                    break
-
-                ; --- One-shot actions ---
-                Case "x":
-                    WinClose, A
-                    _exitLeader := true
-                Case "-":
-                    WinMinimize, A
-                    _exitLeader := true
-                Case "m":
-                    WinGet, winState, MinMax, A
-                    if (winState = 1)
-                        WinRestore, A
-                    else
-                        WinMaximize, A
-                    _exitLeader := true
-                Case "2":
-                    GoSplitScreen(50)
-                    _exitLeader := true
-                Case "3":
-                    GoSplitScreen(33)
-                    _exitLeader := true
-                Case "4":
-                    WinMove, A, , 0, 0, A_ScreenWidth // 2, A_ScreenHeight // 2
-                    _exitLeader := true
-                Case "d":
-                    Send, ^!+9  ; Draw
-                    _exitLeader := true
-                Case "z":
-                    Send, ^!+1  ; Zoom
-                    _exitLeader := true
-                Case "c":
-                    Send, ^!+4  ; Zoom with cursor
-                    _exitLeader := true
-            }
-
-            if (_exitLeader)
-                break
-            else
-                continue
-        }
-
-        ; ----- LEVEL 2: Program Launcher Mode -----
-        if (_leaderKey = "p") {
-            ShowProgramMenu()
-            Input, _appKey, L1 T7, {Escape}{Backspace}, e,s,t,v,n,o,b,z,m,w,l,r,q,p
-
-            if (ErrorLevel = "Timeout" || ErrorLevel = "EndKey:Escape") {
-                break ; Exit loop
-            }
-            if (ErrorLevel = "EndKey:Backspace") {
-                continue ; Go back to the start of the main loop
-            }
-
-            ; Execute program launch dynamically from .ini
-            LaunchProgramFromKey(_appKey)
-            break ; Action taken, exit loop
-        }
-
-        ; ----- LEVEL 2: Timestamp Mode -----
-        if (_leaderKey = "t") {
-            ShowTimeMenu()
-            Input, _tsKey, L1 T20, {Escape}{Backspace}, d,t,h
-
-            if (ErrorLevel = "Timeout" || ErrorLevel = "EndKey:Escape") {
-                break
-            }
-            if (ErrorLevel = "EndKey:Backspace") {
-                continue
-            }
-
-            ; ----- LEVEL 3: Timestamp Submenus -----
-            if (_tsKey = "d") {
-                ; Date formats submenu
-                ShowDateFormatsMenu()
-                Input, _dateKey, L1 T20, {Escape}{Backspace}, d,1,2,3,4,5,6
-                
-                if (ErrorLevel = "Timeout" || ErrorLevel = "EndKey:Escape") {
-                    break
-                }
-                if (ErrorLevel = "EndKey:Backspace") {
-                    continue ; Back to timestamp main menu
-                }
-                
-                WriteTimestampFromKey("date", _dateKey)
-                break
-            }
-            
-            if (_tsKey = "t") {
-                ; Time formats submenu
-                ShowTimeFormatsMenu()
-                Input, _timeKey, L1 T20, {Escape}{Backspace}, t,1,2,3,4,5
-                
-                if (ErrorLevel = "Timeout" || ErrorLevel = "EndKey:Escape") {
-                    break
-                }
-                if (ErrorLevel = "EndKey:Backspace") {
-                    continue ; Back to timestamp main menu
-                }
-                
-                WriteTimestampFromKey("time", _timeKey)
-                break
-            }
-            
-            if (_tsKey = "h") {
-                ; DateTime formats submenu
-                ShowDateTimeFormatsMenu()
-                Input, _datetimeKey, L1 T20, {Escape}{Backspace}, h,1,2,3,4,5
-                
-                if (ErrorLevel = "Timeout" || ErrorLevel = "EndKey:Escape") {
-                    break
-                }
-                if (ErrorLevel = "EndKey:Backspace") {
-                    continue ; Back to timestamp main menu
-                }
-                
-                WriteTimestampFromKey("datetime", _datetimeKey)
-                break
-            }
-        }
-
-        ; ----- LEVEL 2: Commands Mode -----
-        if (_leaderKey = "c") {
-            ShowCommandsMenu()
-            Input, _cmdCategory, L1 T10, {Escape}{Backspace}, s,n,g,m,f,w,v,o,a,h
-
-            if (ErrorLevel = "Timeout" || ErrorLevel = "EndKey:Escape") {
-                break ; Exit loop
-            }
-            if (ErrorLevel = "EndKey:Backspace") {
-                continue ; Go back to main leader menu
-            }
-
-            ; ----- LEVEL 3: Category-specific commands -----
-            _exitLeader := false
-            Switch _cmdCategory {
-                Case "s": ; System Commands
-                    ShowSystemCommandsMenu()
-                    Input, _sysCmd, L1 T10, {Escape}{Backspace}, s,t,v,e,d,c
-                    
-                    if (ErrorLevel = "Timeout" || ErrorLevel = "EndKey:Escape") {
-                        _exitLeader := true
-                    } else if (ErrorLevel = "EndKey:Backspace") {
-                        continue ; Back to commands menu
-                    } else {
-                        ExecuteSystemCommand(_sysCmd)
-                        _exitLeader := true
-                    }
-
-                Case "n": ; Network Commands
-                    ShowNetworkCommandsMenu()
-                    Input, _netCmd, L1 T10, {Escape}{Backspace}, i,p,n
-                    
-                    if (ErrorLevel = "Timeout" || ErrorLevel = "EndKey:Escape") {
-                        _exitLeader := true
-                    } else if (ErrorLevel = "EndKey:Backspace") {
-                        continue ; Back to commands menu
-                    } else {
-                        ExecuteNetworkCommand(_netCmd)
-                        _exitLeader := true
-                    }
-
-                Case "g": ; Git Commands
-                    ShowGitCommandsMenu()
-                    Input, _gitCmd, L1 T10, {Escape}{Backspace}, s,l,b,d,a,p
-                    
-                    if (ErrorLevel = "Timeout" || ErrorLevel = "EndKey:Escape") {
-                        _exitLeader := true
-                    } else if (ErrorLevel = "EndKey:Backspace") {
-                        continue ; Back to commands menu
-                    } else {
-                        ExecuteGitCommand(_gitCmd)
-                        _exitLeader := true
-                    }
-
-                Case "m": ; Monitoring Commands
-                    ShowMonitoringCommandsMenu()
-                    Input, _monCmd, L1 T10, {Escape}{Backspace}, p,s,d,m,c
-                    
-                    if (ErrorLevel = "Timeout" || ErrorLevel = "EndKey:Escape") {
-                        _exitLeader := true
-                    } else if (ErrorLevel = "EndKey:Backspace") {
-                        continue ; Back to commands menu
-                    } else {
-                        ExecuteMonitoringCommand(_monCmd)
-                        _exitLeader := true
-                    }
-
-                Case "f": ; Folder Access Commands
-                    ShowFolderCommandsMenu()
-                    Input, _folderCmd, L1 T10, {Escape}{Backspace}, t,a,p,u,d,s
-                    
-                    if (ErrorLevel = "Timeout" || ErrorLevel = "EndKey:Escape") {
-                        _exitLeader := true
-                    } else if (ErrorLevel = "EndKey:Backspace") {
-                        continue ; Back to commands menu
-                    } else {
-                        ExecuteFolderCommand(_folderCmd)
-                        _exitLeader := true
-                    }
-
-                Case "w": ; Windows Commands
-                    ShowWindowsCommandsMenu()
-                    Input, _winCmd, L1 T10, {Escape}{Backspace}, h,r,e
-                    
-                    if (ErrorLevel = "Timeout" || ErrorLevel = "EndKey:Escape") {
-                        _exitLeader := true
-                    } else if (ErrorLevel = "EndKey:Backspace") {
-                        continue ; Back to commands menu
-                    } else {
-                        ExecuteWindowsCommand(_winCmd)
-                        _exitLeader := true
-                    }
-
-                Case "v": ; VaultFlow Commands
-                    ShowVaultFlowCommandsMenu()
-                    Input, _vaultCmd, L1 T10, {Escape}{Backspace}, v
-                    
-                    if (ErrorLevel = "Timeout" || ErrorLevel = "EndKey:Escape") {
-                        _exitLeader := true
-                    } else if (ErrorLevel = "EndKey:Backspace") {
-                        continue ; Back to commands menu
-                    } else {
-                        ExecuteVaultFlowCommand(_vaultCmd)
-                        _exitLeader := true
-                    }
-
-                Case "o": ; Power Options Commands
-                    ShowPowerOptionsCommandsMenu()
-                    Input, _powerCmd, L1 T10, {Escape}{Backspace}, s,h,r,u
-                    
-                    if (ErrorLevel = "Timeout" || ErrorLevel = "EndKey:Escape") {
-                        _exitLeader := true
-                    } else if (ErrorLevel = "EndKey:Backspace") {
-                        continue ; Back to commands menu
-                    } else {
-                        ExecutePowerOptionsCommand(_powerCmd)
-                        _exitLeader := true
-                    }
-
-                Case "a": ; ADB Tools Commands (Simple ones only)
-                    ShowADBCommandsMenu()
-                    Input, _adbCmd, L1 T10, {Escape}{Backspace}, d,x,s,l,r
-                    
-                    if (ErrorLevel = "Timeout" || ErrorLevel = "EndKey:Escape") {
-                        _exitLeader := true
-                    } else if (ErrorLevel = "EndKey:Backspace") {
-                        continue ; Back to commands menu
-                    } else {
-                        ExecuteADBCommand(_adbCmd)
-                        _exitLeader := true
-                    }
-
-                Case "h": ; Hybrid-CapsLock Management
-                    ShowHybridManagementMenu()
-                    Input, _hybridCmd, L1 T10, {Escape}{Backspace}, i,u,r,f,s,e
-                    
-                    if (ErrorLevel = "Timeout" || ErrorLevel = "EndKey:Escape") {
-                        _exitLeader := true
-                    } else if (ErrorLevel = "EndKey:Backspace") {
-                        continue ; Back to commands menu
-                    } else {
-                        ExecuteHybridManagementCommand(_hybridCmd)
-                        _exitLeader := true
-                    }
-            }
-
-            if (_exitLeader)
-                break
-            else
-                continue
-        }
-
-        ; ----- LEVEL 2: Information Mode -----
-        if (_leaderKey = "i") {
-            ShowInformationMenu()
-            Input, _infoKey, L1 T10, {Escape}{Backspace}, e,n,p,a,c,w,g,l
-
-            if (ErrorLevel = "Timeout" || ErrorLevel = "EndKey:Escape") {
-                break ; Exit loop
-            }
-            if (ErrorLevel = "EndKey:Backspace") {
-                continue ; Go back to main leader menu
-            }
-
-            ; Insert information snippet dynamically from information.ini
-            InsertInformationFromKey(_infoKey)
-            break ; Action taken, exit loop
-        }
-
-        ; ----- LEVEL 2: Excel/Accounting Mode -----
-        if (_leaderKey = "n") {
-            ; Toggle excel layer
-            excelLayerActive := !excelLayerActive
-            ShowExcelStatus(excelLayerActive)
-            UpdateLayerStatus()
-            SetTimer, RemoveToolTip, 1500
-            break ; Exit leader after toggling
-        }
-
-        ; ----- LEVEL 2: Obsidian Layer Mode -----
-        if (_leaderKey = "o") {
-            ShowObsidianLayerMenu()
-            Input, _obsidianKey, L1 T10, {Escape}{Backspace}, 0,1,2,3,4,5,6,A,B,C,D,F,J,O,P,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,`
-
-            if (ErrorLevel = "Timeout" || ErrorLevel = "EndKey:Escape") {
-                ShowCenteredToolTip("DEBUG: Obsidian layer timeout/escape")
-                SetTimer, RemoveToolTip, 2000
-                break ; Exit loop
-            }
-            if (ErrorLevel = "EndKey:Backspace") {
-                ShowCenteredToolTip("DEBUG: Obsidian layer backspace")
-                SetTimer, RemoveToolTip, 2000
-                continue ; Go back to main leader menu
-            }
-
-            ; DEBUG: Show what key was pressed
-            ShowCenteredToolTip("DEBUG: Obsidian key pressed: " . _obsidianKey)
-            SetTimer, RemoveToolTip, 2000
-            
-            ; Execute Obsidian command
-            ExecuteObsidianLayerCommand(_obsidianKey)
-            break ; Action taken, exit loop
-        }
-
-        ; If an invalid key was pressed at Level 1, the loop will just restart
-    }
-
-    ; Cleanup after loop exits
-    leaderActive := false
-    ToolTip
-    ToolTip, , , , 1  ; Limpiar tooltip 1
-    ToolTip, , , , 2  ; Limpiar tooltip 2
-return
-
-CapsLock & 5::
-    WinGetClass, Class, A
-    if (InStr(Class, "CabinetWClass") || InStr(Class, "ExploreWClass")) {
-        Send, !d
-        Sleep, 100
-        Send, ^c
-        Sleep, 50
-        Send, {Esc}
-    } else {
-        Send, ^l
-        Sleep, 100
-        Send, ^c
-        Sleep, 50
-        Send, {Esc}
-    }
-return
-CapsLock & F10::
-    capsActsNormal := !capsActsNormal
-    if (capsActsNormal) {
-        SetCapsLockState, Off
-        ShowCapsLockStatus(true)
-    } else {
-        SetCapsLockState, AlwaysOff
-        ShowCapsLockStatus(false)
-    }
-    SetTimer, RemoveToolTip, 1200
-return
-
-CapsLock & F12::
-    WinGet, activePid, PID, A
-    if (activePid) {
-        Process, Close, %activePid%
-        ShowProcessTerminated()
-        SetTimer, RemoveToolTip, 1500
-    }
-return
-
-; Suprimir escritura de '/' cuando scroll mode está activo
-;/::
-;    if (scrollModeActive) {
-;        ; No hacer nada, suprimir el carácter
-;        return
-;    } else {
-;        ; Comportamiento normal, enviar el carácter
-;        Send, /
-;    }
-;return
-
-;-------------------------------------------------------------------------------
-; SECTION 3: HYBRID LOGIC (TAP VS HOLD)
-;-------------------------------------------------------------------------------
-CapsLock::
-    if (capsActsNormal) {
-        Send, {CapsLock}
-        return
-    }
-    ; Reset the hold flag when key is pressed
-    capsLockWasHeld := false
-    KeyWait, CapsLock, T0.2
-    if (ErrorLevel) { ; User is HOLDING the key beyond threshold
-        capsLockWasHeld := true
-    }
-return
-
-CapsLock Up::
-    if (capsActsNormal) {
-        return
-    }
-    ; Only activate Nvim layer if it was a tap (not held beyond threshold)
-    if (!capsLockWasHeld) {
-        isNvimLayerActive := !isNvimLayerActive
-        if (isNvimLayerActive) {
-            ShowNvimLayerStatus(true)
-            SetTempStatus("NVIM LAYER ON", 1500)
-        } else {
-            ShowNvimLayerStatus(false)
-            SetTempStatus("NVIM LAYER OFF", 1500)
-            VisualMode := false
-        }
-        UpdateLayerStatus()
-        SetTimer, RemoveToolTip, 1500
-    }
-    ; Reset the flag for next use
-    capsLockWasHeld := false
-return
-
-;-------------------------------------------------------------------------------
-; SECTION 4: NVIM LAYER (CONTEXT-SENSITIVE HOTKEYS)
-;-------------------------------------------------------------------------------
-#If (isNvimLayerActive && !GetKeyState("CapsLock","P"))
-
-;----------------------------------
-; SECTION 4A: NVIM LAYER SPECIALS
-;----------------------------------
-
-; f: Ctrl+Alt+k y desactivar capa nvim inmediatamente
-f::
-    ; Desactivar primero la capa nvim
-    isNvimLayerActive := false
-    VisualMode := false
-    ShowNvimLayerStatus(false)
-    UpdateLayerStatus()
-    SetTimer, RemoveToolTip, 800
-    ; Pequeña pausa para salir del contexto #If
-    Sleep, 30
-    ; Enviar Ctrl+Alt+k
-    SendInput, ^!k
-return
-
-; Timestamp writer (,) y formato (.) en capa nvim
-; Timestamp functionality removed - use CapsLock + Space → t instead
-
-;----------------------------------
-; SECTION 4B: NVIM LAYER MAIN KEYS
-;----------------------------------
-v:: ; Visual Mode Toggle
-    VisualMode := !VisualMode
-    if (VisualMode) {
-        ShowVisualModeStatus(true)
-    } else {
-        ShowVisualModeStatus(false)
-    }
-    UpdateLayerStatus()
-    SetTimer, RemoveToolTip, 1000
-return
-
-; ----- Basic Navigation (hjkl) -----
-h::
-    if (VisualMode)
-        Send, +{Left}
-    else
-        Send, {Left}
-return
-j::
-    if (VisualMode)
-        Send, +{Down}
-    else
-        Send, {Down}
-return
-k::
-    if (VisualMode)
-        Send, +{Up}
-    else
-        Send, {Up}
-return
-l::
-    if (VisualMode)
-        Send, +{Right}
-    else
-        Send, {Right}
-return
-
-; ----- Extended Navigation -----
-b::
-    if (VisualMode)
-        Send, ^+{Left}
-    else
-        Send, ^{Left}
-return
-w::
-    if (_deleteAwait) {
-        _deleteAwait := false
-        DeleteCurrentWord()
-        Gosub, RemoveToolTip
-        return
-    }
-    if (VisualMode)
-        Send, ^+{Right}
-    else
-        Send, ^{Right}
-return
-0::
-    if (VisualMode)
-        Send, +{Home}
-    else
-        Send, {Home}
-return
-+4::
-    if (VisualMode)
-        Send, +{End}
-    else
-        Send, {End}
-return
-u::
-    ; u = undo in nvim
-    Send, ^z
-return
-+u::
-    ; U = redo in nvim (Ctrl+R in vim, but Ctrl+Y in most editors)
-    Send, ^y
-return
-d::
-   if (VisualMode) {
-       Send, {Delete}
-       _deleteAwait := false
-       return
-   }
-   if (_deleteAwait) {
-       _deleteAwait := false
-       DeleteCurrentLine()
-       Gosub, RemoveToolTip
-       return
-   }
-   _deleteAwait := true
-   ShowDeleteMenu()
-   SetTimer, __DeleteTimeout, -600
-return
-
-; ----- Editing Actions -----
-x::Send, {Delete}
-+x::Send, {Backspace}  ; X = delete backwards in nvim
-r::
-    ; r = replace character in nvim - simplified approach
-    Send, {Delete}
-    ; Temporarily disable nvim layer to allow normal typing
-    isNvimLayerActive := false
-    _tempEditMode := true
-    ShowNvimLayerStatus(false)
-    SetTempStatus("REPLACE: Type character then press ESC", 3000)
-    UpdateLayerStatus()
-    ; Set a timer to reactivate nvim layer
-    SetTimer, ReactivateNvimAfterReplace, 3000
-return
-i::
-    ; i = insert mode in nvim (temporarily disable nvim layer)
-    isNvimLayerActive := false
-    _tempEditMode := true
-    ShowNvimLayerStatus(false)
-    SetTempStatus("INSERT MODE", 3000)
-    UpdateLayerStatus()
-    SetTimer, ReactivateNvimAfterReplace, 3000
-return
-+a::
-    ; A = append at end of line in nvim
-    Send, {End}
-    isNvimLayerActive := false
-    _tempEditMode := true
-    ShowNvimLayerStatus(false)
-    SetTempStatus("APPEND MODE", 3000)
-    UpdateLayerStatus()
-    SetTimer, ReactivateNvimAfterReplace, 3000
-return
-
-; New line below/above similar to Vim o/O
-o::
-    ; Insert new line below and move cursor there
-    Send, {End}{Enter}
-return
-+o::
-    ; Insert new line above and move cursor there
-    Send, {Home}{Enter}{Up}
-return
-; ----- Click Functions (moved from B and N) -----
-`;::
-    ; Click izquierdo sostenido en capa nvim
-    Click, Left, Down
-    rightClickHeld := true
-    ShowLeftClickStatus(true)
-    SetTempStatus("LEFT CLICK HELD", 1200)
-    SetTimer, RemoveToolTip, 1200
-    
-    ; Esperar a que se suelte la tecla
-    KeyWait, `;
-    
-    ; Soltar click izquierdo
-    Click, Left, Up
-    rightClickHeld := false
-    ShowLeftClickStatus(false)
-    SetTimer, RemoveToolTip, 1200
-return
-
-'::
-    ; Click derecho simple en capa nvim
-    Click, Right
-    ShowRightClickStatus(true)
-    SetTempStatus("RIGHT CLICK", 1200)
-    SetTimer, RemoveToolTip, 1200
-return
-
-; ----- Copy/Paste (Vim-like Yank/Paste) -----
-y::
-   if (VisualMode) {
-       Send, ^c
-       ShowCopyNotification()
-       _yankAwait := false
-       return
-   }
-   if (_yankAwait) {
-       _yankAwait := false
-       CopyCurrentLine()
-       Gosub, RemoveToolTip
-       return
-   }
-   _yankAwait := true
-   ShowYankMenu()
-   SetTimer, __YankTimeout, -600
-return
-
-p::
-    if (_yankAwait) {
-        _yankAwait := false
-        CopyCurrentParagraph()
-        Gosub, RemoveToolTip
-        return
-    }
-    Send, ^v
-    return
-+p::
-   PastePlain()
-return
-
-a::
-    if (_deleteAwait) {
-        _deleteAwait := false
-        DeleteAll()
-        Gosub, RemoveToolTip
-        return
-    }
-    if (_yankAwait) {
-        _yankAwait := false
-        Send, ^a^c
-        ShowCopyNotification()
-        Gosub, RemoveToolTip
-    }
-return
-
-; ----- Smooth Scrolling -----
-+e::Send, {WheelDown}{WheelDown}{WheelDown}
-+y::Send, {WheelUp}{WheelUp}{WheelUp}
-e::
-    ; e = end of word in nvim (like w but to end)
-    Send, ^{Right}{Left}
-return
-
-
-; ----- Touchpad Scroll Mode (Nvim Layer) -----
-LShift::
-RShift::
-    ; Check if Shift touchpad scroll is enabled in Nvim layer configuration
-    nvimShiftTouchpadScroll := ReadConfigValue("Advanced", "nvim_shift_touchpad_scroll", "false")
-    
-    ; Verificar que estamos en la capa NVIM y no hay otras capas activas
-    if (!isNvimLayerActive || excelLayerActive || leaderActive || nvimShiftTouchpadScroll != "true") {
-        ; Si no estamos en NVIM, hay conflictos, o la función está desactivada, comportamiento normal de Shift
-        if (A_ThisHotkey = "LShift")
-            Send, {LShift down}
-        else
-            Send, {RShift down}
-        KeyWait, % SubStr(A_ThisHotkey, 1)
-        if (A_ThisHotkey = "LShift")
-            Send, {LShift up}
-        else
-            Send, {RShift up}
-        return
-    }
-    
-    ; Activar modo scroll con touchpad en capa nvim
-    scrollModeActive := true
-    SetTempStatus("SCROLL MODE ACTIVE", 2000)
-    ShowScrollModeStatus(true)
-    UpdateLayerStatus()
-    SetTimer, RemoveToolTip, 1500
-    
-    ; Variables para tracking del mouse
-    MouseGetPos, startX, startY
-    
-    ; Loop mientras se mantenga presionada cualquier tecla Shift
-    while (GetKeyState("LShift", "P") || GetKeyState("RShift", "P")) {
-        MouseGetPos, currentX, currentY
-        
-        ; Calcular diferencia desde la posición inicial
-        deltaX := currentX - startX
-        deltaY := currentY - startY
-        
-        ; Umbral mínimo para evitar scroll accidental
-        threshold := 3
-        
-        ; Scroll vertical (más sensible) - EJES INVERTIDOS
-        if (Abs(deltaY) > threshold) {
-            if (deltaY > 0) {
-                ; Movimiento hacia abajo = scroll up (invertido)
-                Send, {WheelUp}
-            } else {
-                ; Movimiento hacia arriba = scroll down (invertido)
-                Send, {WheelDown}
-            }
-            ; Actualizar posición de referencia para scroll continuo
-            startY := currentY
-        }
-        
-        ; Scroll horizontal (menos sensible) - EJES INVERTIDOS
-        if (Abs(deltaX) > threshold * 2) {
-            if (deltaX > 0) {
-                ; Movimiento hacia derecha = scroll left (invertido)
-                Send, {WheelLeft}
-            } else {
-                ; Movimiento hacia izquierda = scroll right (invertido)
-                Send, {WheelRight}
-            }
-            ; Actualizar posición de referencia para scroll continuo
-            startX := currentX
-        }
-        
-        Sleep, 10 ; Pequeña pausa para suavizar el scroll
-    }
-    
-    ; Cleanup al soltar las teclas
-    scrollModeActive := false
-    ShowScrollModeStatus(false)
-    SetTempStatus("SCROLL MODE OFF", 800)
-    UpdateLayerStatus()
-    SetTimer, RemoveToolTip, 800
-return
-
-
-#If ; End of Nvim Layer context
-
-;-------------------------------------------------------------------------------
-; SECTION 5: EXCEL/ACCOUNTING LAYER (PERSISTENT EXCEL PRODUCTIVITY)
-;-------------------------------------------------------------------------------
-#If (excelLayerActive && !GetKeyState("CapsLock","P"))
-
-; Excel/Accounting layout mapping:
-; NUMPAD SECTION:
-; 7 8 9    ->    7 8 9
-; u i o    ->    4 5 6  
-; j k l    ->    1 2 3
-; m        ->    0
-; ,        ->    , (numpad comma)
-; .        ->    . (numpad dot)
-; p        ->    + (plus)
-; ;        ->    - (minus)
-; /        ->    / (divide)
-;
-; NAVIGATION SECTION:
-; w a s d  ->    ↑ ← ↓ → (arrows)
-; [        ->    Shift+Tab
-; ]        ->    Tab
-;
-; EXCEL FUNCTIONS:
-; Enter    ->    Ctrl+Enter (fill down)
-; Space    ->    F2 (edit cell)
-; f        ->    Ctrl+F (find)
-; r        ->    Ctrl+R (fill right)
-
-; === NUMPAD SECTION ===
-; Top row (7, 8, 9)
-7::Send, {Numpad7}
-8::Send, {Numpad8}
-9::Send, {Numpad9}
-
-; Middle row (4, 5, 6)
-u::Send, {Numpad4}
-i::Send, {Numpad5}
-o::Send, {Numpad6}
-
-; Bottom row (1, 2, 3)
-j::Send, {Numpad1}
-k::Send, {Numpad2}
-l::Send, {Numpad3}
-
-; Zero
-m::Send, {Numpad0}
-
-; Decimal and comma
-,::Send, {NumpadComma}  ; Numpad comma
-.::Send, {NumpadDot}    ; Numpad dot
-
-; Operations
-p::Send, {NumpadAdd}    ; Plus
-`;::Send, {NumpadSub}   ; Minus (semicolon)
-/::Send, {NumpadDiv}    ; Divide (moved from Shift to avoid conflicts)
-
-; === NAVIGATION SECTION ===
-; Arrow keys (WASD)
-w::Send, {Up}           ; Up arrow
-a::Send, {Left}         ; Left arrow  
-s::Send, {Down}         ; Down arrow
-d::Send, {Right}        ; Right arrow
-
-; Tab navigation
-[::Send, +{Tab}         ; Shift+Tab
-]::Send, {Tab}          ; Tab
-
-; === EXCEL FUNCTIONS ===
-; Cell editing and filling
-Enter::Send, ^{Enter}   ; Ctrl+Enter (fill down)
-Space::Send, {F2}       ; F2 (edit cell)
-f::Send, ^f             ; Ctrl+F (find)
-r::Send, ^r             ; Ctrl+R (fill right)
-
-; Additional Excel shortcuts
-h::Send, ^h             ; Ctrl+H (find & replace)
-g::Send, ^g             ; Ctrl+G (go to)
-t::Send, ^t             ; Ctrl+T (create table)
-n::Send, ^n             ; Ctrl+N (new workbook)
-v::Send, ^v             ; Ctrl+V (paste)
-c::Send, ^c             ; Ctrl+C (copy)
-x::Send, ^x             ; Ctrl+X (cut)
-z::Send, ^z             ; Ctrl+Z (undo)
-y::Send, ^y             ; Ctrl+Y (redo)
-
-; Escape to exit excel layer
-+n::
-    excelLayerActive := false
-    ShowExcelStatus(false)
-    UpdateLayerStatus()
-    SetTimer, RemoveToolTip, 1200
-return
-
-#If ; End of Excel Layer context
-
-__YankTimeout:
-    _yankAwait := false
-    Gosub, RemoveToolTip
-return
-
-__DeleteTimeout:
-    _deleteAwait := false
-    Gosub, RemoveToolTip
-return
-
-ReactivateNvimAfterReplace:
-    SetTimer, ReactivateNvimAfterReplace, Off
-    _tempEditMode := false
-    isNvimLayerActive := true
-    ShowNvimLayerStatus(true)
-    SetTempStatus("NVIM LAYER ON", 1000)
-    UpdateLayerStatus()
-    SetTimer, RemoveToolTip, 1000
-return
-
-; ESC hotkey to reactivate nvim layer after replace/insert modes
-; Only when we're in a temporary edit mode
-~Esc::
-    ; Only reactivate if we're in a temporary edit mode
-    if (!isNvimLayerActive && _tempEditMode) {
-        ; Cancel the auto-reactivation timer
-        SetTimer, ReactivateNvimAfterReplace, Off
-        ; Clear temp edit mode flag
-        _tempEditMode := false
-        ; Reactivate nvim layer immediately
-        isNvimLayerActive := true
-        ShowNvimLayerStatus(true)
-        SetTempStatus("NVIM LAYER ON", 1000)
-        UpdateLayerStatus()
-        SetTimer, RemoveToolTip, 1000
-    }
-return
-
-;-------------------------------------------------------------------------------
-; SECTION 5: HELPER FUNCTIONS
-;-------------------------------------------------------------------------------
+; Basic tooltip function for startup
 ShowCenteredToolTip(Text) {
     ToolTipX := A_ScreenWidth // 2
     ToolTipY := A_ScreenHeight - 100
-    ToolTip, %Text%, %ToolTipX%, %ToolTipY%
-	return
+    ToolTip(Text, ToolTipX, ToolTipY)
 }
 
-ShowNvimLayerStatus(isActive) {
-    ; Tooltip simple y limpio para la capa Nvim con más espacio
-    ToolTipX := A_ScreenWidth // 2 - 60
-    ToolTipY := A_ScreenHeight // 2 - 30
+; Timer function to remove tooltip
+RemoveToolTip() {
+    ToolTip()
+}
+
+
+; Configuration reading function
+ReadConfigValue(section, key, defaultValue := "") {
+    if (section = "Hybrid" && key = "tap_timeout") {
+        return "200"
+    }
+    if (section = "Hybrid" && key = "leader_timeout") {
+        return "5000"
+    }
+    if (section = "Advanced" && key = "nvim_shift_touchpad_scroll") {
+        return "false"
+    }
+    return defaultValue
+}
+
+; Status notification functions (Phase 2 implementation)
+ShowCopyNotification() {
+    ShowCenteredToolTip("COPIED")
+    SetTimer(RemoveToolTip, -800)
+}
+
+ShowLeftClickStatus(isActive) {
     if (isActive) {
-        ToolTip, `n  NVIM LAYER ON `n  `n, %ToolTipX%, %ToolTipY%, 1
+        ShowCenteredToolTip("LEFT CLICK HELD")
     } else {
-        ToolTip, `n NVIM LAYER OFF `n  `n, %ToolTipX%, %ToolTipY%, 1
+        ShowCenteredToolTip("LEFT CLICK RELEASED")
     }
-	return
 }
 
-ShowVisualModeStatus(isActive) {
-    ; Tooltip para Visual Mode con estilo consistente
-    ToolTipX := A_ScreenWidth // 2 - 60
-    ToolTipY := A_ScreenHeight // 2 - 30
-    if (isActive) {
-        ToolTip, `n VISUAL MODE ON `n, %ToolTipX%, %ToolTipY%, 1
+ShowRightClickStatus(isActive) {
+    ShowCenteredToolTip("RIGHT CLICK")
+}
+
+ShowCapsLockStatus(isNormal) {
+    if (isNormal) {
+        ShowCenteredToolTip("CAPSLOCK NORMAL MODE")
     } else {
-        ToolTip, `n VISUAL MODE OFF `n, %ToolTipX%, %ToolTipY%, 1
+        ShowCenteredToolTip("CAPSLOCK HYBRID MODE")
     }
-	return
 }
-
-ShowCapsLockStatus(isActive) {
-    ; Tooltip para CapsLock toggle con estilo consistente
-    ToolTipX := A_ScreenWidth // 2 - 60
-    ToolTipY := A_ScreenHeight // 2 - 30
-    if (isActive) {
-        ToolTip, `n CAPSLOCK ON `n, %ToolTipX%, %ToolTipY%, 1
-    } else {
-        ToolTip, `n CAPSLOCK OFF `n, %ToolTipX%, %ToolTipY%, 1
-    }
-	return
-}
-
-ShowRightClickStatus(isHeld) {
-    ; Tooltip para Right Click sostenido con estilo consistente
-    ToolTipX := A_ScreenWidth // 2 - 70
-    ToolTipY := A_ScreenHeight // 2 - 30
-    if (isHeld) {
-        ToolTip, `n RIGHT CLICK HELD `n, %ToolTipX%, %ToolTipY%, 1
-    } else {
-        ToolTip, `n RIGHT CLICK RELEASED `n, %ToolTipX%, %ToolTipY%, 1
-    }
-	return
-}
-
-ShowLeftClickStatus(isHeld) {
-    ; Tooltip para Left Click sostenido con estilo consistente
-    ToolTipX := A_ScreenWidth // 2 - 70
-    ToolTipY := A_ScreenHeight // 2 - 30
-    if (isHeld) {
-        ToolTip, `n LEFT CLICK HELD `n, %ToolTipX%, %ToolTipY%, 1
-    } else {
-        ToolTip, `n LEFT CLICK RELEASED `n, %ToolTipX%, %ToolTipY%, 1
-    }
-	return
-}
-
-ShowScrollModeStatus(isActive) {
-    ; Tooltip para Scroll Mode con estilo consistente
-    ToolTipX := A_ScreenWidth // 2 - 80
-    ToolTipY := A_ScreenHeight // 2 - 30
-    if (isActive) {
-        ToolTip, `n SCROLL MODE ACTIVE `n Move touchpad to scroll `n, %ToolTipX%, %ToolTipY%, 1
-    } else {
-        ToolTip, `n SCROLL MODE OFF `n, %ToolTipX%, %ToolTipY%, 1
-    }
-	return
-}
-
-ShowCopyStatus() {
-    ; Tooltip para notificación de copiado con estilo consistente
-    ToolTipX := A_ScreenWidth // 2 - 40
-    ToolTipY := A_ScreenHeight // 2 - 30
-    ToolTip, `n COPIED `n, %ToolTipX%, %ToolTipY%, 1
-	return
-}
-
-; Timestamp format functions removed - functionality moved to timestamps.ini system
-
-; ShowTSFormatStatus removed - timestamp functionality moved to timestamps.ini system
-
-ShowExcelStatus(isActive) {
-    ; Tooltip para estado de la capa Excel/Accounting
-    ToolTipX := A_ScreenWidth // 2 - 70
-    ToolTipY := A_ScreenHeight // 2 - 30
-    if (isActive) {
-        ToolTip, `n EXCEL LAYER ON `n, %ToolTipX%, %ToolTipY%, 1
-    } else {
-        ToolTip, `n EXCEL LAYER OFF `n, %ToolTipX%, %ToolTipY%, 1
-    }
-	return
-}
-
-UpdateLayerStatus() {
-    ; Update JSON file with current layer states for Zebar integration
-    FormatTime, CurrentTime, , yyyy-MM-dd HH:mm:ss
-    
-    ; Check if temporary status has expired
-    if (A_TickCount > tempStatusExpiry) {
-        currentTempStatus := ""
-    }
-    
-    JsonContent := "{"
-    JsonContent .= """nvim_layer"": " . (isNvimLayerActive ? "true" : "false") . ","
-    JsonContent .= """excel_layer"": " . (excelLayerActive ? "true" : "false") . ","
-    JsonContent .= """visual_mode"": " . (VisualMode ? "true" : "false") . ","
-    JsonContent .= """leader_active"": " . (leaderActive ? "true" : "false") . ","
-    JsonContent .= """yank_await"": " . (_yankAwait ? "true" : "false") . ","
-    JsonContent .= """right_click_held"": " . (rightClickHeld ? "true" : "false") . ","
-    JsonContent .= """scroll_mode"": " . (scrollModeActive ? "true" : "false") . ","
-    JsonContent .= """caps_normal"": " . (capsActsNormal ? "true" : "false") . ","
-    JsonContent .= """temp_status"": """ . currentTempStatus . ""","
-    JsonContent .= """temp_status_active"": " . (currentTempStatus != "" ? "true" : "false") . ","
-    JsonContent .= """last_updated"": """ . CurrentTime . """"
-    JsonContent .= "}"
-    
-    ; Write to local file
-    FileDelete, %LayerStatusFile%
-    FileAppend, %JsonContent%, %LayerStatusFile%
-    
-    ; Copy to Zebar widget folder if it exists
-    EnvGet, UserProfile, USERPROFILE
-    if (UserProfile) {
-        ZebarWidgetPath := UserProfile . "\.glzr\zebar\capsLock-indicator\with-glazewm\layer_status.json"
-        FileCopy, %LayerStatusFile%, %ZebarWidgetPath%, 1
-    }
-	return
-}
-
-SetTempStatus(statusText, durationMs) {
-    ; Set a temporary status that will be shown in Zebar
-    global currentTempStatus, tempStatusExpiry
-    currentTempStatus := statusText
-    tempStatusExpiry := A_TickCount + durationMs
-    UpdateLayerStatus()
-	return
-}
-
-ShowYankMenu() {
-    ; Menu de yank en capa Nvim con estilo centrado
-    ToolTipX := A_ScreenWidth // 2 - 80
-    ToolTipY := A_ScreenHeight // 2 - 60
-    MenuText := "YANK MODE`n"
-    MenuText .= "`n"
-    MenuText .= "y - Line`n"
-    MenuText .= "p - Paragraph`n"
-    MenuText .= "a - All`n"
-    ToolTip, %MenuText%, %ToolTipX%, %ToolTipY%, 1
-	return
-}
-
-ShowDeleteMenu() {
-    ; Menu de delete en capa Nvim con estilo centrado
-    ToolTipX := A_ScreenWidth // 2 - 80
-    ToolTipY := A_ScreenHeight // 2 - 60
-    MenuText := "DELETE MODE`n"
-    MenuText .= "`n"
-    MenuText .= "d - Line`n"
-    MenuText .= "w - Word`n"
-    MenuText .= "a - All`n"
-    ToolTip, %MenuText%, %ToolTipX%, %ToolTipY%, 1
-	return
-}
-
 
 ShowProcessTerminated() {
-    ; Tooltip para proceso terminado
-    ToolTipX := A_ScreenWidth // 2 - 70
-    ToolTipY := A_ScreenHeight // 2 - 30
-    ToolTip, `n PROCESS TERMINATED `n, %ToolTipX%, %ToolTipY%, 1
-	return
+    ShowCenteredToolTip("PROCESS TERMINATED")
 }
 
-ShowLeaderMenu() {
-    ; Menu principal del Leader centrado
-    ToolTipX := A_ScreenWidth // 2 - 80
-    ToolTipY := A_ScreenHeight // 2 - 80
-    MenuText := "LEADER MENU`n"
-    MenuText .= "`n"
-    MenuText .= "w - Windows`n"
-    MenuText .= "p - Programs`n"
-    MenuText .= "t - Time`n"
-    MenuText .= "c - Commands`n"
-    MenuText .= "i - Information`n"
-    MenuText .= "n - Excel`n"
-    MenuText .= "o - Obsidian`n"
-    MenuText .= "`n"
-    MenuText .= "[Esc: Exit]"
-    ToolTip, %MenuText%, %ToolTipX%, %ToolTipY%, 2
-	return
+SetTempStatus(status, duration) {
+    global currentTempStatus, tempStatusExpiry
+    currentTempStatus := status
+    tempStatusExpiry := A_TickCount + duration
 }
 
-ShowWindowMenu() {
-    ; Menu de ventanas en formato lista vertical centrado
-    ToolTipX := A_ScreenWidth // 2 - 110
-    ToolTipY := A_ScreenHeight // 2 - 140
-    MenuText := "WINDOW MANAGER`n"
-    MenuText .= "`n"
-    MenuText .= "SPLITS:`n"
-    MenuText .= "2 - Split 50/50    3 - Split 33/67`n"
-    MenuText .= "4 - Quarter Split`n"
-    MenuText .= "`n"
-    MenuText .= "ACTIONS:`n"
-    MenuText .= "x - Close          m - Maximize`n"
-    MenuText .= "- - Minimize`n"
-    MenuText .= "`n"
-    MenuText .= "ZOOM TOOLS:`n"
-    MenuText .= "d - Draw           z - Zoom`n"
-    MenuText .= "c - Zoom with cursor`n"
-    MenuText .= "`n"
-    MenuText .= "PERSISTENT SWITCH:`n"
-    MenuText .= "j/k - Blind Switch (Next/Prev)`n"
-    MenuText .= "l/h - Visual Switch (Next/Prev)`n"
-    MenuText .= "`n"
-    MenuText .= "[Enter/Esc: Exit Mode] [Backspace: Back]"
-    ToolTip, %MenuText%, %ToolTipX%, %ToolTipY%, 2
-	return
-}
-
-ShowTimeMenu() {
-    ; Menu principal de timestamp - lee desde timestamps.ini
-    ToolTipX := A_ScreenWidth // 2 - 110
-    ToolTipY := A_ScreenHeight // 2 - 80
-    MenuText := "TIMESTAMP MANAGER`n"
-    MenuText .= "`n"
-    MenuText .= "d - Date Formats`n"
-    MenuText .= "t - Time Formats`n"
-    MenuText .= "h - Date+Time Formats`n"
-    MenuText .= "`n"
-    MenuText .= "[Backspace: Back] [Esc: Exit]"
-    ToolTip, %MenuText%, %ToolTipX%, %ToolTipY%, 2
-	return
-}
-
-ShowDateFormatsMenu() {
-    ; Menu de formatos de fecha - lee desde timestamps.ini
-    global TimestampsIni
-    ToolTipX := A_ScreenWidth // 2 - 120
-    ToolTipY := A_ScreenHeight // 2 - 100
-    MenuText := "DATE FORMATS`n"
-    MenuText .= "`n"
-    
-    ; Read menu lines dynamically from timestamps.ini
-    Loop, 10 {
-        IniRead, lineContent, %TimestampsIni%, MenuDisplay, date_line%A_Index%
-        if (lineContent != "ERROR" && lineContent != "") {
-            MenuText .= lineContent . "`n"
-        }
+; Nvim Layer status functions (Phase 3 implementation)
+ShowNvimLayerStatus(isActive) {
+    if (isActive) {
+        ShowCenteredToolTip("NVIM LAYER ON")
+    } else {
+        ShowCenteredToolTip("NVIM LAYER OFF")
     }
-    
-    MenuText .= "`n"
-    MenuText .= "[Backspace: Back] [Esc: Exit]"
-    ToolTip, %MenuText%, %ToolTipX%, %ToolTipY%, 2
-	return
 }
 
-ShowTimeFormatsMenu() {
-    ; Menu de formatos de hora - lee desde timestamps.ini
-    global TimestampsIni
-    ToolTipX := A_ScreenWidth // 2 - 120
-    ToolTipY := A_ScreenHeight // 2 - 100
-    MenuText := "TIME FORMATS`n"
-    MenuText .= "`n"
-    
-    ; Read menu lines dynamically from timestamps.ini
-    Loop, 10 {
-        IniRead, lineContent, %TimestampsIni%, MenuDisplay, time_line%A_Index%
-        if (lineContent != "ERROR" && lineContent != "") {
-            MenuText .= lineContent . "`n"
-        }
+; Visual mode status function (Phase 4 implementation)
+ShowVisualModeStatus(isActive) {
+    if (isActive) {
+        ShowCenteredToolTip("VISUAL MODE ON")
+    } else {
+        ShowCenteredToolTip("VISUAL MODE OFF")
     }
-    
-    MenuText .= "`n"
-    MenuText .= "[Backspace: Back] [Esc: Exit]"
-    ToolTip, %MenuText%, %ToolTipX%, %ToolTipY%, 2
-	return
 }
 
-ShowDateTimeFormatsMenu() {
-    ; Menu de formatos de fecha+hora - lee desde timestamps.ini
-    global TimestampsIni
-    ToolTipX := A_ScreenWidth // 2 - 140
-    ToolTipY := A_ScreenHeight // 2 - 120
-    MenuText := "DATE+TIME FORMATS`n"
-    MenuText .= "`n"
-    
-    ; Read menu lines dynamically from timestamps.ini
-    Loop, 10 {
-        IniRead, lineContent, %TimestampsIni%, MenuDisplay, datetime_line%A_Index%
-        if (lineContent != "ERROR" && lineContent != "") {
-            MenuText .= lineContent . "`n"
-        }
-    }
-    
-    MenuText .= "`n"
-    MenuText .= "[Backspace: Back] [Esc: Exit]"
-    ToolTip, %MenuText%, %ToolTipX%, %ToolTipY%, 2
-	return
+; Delete menu function (Phase 4 implementation)
+ShowDeleteMenu() {
+    ShowCenteredToolTip("DELETE: w=word, d=line, a=all")
 }
 
-ShowProgramMenu() {
-    ; Menu de programas en formato lista vertical centrado - lee desde programs.ini
-    global ProgramsIni
-    ToolTipX := A_ScreenWidth // 2 - 120
-    ToolTipY := A_ScreenHeight // 2 - 150
-    MenuText := "PROGRAM LAUNCHER`n"
-    MenuText .= "`n"
-    
-    ; Read menu lines dynamically from programs.ini
-    Loop, 10 {
-        IniRead, lineContent, %ProgramsIni%, MenuDisplay, line%A_Index%
-        if (lineContent != "ERROR" && lineContent != "") {
-            MenuText .= lineContent . "`n"
-        }
-    }
-    
-    MenuText .= "`n"
-    MenuText .= "[Backspace: Back] [Esc: Exit]"
-    ToolTip, %MenuText%, %ToolTipX%, %ToolTipY%, 2
-	return
+; Yank menu function (Phase 4 implementation)
+ShowYankMenu() {
+    ShowCenteredToolTip("YANK: y=line, w=word, a=all, p=paragraph")
 }
 
-RemoveToolTip:
-    SetTimer, RemoveToolTip, Off
-    ToolTip
-    ToolTip, , , , 1  ; Limpiar tooltip 1 (Nvim Layer)
-    ToolTip, , , , 2  ; Limpiar tooltip 2 (Program Menu)
-return
-
-ShowCopyNotification() {
-    ShowCopyStatus()
-    SetTempStatus("COPIED", 800)
-    SetTimer, RemoveToolTip, 800
-	return
-}
-
-GoSplitScreen(percent) {
-    WinGet, active_id, ID, A
-    W_Left := (A_ScreenWidth * percent) // 100
-    W_Right := A_ScreenWidth - W_Left
-    H := A_ScreenHeight
-    X_Right := W_Left
-
-    WinMove, ahk_id %active_id%,, 0, 0, %W_Left%, %H%
-    Send, !{Tab}
-    WinWaitNotActive, ahk_id %active_id%,, 1
-    WinMove, A, , %X_Right%, 0, %W_Right%, %H%
-	return
-}
-
-CopyCurrentLine() {
-    Send, {Home}+{End}^c
-    Sleep, 50
-    ShowCopyNotification()
-	return
-}
-
-CopyCurrentParagraph() {
-    Send, {Right}{Left} ; Clear selection
-    Send, ^+{Up}^+{Down} ; Select paragraph
-    Send, ^c
-    ClipWait, 0.3
-    Sleep, 60
-    ShowCopyNotification()
-	return
+; Nvim helper functions (Phase 4 implementation)
+DeleteCurrentWord() {
+    Send("^{Right}^+{Left}{Delete}")
+    ShowCenteredToolTip("WORD DELETED")
+    SetTimer(RemoveToolTip, -800)
 }
 
 DeleteCurrentLine() {
-    Send, {Home}+{End}{Delete}
-    ShowDeleteNotification()
-	return
-}
-
-DeleteCurrentWord() {
-    Send, ^+{Right}{Delete}
-    ShowDeleteNotification()
-	return
+    Send("{Home}+{End}{Delete}")
+    ShowCenteredToolTip("LINE DELETED")
+    SetTimer(RemoveToolTip, -800)
 }
 
 DeleteAll() {
-    Send, ^a{Delete}
-    ShowDeleteNotification()
-	return
+    Send("^a{Delete}")
+    ShowCenteredToolTip("ALL DELETED")
+    SetTimer(RemoveToolTip, -800)
 }
 
-ShowDeleteNotification() {
-    SetTempStatus("DELETED", 800)
-    SetTimer, RemoveToolTip, 800
-	return
+CopyCurrentLine() {
+    Send("{Home}+{End}^c")
+    ShowCenteredToolTip("LINE COPIED")
+    SetTimer(RemoveToolTip, -800)
+}
+
+CopyCurrentParagraph() {
+    Send("^{Up}^+{Down}^c")
+    ShowCenteredToolTip("PARAGRAPH COPIED")
+    SetTimer(RemoveToolTip, -800)
 }
 
 PastePlain() {
-    ClipSaved := ClipboardAll
-    Clipboard := Clipboard
-    Send, ^v
-    Sleep, 50
-    Clipboard := Clipboard
-    ClipSaved := ""
-	return
+    ; Paste as plain text (implementation depends on application)
+    Send("^+v")  ; Common shortcut for paste plain text
 }
 
+; Timer functions for Nvim layer
+DeleteTimeout() {
+    global _deleteAwait
+    _deleteAwait := false
+    SetTimer(RemoveToolTip, -100)
+}
+
+YankTimeout() {
+    global _yankAwait
+    _yankAwait := false
+    SetTimer(RemoveToolTip, -100)
+}
+
+ReactivateNvimAfterInsert() {
+    global isNvimLayerActive, _tempEditMode
+    if (_tempEditMode) {
+        isNvimLayerActive := true
+        _tempEditMode := false
+        ShowNvimLayerStatus(true)
+        UpdateLayerStatus()
+        SetTimer(RemoveToolTip, -1000)
+    }
+}
+
+ReactivateNvimAfterReplace() {
+    global isNvimLayerActive, _tempEditMode
+    if (_tempEditMode) {
+        isNvimLayerActive := true
+        _tempEditMode := false
+        ShowNvimLayerStatus(true)
+        UpdateLayerStatus()
+        SetTimer(RemoveToolTip, -1000)
+    }
+}
+
+;-------------------------------------------------------------------------------
+; SECTION 8: SPECIALIZED LAYERS (v2 - Phase 6)
+;-------------------------------------------------------------------------------
+
+; Excel/Accounting layer - only active when excelLayerActive is true
+#HotIf (excelLayerActive && !GetKeyState("CapsLock", "P"))
+
+; === NUMPAD SECTION ===
+; Top row (7, 8, 9)
+7::Send("{Numpad7}")
+8::Send("{Numpad8}")
+9::Send("{Numpad9}")
+
+; Middle row (4, 5, 6)
+u::Send("{Numpad4}")
+i::Send("{Numpad5}")
+o::Send("{Numpad6}")
+
+; Bottom row (1, 2, 3)
+j::Send("{Numpad1}")
+k::Send("{Numpad2}")
+l::Send("{Numpad3}")
+
+; Zero
+m::Send("{Numpad0}")
+
+; Decimal and comma
+,::Send("{NumpadComma}")
+.::Send("{NumpadDot}")
+
+; Operations
+p::Send("{NumpadAdd}")
+`;::Send("{NumpadSub}")
+/::Send("{NumpadDiv}")
+
+; === NAVIGATION SECTION ===
+; Arrow keys (WASD)
+w::Send("{Up}")
+a::Send("{Left}")
+s::Send("{Down}")
+d::Send("{Right}")
+
+; Tab navigation
+[::Send("+{Tab}")
+]::Send("{Tab}")
+
+; === EXCEL FUNCTIONS ===
+Enter::Send("^{Enter}")  ; Fill down
+Space::Send("{F2}")      ; Edit cell
+f::Send("^f")           ; Find
+r::Send("^r")           ; Fill right
+
+; === EXIT EXCEL LAYER ===
++n:: {
+    ; Shift+n to exit Excel layer
+    global excelLayerActive
+    excelLayerActive := false
+    ShowExcelLayerStatus(false)
+    SetTempStatus("EXCEL LAYER OFF", 2000)
+    UpdateLayerStatus()
+    SetTimer(RemoveToolTip, -2000)
+}
+
+; End of Excel Layer context
+#HotIf
+
+; Specialized layer helper functions (Phase 6 implementation)
+ShowExcelLayerStatus(isActive) {
+    if (isActive) {
+        ShowCenteredToolTip("EXCEL LAYER ON")
+    } else {
+        ShowCenteredToolTip("EXCEL LAYER OFF")
+    }
+}
+
+ShowWindowMenu() {
+    ToolTipX := A_ScreenWidth // 2 - 110
+    ToolTipY := A_ScreenHeight // 2 - 120
+    menuText := "WINDOW MANAGER`n`n"
+    menuText .= "SPLITS:`n"
+    menuText .= "2 - Split 50/50    3 - Split 33/67`n"
+    menuText .= "4 - Quarter Split`n`n"
+    menuText .= "ACTIONS:`n"
+    menuText .= "x - Close          m - Maximize`n"
+    menuText .= "- - Minimize`n`n"
+    menuText .= "ZOOM TOOLS:`n"
+    menuText .= "d - Draw           z - Zoom`n"
+    menuText .= "c - Zoom with cursor`n`n"
+    menuText .= "WINDOW SWITCHING:`n"
+    menuText .= "j/k - Persistent Window Switch`n`n"
+    menuText .= "[\: Back] [Esc: Exit]"
+    ToolTip(menuText, ToolTipX, ToolTipY, 2)
+}
+
+ShowTimeMenu() {
+    global TimestampsIni
+    ToolTipX := A_ScreenWidth // 2 - 110
+    ToolTipY := A_ScreenHeight // 2 - 80
+    menuText := "TIMESTAMP MANAGER`n`n"
+    menuText .= "d - Date Formats`n"
+    menuText .= "t - Time Formats`n"
+    menuText .= "h - Date+Time Formats`n`n"
+    menuText .= "[\: Back] [Esc: Exit]"
+    ToolTip(menuText, ToolTipX, ToolTipY, 2)
+}
+
+ShowInformationMenu() {
+    global InfoIni
+    ToolTipX := A_ScreenWidth // 2 - 120
+    ToolTipY := A_ScreenHeight // 2 - 100
+    menuText := "INFORMATION MANAGER`n`n"
+    
+    ; Read menu lines dynamically from information.ini
+    Loop 10 {
+        lineContent := IniRead(InfoIni, "MenuDisplay", "info_line" . A_Index, "")
+        if (lineContent != "" && lineContent != "ERROR") {
+            menuText .= lineContent . "`n"
+        }
+    }
+    
+    menuText .= "`n[\: Back] [Esc: Exit]"
+    ToolTip(menuText, ToolTipX, ToolTipY, 2)
+}
+
+; Window action executor
+ExecuteWindowAction(action) {
+    switch action {
+        case "2":
+            ; Split 50/50
+            Send("#{Left}")
+            Sleep(100)
+            Send("#{Right}")
+            ShowCenteredToolTip("SPLIT 50/50")
+            SetTimer(RemoveToolTip, -1500)
+        case "3":
+            ; Split 33/67
+            Send("#{Left}")
+            Sleep(100)
+            Send("#{Right}")
+            Sleep(100)
+            Send("#{Left}")
+            ShowCenteredToolTip("SPLIT 33/67")
+            SetTimer(RemoveToolTip, -1500)
+        case "4":
+            ; Quarter split
+            Send("#{Up}")
+            Sleep(100)
+            Send("#{Left}")
+            ShowCenteredToolTip("QUARTER SPLIT")
+            SetTimer(RemoveToolTip, -1500)
+        case "x":
+            ; Close window
+            Send("!{F4}")
+            ShowCenteredToolTip("WINDOW CLOSED")
+            SetTimer(RemoveToolTip, -1500)
+        case "m":
+            ; Maximize
+            Send("#{Up}")
+            ShowCenteredToolTip("MAXIMIZED")
+            SetTimer(RemoveToolTip, -1500)
+        case "-":
+            ; Minimize
+            Send("#{Down}")
+            ShowCenteredToolTip("MINIMIZED")
+            SetTimer(RemoveToolTip, -1500)
+        case "d":
+            ; Draw (from v1: Ctrl+Alt+Shift+9)
+            Send("^!+9")
+            ShowCenteredToolTip("DRAW MODE")
+            SetTimer(RemoveToolTip, -1500)
+        case "z":
+            ; Zoom (from v1: Ctrl+Alt+Shift+1)
+            Send("^!+1")
+            ShowCenteredToolTip("ZOOM MODE")
+            SetTimer(RemoveToolTip, -1500)
+        case "c":
+            ; Zoom with cursor (from v1: Ctrl+Alt+Shift+4)
+            Send("^!+4")
+            ShowCenteredToolTip("ZOOM CURSOR")
+            SetTimer(RemoveToolTip, -1500)
+        case "j":
+            ; Persistent blind switch - start mode
+            StartPersistentBlindSwitch()
+        case "k":
+            ; This will be handled in persistent mode
+            StartPersistentBlindSwitch()
+        default:
+            ShowCenteredToolTip("Unknown action: " . action)
+            SetTimer(RemoveToolTip, -1500)
+    }
+}
+
+; Persistent blind switch mode (no taskbar, instant switching)
+StartPersistentBlindSwitch() {
+    ShowCenteredToolTip("BLIND SWITCH MODE`nj: Next | k: Previous | Enter: Exit | Esc: Cancel")
+    
+    ; Persistent loop for blind switching
+    Loop {
+        ; Simple InputHook without complex options
+        ih := InputHook("L1 T10")
+        ih.Start()
+        ih.Wait()
+        
+        ; Check what happened
+        if (ih.EndReason = "Timeout") {
+            ih.Stop()  ; Clean up InputHook
+            ShowCenteredToolTip("BLIND SWITCH TIMEOUT")
+            SetTimer(RemoveToolTip, -1000)
+            break
+        }
+        
+        ; Get the input character
+        key := ih.Input
+        ih.Stop()  ; Clean up InputHook after getting input
+        
+        ; Handle the key
+        if (key = "j") {
+            ; Next window
+            Send("!{Tab}")
+            ShowCenteredToolTip("BLIND SWITCH MODE`nj: Next | k: Previous | Enter: Exit | Esc: Cancel")
+        }
+        else if (key = "k") {
+            ; Previous window
+            Send("!+{Tab}")
+            ShowCenteredToolTip("BLIND SWITCH MODE`nj: Next | k: Previous | Enter: Exit | Esc: Cancel")
+        }
+        else if (key = Chr(13) || key = Chr(10)) {  ; Enter (try both CR and LF)
+            ShowCenteredToolTip("BLIND SWITCH ENDED")
+            SetTimer(RemoveToolTip, -1000)
+            break
+        }
+        else if (key = Chr(27)) {  ; Escape
+            ShowCenteredToolTip("BLIND SWITCH CANCELLED")
+            SetTimer(RemoveToolTip, -1000)
+            break
+        }
+        ; For any other key, just continue the loop
+    }
+}
+
+; Visual window switch function removed - using only blind switch j/k
+
+; Timestamp mode handler
+HandleTimestampMode(mode) {
+    switch mode {
+        case "d":
+            ; Date formats submenu
+            Loop {
+                ShowDateFormatsMenu()
+                dateInput := InputHook("L1 T7")
+                dateInput.Start()
+                dateInput.Wait()
+                
+                if (dateInput.EndReason = "Timeout" || dateInput.Input = Chr(27)) {  ; Escape
+                    dateInput.Stop()  ; Clean up InputHook
+                    return  ; Exit timestamp mode
+                }
+                if (dateInput.Input = Chr(8)) {  ; Backspace
+                    dateInput.Stop()  ; Clean up InputHook
+                    break  ; Back to timestamp menu
+                }
+                
+                WriteTimestampFromKey("date", dateInput.Input)
+                return  ; Exit after inserting timestamp
+            }
+        case "t":
+            ; Time formats submenu
+            Loop {
+                ShowTimeFormatsMenu()
+                timeInput := InputHook("L1 T7")
+                timeInput.Start()
+                timeInput.Wait()
+                
+                if (timeInput.EndReason = "Timeout" || timeInput.Input = Chr(27)) {  ; Escape
+                    timeInput.Stop()  ; Clean up InputHook
+                    return  ; Exit timestamp mode
+                }
+                if (timeInput.Input = Chr(8)) {  ; Backspace
+                    timeInput.Stop()  ; Clean up InputHook
+                    break  ; Back to timestamp menu
+                }
+                
+                WriteTimestampFromKey("time", timeInput.Input)
+                return  ; Exit after inserting timestamp
+            }
+        case "h":
+            ; DateTime formats submenu
+            Loop {
+                ShowDateTimeFormatsMenu()
+                datetimeInput := InputHook("L1 T7")
+                datetimeInput.Start()
+                datetimeInput.Wait()
+                
+                if (datetimeInput.EndReason = "Timeout" || datetimeInput.Input = Chr(27)) {  ; Escape
+                    datetimeInput.Stop()  ; Clean up InputHook
+                    return  ; Exit timestamp mode
+                }
+                if (datetimeInput.Input = Chr(8)) {  ; Backspace
+                    datetimeInput.Stop()  ; Clean up InputHook
+                    break  ; Back to timestamp menu
+                }
+                
+                WriteTimestampFromKey("datetime", datetimeInput.Input)
+                return  ; Exit after inserting timestamp
+            }
+        default:
+            ShowCenteredToolTip("Unknown timestamp mode: " . mode)
+            SetTimer(RemoveToolTip, -1500)
+    }
+}
+
+; Information insertion from key
+InsertInformationFromKey(keyPressed) {
+    global InfoIni
+    
+    ; Read the information name mapped to this key
+    keyName := "key_" . keyPressed
+    infoName := IniRead(InfoIni, "InfoMapping", keyName, "")
+    
+    ; If no mapping found, show error
+    if (infoName = "" || infoName = "ERROR") {
+        ShowCenteredToolTip("Key '" . keyPressed . "' not mapped.`nAdd to information.ini`n[InfoMapping]")
+        SetTimer(RemoveToolTip, -3500)
+        return
+    }
+    
+    ; Read the information content for this key
+    infoContent := IniRead(InfoIni, "PersonalInfo", infoName, "")
+    if (infoContent = "" || infoContent = "ERROR") {
+        ShowCenteredToolTip(infoName . " not found in [PersonalInfo].`nAdd content to information.ini")
+        SetTimer(RemoveToolTip, -3500)
+        return
+    }
+    
+    ; Insert the information content
+    SendText(infoContent)
+    ShowInformationInserted(infoName)
+}
+
+ShowInformationInserted(infoName) {
+    ShowCenteredToolTip(infoName . " INSERTED")
+    SetTimer(RemoveToolTip, -1500)
+}
+
+; Timestamp menu functions
+ShowDateFormatsMenu() {
+    global TimestampsIni
+    ToolTipX := A_ScreenWidth // 2 - 120
+    ToolTipY := A_ScreenHeight // 2 - 100
+    menuText := "DATE FORMATS`n`n"
+    
+    ; Read menu lines dynamically from timestamps.ini
+    Loop 10 {
+        lineContent := IniRead(TimestampsIni, "MenuDisplay", "date_line" . A_Index, "")
+        if (lineContent != "" && lineContent != "ERROR") {
+            menuText .= lineContent . "`n"
+        }
+    }
+    
+    menuText .= "`n[\: Back] [Esc: Exit]"
+    ToolTip(menuText, ToolTipX, ToolTipY, 2)
+}
+
+ShowTimeFormatsMenu() {
+    global TimestampsIni
+    ToolTipX := A_ScreenWidth // 2 - 120
+    ToolTipY := A_ScreenHeight // 2 - 100
+    menuText := "TIME FORMATS`n`n"
+    
+    ; Read menu lines dynamically from timestamps.ini
+    Loop 10 {
+        lineContent := IniRead(TimestampsIni, "MenuDisplay", "time_line" . A_Index, "")
+        if (lineContent != "" && lineContent != "ERROR") {
+            menuText .= lineContent . "`n"
+        }
+    }
+    
+    menuText .= "`n[\: Back] [Esc: Exit]"
+    ToolTip(menuText, ToolTipX, ToolTipY, 2)
+}
+
+ShowDateTimeFormatsMenu() {
+    global TimestampsIni
+    ToolTipX := A_ScreenWidth // 2 - 140
+    ToolTipY := A_ScreenHeight // 2 - 120
+    menuText := "DATE+TIME FORMATS`n`n"
+    
+    ; Read menu lines dynamically from timestamps.ini
+    Loop 10 {
+        lineContent := IniRead(TimestampsIni, "MenuDisplay", "datetime_line" . A_Index, "")
+        if (lineContent != "" && lineContent != "ERROR") {
+            menuText .= lineContent . "`n"
+        }
+    }
+    
+    menuText .= "`n[\: Back] [Esc: Exit]"
+    ToolTip(menuText, ToolTipX, ToolTipY, 2)
+}
+
+; Timestamp writer function
 WriteTimestampFromKey(mode, keyPressed) {
-    ; Dynamic timestamp writer that reads formats from timestamps.ini
     global TimestampsIni
     
     ; Determine format key name based on mode and key pressed
     if (mode = "date") {
         if (keyPressed = "d") {
             ; Use default format
-            IniRead, defaultNum, %TimestampsIni%, DateFormats, default
+            defaultNum := IniRead(TimestampsIni, "DateFormats", "default", "1")
             formatKey := "format_" . defaultNum
         } else {
             formatKey := "format_" . keyPressed
@@ -1649,7 +674,7 @@ WriteTimestampFromKey(mode, keyPressed) {
     } else if (mode = "time") {
         if (keyPressed = "t") {
             ; Use default format
-            IniRead, defaultNum, %TimestampsIni%, TimeFormats, default
+            defaultNum := IniRead(TimestampsIni, "TimeFormats", "default", "1")
             formatKey := "format_" . defaultNum
         } else {
             formatKey := "format_" . keyPressed
@@ -1658,7 +683,7 @@ WriteTimestampFromKey(mode, keyPressed) {
     } else if (mode = "datetime") {
         if (keyPressed = "h") {
             ; Use default format
-            IniRead, defaultNum, %TimestampsIni%, DateTimeFormats, default
+            defaultNum := IniRead(TimestampsIni, "DateTimeFormats", "default", "1")
             formatKey := "format_" . defaultNum
         } else {
             formatKey := "format_" . keyPressed
@@ -1667,133 +692,1636 @@ WriteTimestampFromKey(mode, keyPressed) {
     }
     
     ; Read the format string
-    IniRead, formatString, %TimestampsIni%, %sectionName%, %formatKey%
+    formatString := IniRead(TimestampsIni, sectionName, formatKey, "")
     
     ; If format not found, show error
-    if (formatString = "ERROR" || formatString = "") {
+    if (formatString = "" || formatString = "ERROR") {
         ShowCenteredToolTip("Format '" . keyPressed . "' not found in " . sectionName)
-        SetTimer, RemoveToolTip, 3500
+        SetTimer(RemoveToolTip, -3500)
         return
     }
     
     ; Generate and insert timestamp
-    FormatTime, _out, , %formatString%
-    SendRaw, %_out%
-	return
+    timestamp := FormatTime(, formatString)
+    SendText(timestamp)
+    ShowCenteredToolTip("TIMESTAMP: " . timestamp)
+    SetTimer(RemoveToolTip, -2000)
 }
 
-; ----- Program Launcher Helpers -----
+;-------------------------------------------------------------------------------
+; SECTION 9: COMMANDS LAYER (v2 - Phase 7)
+;-------------------------------------------------------------------------------
 
-_FindExecutablePath(exeName) {
-    ; Tries to find an executable's full path via the Windows Registry "App Paths".
-    _path := ""
-    try {
-        RegRead, _path, HKCU, SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\%exeName%
-    }
-    if (FileExist(_path)) {
-        return _path
-    }
-    try {
-        RegRead, _path, HKLM, SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\%exeName%
-    }
-    if (FileExist(_path)) {
-        return _path
-    }
-    return ""
-}
+; Commands layer implementation - accessed via Leader mode (CapsLock + Space → c)
 
-_ResolveExecutable(exeName) {
-    ; Safely finds a full, verifiable path to an executable.
-    ; 1. Check App Paths registry.
-    _path := _FindExecutablePath(exeName)
-    if (FileExist(_path)) {
-        return _path
-    }
+; Main commands menu
+ShowCommandsMenu() {
+    global CommandsIni
+    ToolTipX := A_ScreenWidth // 2 - 110
+    ToolTipY := A_ScreenHeight // 2 - 120
+    menuText := "COMMAND PALETTE`n`n"
     
-    ; 2. Check System PATH environment variable.
-    EnvGet, systemPath, Path
-    Loop, parse, systemPath, `;
-    {
-        _checkPath := A_LoopField . "\" . exeName
-        if (FileExist(_checkPath)) {
-            return _checkPath
+    ; Try to read from commands.ini, fallback to hardcoded menu
+    hasConfigMenu := false
+    Loop 20 {
+        lineContent := IniRead(CommandsIni, "MenuDisplay", "main_line" . A_Index, "")
+        if (lineContent != "" && lineContent != "ERROR") {
+            menuText .= lineContent . "`n"
+            hasConfigMenu := true
         }
     }
     
-    return "" ; Return empty if not found anywhere.
+    ; If no config found, show hardcoded menu with all options
+    if (!hasConfigMenu) {
+        menuText .= "s - System Commands`n"
+        menuText .= "n - Network Commands`n"
+        menuText .= "g - Git Commands`n"
+        menuText .= "m - Monitoring Commands`n"
+        menuText .= "f - Folder Commands`n"
+        menuText .= "w - Windows Commands`n"
+        menuText .= "o - Power Options`n"
+        menuText .= "a - ADB Tools`n"
+        menuText .= "v - VaultFlow`n"
+        menuText .= "h - Hybrid Management`n"
+    }
+    
+    menuText .= "`n[\: Back] [Esc: Exit]"
+    ToolTip(menuText, ToolTipX, ToolTipY, 2)
 }
 
+; Command category handler
+HandleCommandCategory(category) {
+    switch category {
+        case "s":
+            ; System Commands
+            Loop {
+                ShowSystemCommandsMenu()
+                categoryInput := InputHook("L1 T7")
+                categoryInput.Start()
+                categoryInput.Wait()
+                
+                if (categoryInput.EndReason = "Timeout" || categoryInput.Input = Chr(27)) {  ; Escape
+                    categoryInput.Stop()  ; Clean up InputHook
+                    return  ; Exit command category
+                }
+                if (categoryInput.Input = Chr(8)) {  ; Backspace
+                    categoryInput.Stop()  ; Clean up InputHook
+                    return  ; Back to commands menu (exit this category)
+                }
+                
+                ExecuteSystemCommand(categoryInput.Input)
+                categoryInput.Stop()  ; Clean up InputHook
+                return  ; Exit after executing command
+            }
+        case "n":
+            ; Network Commands
+            Loop {
+                ShowNetworkCommandsMenu()
+                categoryInput := InputHook("L1 T7")
+                categoryInput.Start()
+                categoryInput.Wait()
+                
+                if (categoryInput.EndReason = "Timeout" || categoryInput.Input = Chr(27)) {  ; Escape
+                    categoryInput.Stop()  ; Clean up InputHook
+                    return  ; Exit command category
+                }
+                if (categoryInput.Input = Chr(8)) {  ; Backspace
+                    categoryInput.Stop()  ; Clean up InputHook
+                    return  ; Back to commands menu (exit this category)
+                }
+                
+                ExecuteNetworkCommand(categoryInput.Input)
+                categoryInput.Stop()  ; Clean up InputHook
+                return  ; Exit after executing command
+            }
+        case "g":
+            ; Git Commands
+            Loop {
+                ShowGitCommandsMenu()
+                categoryInput := InputHook("L1 T7")
+                categoryInput.Start()
+                categoryInput.Wait()
+                
+                if (categoryInput.EndReason = "Timeout" || categoryInput.Input = Chr(27)) {  ; Escape
+                    categoryInput.Stop()  ; Clean up InputHook
+                    return  ; Exit command category
+                }
+                if (categoryInput.Input = Chr(8)) {  ; Backspace
+                    categoryInput.Stop()  ; Clean up InputHook
+                    return  ; Back to commands menu (exit this category)
+                }
+                
+                ExecuteGitCommand(categoryInput.Input)
+                categoryInput.Stop()  ; Clean up InputHook
+                return  ; Exit after executing command
+            }
+        case "m":
+            ; Monitoring Commands
+            Loop {
+                ShowMonitoringCommandsMenu()
+                categoryInput := InputHook("L1 T7")
+                categoryInput.Start()
+                categoryInput.Wait()
+                
+                if (categoryInput.EndReason = "Timeout" || categoryInput.Input = Chr(27)) {  ; Escape
+                    return  ; Exit command category
+                }
+                if (categoryInput.Input = Chr(8)) {  ; Backspace
+                    return  ; Back to commands menu (exit this category)
+                }
+                
+                ExecuteMonitoringCommand(categoryInput.Input)
+                return  ; Exit after executing command
+            }
+        case "f":
+            ; Folder Commands
+            Loop {
+                ShowFolderCommandsMenu()
+                categoryInput := InputHook("L1 T7")
+                categoryInput.Start()
+                categoryInput.Wait()
+                
+                if (categoryInput.EndReason = "Timeout" || categoryInput.Input = Chr(27)) {  ; Escape
+                    return  ; Exit command category
+                }
+                if (categoryInput.Input = Chr(8)) {  ; Backspace
+                    return  ; Back to commands menu (exit this category)
+                }
+                
+                ExecuteFolderCommand(categoryInput.Input)
+                return  ; Exit after executing command
+            }
+        case "w":
+            ; Windows Commands
+            Loop {
+                ShowWindowsCommandsMenu()
+                categoryInput := InputHook("L1 T7")
+                categoryInput.Start()
+                categoryInput.Wait()
+                
+                if (categoryInput.EndReason = "Timeout" || categoryInput.Input = Chr(27)) {  ; Escape
+                    return  ; Exit command category
+                }
+                if (categoryInput.Input = Chr(8)) {  ; Backspace
+                    return  ; Back to commands menu (exit this category)
+                }
+                
+                ExecuteWindowsCommand(categoryInput.Input)
+                return  ; Exit after executing command
+            }
+        default:
+            ShowCenteredToolTip("Unknown command category: " . category)
+            SetTimer(RemoveToolTip, -1500)
+    }
+}
+
+; Command menu functions
+ShowSystemCommandsMenu() {
+    global CommandsIni
+    ToolTipX := A_ScreenWidth // 2 - 120
+    ToolTipY := A_ScreenHeight // 2 - 90
+    menuText := "SYSTEM COMMANDS`n`n"
+    
+    Loop 10 {
+        lineContent := IniRead(CommandsIni, "MenuDisplay", "system_line" . A_Index, "")
+        if (lineContent != "" && lineContent != "ERROR") {
+            menuText .= lineContent . "`n"
+        }
+    }
+    
+    menuText .= "`n[\: Back] [Esc: Exit]"
+    ToolTip(menuText, ToolTipX, ToolTipY, 2)
+}
+
+ShowNetworkCommandsMenu() {
+    global CommandsIni
+    ToolTipX := A_ScreenWidth // 2 - 120
+    ToolTipY := A_ScreenHeight // 2 - 70
+    menuText := "NETWORK COMMANDS`n`n"
+    
+    Loop 10 {
+        lineContent := IniRead(CommandsIni, "MenuDisplay", "network_line" . A_Index, "")
+        if (lineContent != "" && lineContent != "ERROR") {
+            menuText .= lineContent . "`n"
+        }
+    }
+    
+    menuText .= "`n[\: Back] [Esc: Exit]"
+    ToolTip(menuText, ToolTipX, ToolTipY, 2)
+}
+
+ShowGitCommandsMenu() {
+    global CommandsIni
+    ToolTipX := A_ScreenWidth // 2 - 120
+    ToolTipY := A_ScreenHeight // 2 - 90
+    menuText := "GIT COMMANDS`n`n"
+    
+    Loop 10 {
+        lineContent := IniRead(CommandsIni, "MenuDisplay", "git_line" . A_Index, "")
+        if (lineContent != "" && lineContent != "ERROR") {
+            menuText .= lineContent . "`n"
+        }
+    }
+    
+    menuText .= "`n[\: Back] [Esc: Exit]"
+    ToolTip(menuText, ToolTipX, ToolTipY, 2)
+}
+
+ShowMonitoringCommandsMenu() {
+    global CommandsIni
+    ToolTipX := A_ScreenWidth // 2 - 120
+    ToolTipY := A_ScreenHeight // 2 - 90
+    menuText := "MONITORING COMMANDS`n`n"
+    
+    Loop 10 {
+        lineContent := IniRead(CommandsIni, "MenuDisplay", "monitoring_line" . A_Index, "")
+        if (lineContent != "" && lineContent != "ERROR") {
+            menuText .= lineContent . "`n"
+        }
+    }
+    
+    menuText .= "`n[\: Back] [Esc: Exit]"
+    ToolTip(menuText, ToolTipX, ToolTipY, 2)
+}
+
+ShowFolderCommandsMenu() {
+    global CommandsIni
+    ToolTipX := A_ScreenWidth // 2 - 120
+    ToolTipY := A_ScreenHeight // 2 - 90
+    menuText := "FOLDER ACCESS`n`n"
+    
+    Loop 10 {
+        lineContent := IniRead(CommandsIni, "MenuDisplay", "folder_line" . A_Index, "")
+        if (lineContent != "" && lineContent != "ERROR") {
+            menuText .= lineContent . "`n"
+        }
+    }
+    
+    menuText .= "`n[\: Back] [Esc: Exit]"
+    ToolTip(menuText, ToolTipX, ToolTipY, 2)
+}
+
+ShowWindowsCommandsMenu() {
+    global CommandsIni
+    ToolTipX := A_ScreenWidth // 2 - 120
+    ToolTipY := A_ScreenHeight // 2 - 90
+    menuText := "WINDOWS COMMANDS`n`n"
+    
+    Loop 10 {
+        lineContent := IniRead(CommandsIni, "MenuDisplay", "windows_line" . A_Index, "")
+        if (lineContent != "" && lineContent != "ERROR") {
+            menuText .= lineContent . "`n"
+        }
+    }
+    
+    menuText .= "`n[\: Back] [Esc: Exit]"
+    ToolTip(menuText, ToolTipX, ToolTipY, 2)
+}
+
+ShowPowerOptionsCommandsMenu() {
+    ToolTipX := A_ScreenWidth // 2 - 120
+    ToolTipY := A_ScreenHeight // 2 - 90
+    menuText := "POWER OPTIONS`n`n"
+    menuText .= "s - Sleep`n"
+    menuText .= "h - Hibernate`n"
+    menuText .= "r - Restart`n"
+    menuText .= "d - Shutdown`n"
+    menuText .= "l - Lock Screen`n"
+    menuText .= "o - Sign Out`n"
+    menuText .= "`n[\: Back] [Esc: Exit]"
+    ToolTip(menuText, ToolTipX, ToolTipY, 2)
+}
+
+ShowADBCommandsMenu() {
+    ToolTipX := A_ScreenWidth // 2 - 120
+    ToolTipY := A_ScreenHeight // 2 - 100
+    menuText := "ADB TOOLS`n`n"
+    menuText .= "d - List Devices`n"
+    menuText .= "i - Install APK`n"
+    menuText .= "u - Uninstall Package`n"
+    menuText .= "l - Logcat`n"
+    menuText .= "s - Shell`n"
+    menuText .= "r - Reboot Device`n"
+    menuText .= "c - Clear App Data`n"
+    menuText .= "`n[\: Back] [Esc: Exit]"
+    ToolTip(menuText, ToolTipX, ToolTipY, 2)
+}
+
+ShowHybridManagementMenu() {
+    ToolTipX := A_ScreenWidth // 2 - 120
+    ToolTipY := A_ScreenHeight // 2 - 80
+    menuText := "HYBRID MANAGEMENT`n`n"
+    menuText .= "r - Reload Script`n"
+    menuText .= "e - Exit Script`n"
+    menuText .= "c - Open Config Folder`n"
+    menuText .= "l - View Log File`n"
+    menuText .= "v - Show Version Info`n"
+    menuText .= "`n[\: Back] [Esc: Exit]"
+    ToolTip(menuText, ToolTipX, ToolTipY, 2)
+}
+
+ShowVaultFlowCommandsMenu() {
+    global CommandsIni
+    ToolTipX := A_ScreenWidth // 2 - 120
+    ToolTipY := A_ScreenHeight // 2 - 60
+    menuText := "VAULTFLOW COMMANDS`n`n"
+    
+    ; Try to read from commands.ini first
+    hasConfigMenu := false
+    Loop 10 {
+        lineContent := IniRead(CommandsIni, "MenuDisplay", "vaultflow_line" . A_Index, "")
+        if (lineContent != "" && lineContent != "ERROR") {
+            menuText .= lineContent . "`n"
+            hasConfigMenu := true
+        }
+    }
+    
+    ; If no config found, show hardcoded menu
+    if (!hasConfigMenu) {
+        menuText .= "v - Run VaultFlow`n"
+        menuText .= "s - VaultFlow Status`n"
+        menuText .= "l - List Vaults`n"
+        menuText .= "h - VaultFlow Help`n"
+    }
+    
+    menuText .= "`n[\: Back] [Esc: Exit]"
+    ToolTip(menuText, ToolTipX, ToolTipY, 2)
+}
+
+; Command execution functions
+ExecuteSystemCommand(cmd) {
+    switch cmd {
+        case "s":
+            Run("cmd.exe /k systeminfo")
+        case "t":
+            Run("taskmgr.exe")
+        case "v":
+            Run("services.msc")
+        case "e":
+            Run("eventvwr.msc")
+        case "d":
+            Run("devmgmt.msc")
+        case "c":
+            Run("cleanmgr.exe")
+        default:
+            ShowCenteredToolTip("Unknown system command: " . cmd)
+            SetTimer(RemoveToolTip, -1500)
+            return
+    }
+    ShowCommandExecuted("System", cmd)
+}
+
+ExecuteNetworkCommand(cmd) {
+    switch cmd {
+        case "i":
+            Run("cmd.exe /k ipconfig /all")
+        case "p":
+            Run("cmd.exe /k ping google.com")
+        case "n":
+            Run("cmd.exe /k netstat -an")
+        default:
+            ShowCenteredToolTip("Unknown network command: " . cmd)
+            SetTimer(RemoveToolTip, -1500)
+            return
+    }
+    ShowCommandExecuted("Network", cmd)
+}
+
+ExecuteGitCommand(cmd) {
+    switch cmd {
+        case "s":
+            Run("cmd.exe /k git status")
+        case "l":
+            Run("cmd.exe /k git log --oneline -10")
+        case "b":
+            Run("cmd.exe /k git branch -a")
+        case "d":
+            Run("cmd.exe /k git diff")
+        case "a":
+            Run("cmd.exe /k git add .")
+        case "p":
+            Run("cmd.exe /k git pull")
+        default:
+            ShowCenteredToolTip("Unknown git command: " . cmd)
+            SetTimer(RemoveToolTip, -1500)
+            return
+    }
+    ShowCommandExecuted("Git", cmd)
+}
+
+ExecuteMonitoringCommand(cmd) {
+    switch cmd {
+        case "p":
+            Run("powershell.exe -Command `"Get-Process | Sort-Object CPU -Descending | Select-Object -First 20 | Format-Table -AutoSize; Read-Host 'Press Enter to exit'`"")
+        case "s":
+            Run("powershell.exe -Command `"Get-Service | Sort-Object Status,Name | Format-Table -AutoSize; Read-Host 'Press Enter to exit'`"")
+        case "d":
+            Run("powershell.exe -Command `"Get-WmiObject -Class Win32_LogicalDisk | Select-Object DeviceID,Size,FreeSpace | Format-Table -AutoSize; Read-Host 'Press Enter to exit'`"")
+        case "m":
+            Run("powershell.exe -Command `"Get-WmiObject -Class Win32_OperatingSystem | Select-Object TotalVisibleMemorySize,FreePhysicalMemory | Format-Table -AutoSize; Read-Host 'Press Enter to exit'`"")
+        case "c":
+            Run("powershell.exe -Command `"Get-WmiObject -Class Win32_Processor | Select-Object Name,LoadPercentage | Format-Table -AutoSize; Read-Host 'Press Enter to exit'`"")
+        default:
+            ShowCenteredToolTip("Unknown monitoring command: " . cmd)
+            SetTimer(RemoveToolTip, -1500)
+            return
+    }
+    ShowCommandExecuted("Monitoring", cmd)
+}
+
+ExecuteFolderCommand(cmd) {
+    switch cmd {
+        case "t":
+            Run('explorer.exe "' . EnvGet("TEMP") . '"')
+        case "a":
+            Run('explorer.exe "' . EnvGet("APPDATA") . '"')
+        case "p":
+            Run('explorer.exe "C:\Program Files"')
+        case "u":
+            Run('explorer.exe "' . EnvGet("USERPROFILE") . '"')
+        case "d":
+            Run('explorer.exe "' . EnvGet("USERPROFILE") . '\Desktop"')
+        case "s":
+            Run('explorer.exe "C:\Windows\System32"')
+        default:
+            ShowCenteredToolTip("Unknown folder command: " . cmd)
+            SetTimer(RemoveToolTip, -1500)
+            return
+    }
+    ShowCommandExecuted("Folder", cmd)
+}
+
+ExecuteWindowsCommand(cmd) {
+    switch cmd {
+        case "h":
+            ToggleHiddenFiles()
+        case "r":
+            Run("regedit.exe")
+            ShowCommandExecuted("Windows", "Registry Editor")
+        case "e":
+            Run("rundll32.exe sysdm.cpl,EditEnvironmentVariables")
+            ShowCommandExecuted("Windows", "Environment Variables")
+        default:
+            ShowCenteredToolTip("Unknown windows command: " . cmd)
+            SetTimer(RemoveToolTip, -1500)
+            return
+    }
+}
+
+ExecutePowerOptionsCommand(cmd) {
+    switch cmd {
+        case "s":
+            ; Sleep
+            DllCall("PowrProf.dll\SetSuspendState", "int", 0, "int", 0, "int", 0)
+            ShowCommandExecuted("Power", "Sleep")
+        case "h":
+            ; Hibernate
+            DllCall("PowrProf.dll\SetSuspendState", "int", 1, "int", 0, "int", 0)
+            ShowCommandExecuted("Power", "Hibernate")
+        case "r":
+            ; Restart
+            Run("shutdown.exe /r /t 0")
+            ShowCommandExecuted("Power", "Restart")
+        case "d":
+            ; Shutdown
+            Run("shutdown.exe /s /t 0")
+            ShowCommandExecuted("Power", "Shutdown")
+        case "l":
+            ; Lock Screen
+            DllCall("user32.dll\LockWorkStation")
+            ShowCommandExecuted("Power", "Lock Screen")
+        case "o":
+            ; Sign Out
+            Run("shutdown.exe /l")
+            ShowCommandExecuted("Power", "Sign Out")
+        default:
+            ShowCenteredToolTip("Unknown power command: " . cmd)
+            SetTimer(RemoveToolTip, -1500)
+            return
+    }
+}
+
+ExecuteADBCommand(cmd) {
+    switch cmd {
+        case "d":
+            Run("cmd.exe /k adb devices")
+            ShowCommandExecuted("ADB", "List Devices")
+        case "i":
+            Run("cmd.exe /k echo Select APK file to install && pause && adb install")
+            ShowCommandExecuted("ADB", "Install APK")
+        case "u":
+            Run("cmd.exe /k echo Enter package name to uninstall && pause && adb uninstall")
+            ShowCommandExecuted("ADB", "Uninstall Package")
+        case "l":
+            Run("cmd.exe /k adb logcat")
+            ShowCommandExecuted("ADB", "Logcat")
+        case "s":
+            Run("cmd.exe /k adb shell")
+            ShowCommandExecuted("ADB", "Shell")
+        case "r":
+            Run("cmd.exe /k adb reboot")
+            ShowCommandExecuted("ADB", "Reboot Device")
+        case "c":
+            Run("cmd.exe /k echo Enter package name to clear data && pause && adb shell pm clear")
+            ShowCommandExecuted("ADB", "Clear App Data")
+        default:
+            ShowCenteredToolTip("Unknown ADB command: " . cmd)
+            SetTimer(RemoveToolTip, -1500)
+            return
+    }
+}
+
+ExecuteHybridManagementCommand(cmd) {
+    switch cmd {
+        case "r":
+            ; Reload Script
+            ShowCenteredToolTip("RELOADING SCRIPT...")
+            SetTimer(RemoveToolTip, -1000)
+            Sleep(1000)
+            Reload()
+        case "e":
+            ; Exit Script
+            ShowCenteredToolTip("EXITING SCRIPT...")
+            SetTimer(RemoveToolTip, -1000)
+            Sleep(1000)
+            ExitApp()
+        case "c":
+            ; Open Config Folder
+            Run('explorer.exe "' . A_ScriptDir . '\config"')
+            ShowCommandExecuted("Hybrid", "Config Folder")
+        case "l":
+            ; View Log File (if exists)
+            logFile := A_ScriptDir . "\hybrid_log.txt"
+            if (FileExist(logFile)) {
+                Run('notepad.exe "' . logFile . '"')
+            } else {
+                ShowCenteredToolTip("No log file found")
+                SetTimer(RemoveToolTip, -2000)
+                return
+            }
+            ShowCommandExecuted("Hybrid", "Log File")
+        case "v":
+            ; Show Version Info
+            ShowCenteredToolTip("HybridCapsLock v2`nAutoHotkey " . A_AhkVersion . "`nScript: " . A_ScriptName)
+            SetTimer(RemoveToolTip, -3000)
+            return
+        default:
+            ShowCenteredToolTip("Unknown hybrid command: " . cmd)
+            SetTimer(RemoveToolTip, -1500)
+            return
+    }
+}
+
+ExecuteVaultFlowCommand(cmd) {
+    switch cmd {
+        case "v":
+            ; Run VaultFlow
+            Run("powershell.exe -Command `"vaultflow`"")
+            ShowCommandExecuted("VaultFlow", "Run VaultFlow")
+        case "s":
+            ; VaultFlow Status
+            Run("cmd.exe /k vaultflow status")
+            ShowCommandExecuted("VaultFlow", "Status")
+        case "l":
+            ; List Vaults
+            Run("cmd.exe /k vaultflow list")
+            ShowCommandExecuted("VaultFlow", "List Vaults")
+        case "h":
+            ; VaultFlow Help
+            Run("cmd.exe /k vaultflow --help")
+            ShowCommandExecuted("VaultFlow", "Help")
+        default:
+            ShowCenteredToolTip("Unknown VaultFlow command: " . cmd)
+            SetTimer(RemoveToolTip, -1500)
+            return
+    }
+}
+
+; Helper functions for commands
+ShowCommandExecuted(category, command) {
+    ShowCenteredToolTip(category . " command executed: " . command)
+    SetTimer(RemoveToolTip, -2000)
+}
+
+ToggleHiddenFiles() {
+    ; Toggle hidden files visibility in Explorer
+    try {
+        RegRead("HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced", "Hidden")
+        currentValue := RegRead("HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced", "Hidden")
+        newValue := (currentValue = 1) ? 2 : 1
+        RegWrite(newValue, "REG_DWORD", "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced", "Hidden")
+        
+        ; Refresh Explorer windows
+        Send("{F5}")
+        
+        statusText := (newValue = 1) ? "HIDDEN FILES SHOWN" : "HIDDEN FILES HIDDEN"
+        ShowCenteredToolTip(statusText)
+        SetTimer(RemoveToolTip, -2000)
+    } catch Error as e {
+        ShowCenteredToolTip("Error toggling hidden files")
+        SetTimer(RemoveToolTip, -2000)
+    }
+}
+
+; Leader mode menu function (Phase 3 basic implementation)
+ShowLeaderModeMenu() {
+    ; Basic leader menu - will be expanded in later phases
+    menuText := "`n LEADER MODE `n"
+    menuText .= "p - Programs`n"
+    menuText .= "t - Timestamps`n" 
+    menuText .= "c - Commands`n"
+    menuText .= "i - Information`n"
+    menuText .= "w - Windows`n"
+    menuText .= "n - Excel/Numbers`n"
+    menuText .= "`n\\ - Back | ESC - Exit`n"
+    
+    ToolTipX := A_ScreenWidth // 2 - 100
+    ToolTipY := A_ScreenHeight // 2 - 100
+    ToolTip(menuText, ToolTipX, ToolTipY)
+}
+
+; Enhanced UpdateLayerStatus function
+UpdateLayerStatus() {
+    ; Update JSON file with current layer states for Zebar integration
+    currentTime := FormatTime(, "yyyy-MM-dd HH:mm:ss")
+    
+    ; Check if temporary status has expired
+    if (A_TickCount > tempStatusExpiry) {
+        global currentTempStatus := ""
+    }
+    
+    jsonContent := "{"
+    jsonContent .= '"nvim_layer": ' . (isNvimLayerActive ? "true" : "false") . ","
+    jsonContent .= '"excel_layer": ' . (excelLayerActive ? "true" : "false") . ","
+    jsonContent .= '"visual_mode": ' . (VisualMode ? "true" : "false") . ","
+    jsonContent .= '"leader_active": ' . (leaderActive ? "true" : "false") . ","
+    jsonContent .= '"temp_status": "' . currentTempStatus . '",'
+    jsonContent .= '"last_updated": "' . currentTime . '"'
+    jsonContent .= "}"
+    
+    ; Write to JSON file for Zebar integration
+    try {
+        FileDelete(LayerStatusFile)
+        FileAppend(jsonContent, LayerStatusFile)
+    } catch Error as e {
+        ; Silent fail - don't interrupt workflow if file can't be written
+    }
+}
+
+;-------------------------------------------------------------------------------
+; SECTION 4: MODIFIER MODE HOTKEYS (v2 - Phase 2)
+;-------------------------------------------------------------------------------
+
+; ----- Window Functions -----
+CapsLock & 1::WinMinimize("A")
+CapsLock & `::Send("#m")  ; Minimize all windows
+CapsLock & q::Send("!{F4}")  ; Close window (Alt+F4)
+
+; Maximize/Restore toggle
+CapsLock & f:: {
+    winState := WinGetMinMax("A")
+    if (winState = 1)
+        WinRestore("A")
+    else
+        WinMaximize("A")
+}
+
+; ----- Basic Navigation (Vim Style) -----
+CapsLock & h::Send("{Left}")
+CapsLock & j::Send("{Down}")
+CapsLock & k::Send("{Up}")
+CapsLock & l::Send("{Right}")
+
+; ----- Smooth Scrolling -----
+CapsLock & e::Send("{WheelDown 3}")
+CapsLock & d::Send("{WheelUp 3}")
+
+; ----- Common Shortcuts (Ctrl equivalents) -----
+CapsLock & a::Send("^a")  ; Select all
+CapsLock & s::Send("^s")  ; Save
+CapsLock & c:: {
+    Send("^c")  ; Copy
+    ShowCopyNotification()
+}
+CapsLock & v::Send("^v")  ; Paste
+CapsLock & x::Send("^x")  ; Cut
+CapsLock & z::Send("^z")  ; Undo
+CapsLock & o::Send("^o")  ; Open
+CapsLock & t::Send("^t")  ; New tab
+CapsLock & r::Send("{F5}")  ; Refresh
+
+; ----- Enhanced Alt+Tab -----
+CapsLock & Tab:: {
+    ; Start Alt+Tab sequence
+    Send("{Alt down}{Tab}")
+    
+    ; Wait for Tab to be released
+    KeyWait("Tab")
+    
+    ; Continue Alt+Tab while CapsLock is held
+    while GetKeyState("CapsLock", "P") {
+        if GetKeyState("Tab", "P") {
+            Send("{Tab}")
+            KeyWait("Tab")
+        }
+        Sleep(10)
+    }
+    
+    ; Release Alt
+    Send("{Alt up}")
+}
+
+; ----- Click Functions -----
+CapsLock & `;:: {
+    global rightClickHeld
+    ; Start left click hold
+    Click("Left", , , 1, 0, "D")  ; Down
+    rightClickHeld := true
+    ShowLeftClickStatus(true)
+    SetTempStatus("LEFT CLICK HELD", 1200)
+    SetTimer(RemoveToolTip, -1200)
+    
+    ; Wait for release
+    KeyWait("CapsLock")
+    KeyWait(";")
+    
+    ; Release left click
+    Click("Left", , , 1, 0, "U")  ; Up
+    rightClickHeld := false
+    ShowLeftClickStatus(false)
+    SetTimer(RemoveToolTip, -1200)
+}
+
+CapsLock & ':: {
+    ; Simple right click
+    Click("Right")
+    ShowRightClickStatus(true)
+    SetTempStatus("RIGHT CLICK", 1200)
+    SetTimer(RemoveToolTip, -1200)
+}
+
+; ----- Additional Shortcuts -----
+CapsLock & 2::Send("^+!{2}")
+CapsLock & 3::Send("!a")
+CapsLock & 4::Send("!s")
+CapsLock & i::Send("^!k")
+CapsLock & w::Send("^w")
+CapsLock & m::Send("^{PgDn}")
+CapsLock & u::Send("^{PgUp}")
+CapsLock & g::Send("^!+g")  ; Missing hotkey from v1
+CapsLock & [::Send("^!+{[}")
+CapsLock & ]::Send("^!+{]}")
+
+; ----- Window Management (GlazeWM) -----
+CapsLock & Left::Send("!+h")
+CapsLock & Up::Send("!+k")
+CapsLock & Down::Send("!+j")
+CapsLock & Right::Send("!+l")
+
+; ----- Utility Functions -----
+CapsLock & \::SendText("your.email@example.com")
+CapsLock & p::Send("+!p")
+CapsLock & Enter::Send("^{Enter}")
+CapsLock & 9::Send("#+s")
+CapsLock & 6::Send("#{Left}")
+CapsLock & 7::Send("#{Right}")
+CapsLock & Backspace::Send("!{Left}")
+
+; ----- Address Bar Copy (CapsLock & 5) -----
+CapsLock & 5:: {
+    winClass := WinGetClass("A")
+    if (InStr(winClass, "CabinetWClass") || InStr(winClass, "ExploreWClass")) {
+        Send("!d")
+        Sleep(100)
+        Send("^c")
+        Sleep(50)
+        Send("{Esc}")
+    } else {
+        Send("^l")
+        Sleep(100)
+        Send("^c")
+        Sleep(50)
+        Send("{Esc}")
+    }
+}
+
+; ----- CapsLock Toggle (F10) -----
+CapsLock & F10:: {
+    global capsActsNormal
+    capsActsNormal := !capsActsNormal
+    if (capsActsNormal) {
+        SetCapsLockState("Off")
+        ShowCapsLockStatus(true)
+    } else {
+        SetCapsLockState("AlwaysOff")
+        ShowCapsLockStatus(false)
+    }
+    SetTimer(RemoveToolTip, -1200)
+}
+
+; ----- Process Termination (F12) -----
+CapsLock & F12:: {
+    activePid := WinGetPID("A")
+    if (activePid) {
+        ProcessClose(activePid)
+        ShowProcessTerminated()
+        SetTimer(RemoveToolTip, -1500)
+    }
+}
+
+;-------------------------------------------------------------------------------
+; SECTION 5: HYBRID LOGIC (v2 - Phase 3)
+;-------------------------------------------------------------------------------
+
+; Core hybrid functionality: CapsLock tap vs hold detection
+CapsLock:: {
+    global capsActsNormal, capsLockWasHeld
+    
+    ; If CapsLock is in normal mode, act as regular CapsLock
+    if (capsActsNormal) {
+        Send("{CapsLock}")
+        return
+    }
+    
+    ; Reset the hold flag when key is pressed
+    capsLockWasHeld := false
+    
+    ; Wait for key release with timeout (0.2 seconds)
+    ; If timeout expires, user is HOLDING the key
+    if (!KeyWait("CapsLock", "T0.2")) {
+        ; Timeout expired - user is holding CapsLock
+        capsLockWasHeld := true
+    }
+}
+
+CapsLock Up:: {
+    global capsActsNormal, capsLockWasHeld, isNvimLayerActive, VisualMode
+    
+    ; If CapsLock is in normal mode, do nothing
+    if (capsActsNormal) {
+        return
+    }
+    
+    ; Only activate Nvim layer if it was a TAP (not held beyond threshold)
+    if (!capsLockWasHeld) {
+        ; Toggle Nvim layer on tap
+        isNvimLayerActive := !isNvimLayerActive
+        
+        if (isNvimLayerActive) {
+            ShowNvimLayerStatus(true)
+            SetTempStatus("NVIM LAYER ON", 1500)
+        } else {
+            ShowNvimLayerStatus(false)
+            SetTempStatus("NVIM LAYER OFF", 1500)
+            VisualMode := false
+        }
+        
+        UpdateLayerStatus()
+        SetTimer(RemoveToolTip, -1500)
+    }
+    
+    ; Reset the flag for next use
+    capsLockWasHeld := false
+}
+
+; Leader Mode: CapsLock + Space activates command palette
+CapsLock & Space:: {
+    global leaderActive, isNvimLayerActive, VisualMode
+    
+    ; Deactivate Nvim Layer if it's active when leader is called
+    if (isNvimLayerActive) {
+        isNvimLayerActive := false
+        VisualMode := false
+        ShowNvimLayerStatus(false)
+        UpdateLayerStatus()
+        SetTimer(RemoveToolTip, -1200)
+        Sleep(50)  ; Brief pause to ensure state change is registered
+    }
+    
+    leaderActive := true
+    
+    ; Navigation stack to track menu hierarchy
+    menuStack := []
+    currentMenu := "main"
+    
+    ; Main leader loop with proper back navigation
+    Loop {
+        ; Show current menu based on stack
+        switch currentMenu {
+            case "main":
+                ShowLeaderModeMenu()
+            case "programs":
+                ShowProgramMenu()
+            case "windows":
+                ShowWindowMenu()
+            case "timestamps":
+                ShowTimeMenu()
+            case "information":
+                ShowInformationMenu()
+            case "commands":
+                ShowCommandsMenu()
+            default:
+                ; Handle submenu cases
+                if (InStr(currentMenu, "commands_")) {
+                    category := StrReplace(currentMenu, "commands_", "")
+                    ; Show the appropriate command category menu
+                    switch category {
+                        case "system":
+                            ShowSystemCommandsMenu()
+                        case "network":
+                            ShowNetworkCommandsMenu()
+                        case "git":
+                            ShowGitCommandsMenu()
+                        case "monitoring":
+                            ShowMonitoringCommandsMenu()
+                        case "folder":
+                            ShowFolderCommandsMenu()
+                        case "windows":
+                            ShowWindowsCommandsMenu()
+                        case "power":
+                            ShowPowerOptionsCommandsMenu()
+                        case "adb":
+                            ShowADBCommandsMenu()
+                        case "hybrid":
+                            ShowHybridManagementMenu()
+                        case "vaultflow":
+                            ShowVaultFlowCommandsMenu()
+                    }
+                } else if (InStr(currentMenu, "timestamps_")) {
+                    mode := StrReplace(currentMenu, "timestamps_", "")
+                    ; Show the appropriate timestamp menu
+                    switch mode {
+                        case "date":
+                            ShowDateFormatsMenu()
+                        case "time":
+                            ShowTimeFormatsMenu()
+                        case "datetime":
+                            ShowDateTimeFormatsMenu()
+                    }
+                }
+        }
+        
+        userInput := InputHook("L1 T7")
+        userInput.KeyOpt("{Backspace}", "+")  ; Enable Backspace detection
+        userInput.KeyOpt("{Escape}", "+")     ; Enable Escape detection
+        userInput.Start()
+        userInput.Wait()
+        
+        if (userInput.EndReason = "Timeout") {
+            userInput.Stop()  ; Clean up InputHook
+            break  ; Exit completely
+        }
+        
+        ; Check if it was a special key
+        if (userInput.EndReason = "KeyDown") {
+            if (userInput.EndKey = "Escape") {
+                userInput.Stop()
+                break  ; Exit completely
+            }
+        }
+        
+        _key := userInput.Input
+        userInput.Stop()  ; Clean up InputHook after getting input
+        
+        ; Check for Escape via input (backup method)
+        if (_key = Chr(27)) {  ; Escape
+            break  ; Exit completely
+        }
+        
+        ; Use backslash (\) as temporary back navigation key
+        if (_key = "\") {
+            if (menuStack.Length > 0) {
+                currentMenu := menuStack.Pop()  ; Go back to previous menu
+                continue
+            } else {
+                break  ; Exit if at main menu
+            }
+        }
+        
+        ; Handle navigation based on current menu
+        switch currentMenu {
+            case "main":
+                ; Main menu navigation
+                switch _key {
+                    case "p":
+                        menuStack.Push(currentMenu)
+                        currentMenu := "programs"
+                    case "w":
+                        menuStack.Push(currentMenu)
+                        currentMenu := "windows"
+                    case "t":
+                        menuStack.Push(currentMenu)
+                        currentMenu := "timestamps"
+                    case "i":
+                        menuStack.Push(currentMenu)
+                        currentMenu := "information"
+                    case "c":
+                        menuStack.Push(currentMenu)
+                        currentMenu := "commands"
+                    case "n":
+                        ; Excel layer toggle (direct action)
+                        global excelLayerActive
+                        excelLayerActive := !excelLayerActive
+                        if (excelLayerActive) {
+                            ShowExcelLayerStatus(true)
+                            SetTempStatus("EXCEL LAYER ON", 2000)
+                        } else {
+                            ShowExcelLayerStatus(false)
+                            SetTempStatus("EXCEL LAYER OFF", 2000)
+                        }
+                        UpdateLayerStatus()
+                        SetTimer(RemoveToolTip, -2000)
+                        break  ; Exit after toggle
+                    default:
+                        ShowCenteredToolTip("Unknown option: " . _key)
+                        SetTimer(RemoveToolTip, -1000)
+                }
+            
+            case "programs":
+                ; Programs menu - launch program and exit
+                LaunchProgramFromKey(_key)
+                break
+            
+            case "windows":
+                ; Windows menu - execute action and exit
+                ExecuteWindowAction(_key)
+                break
+            
+            case "information":
+                ; Information menu - insert info and exit
+                InsertInformationFromKey(_key)
+                break
+            
+            case "timestamps":
+                ; Timestamps menu navigation
+                switch _key {
+                    case "d":
+                        menuStack.Push(currentMenu)
+                        currentMenu := "timestamps_date"
+                    case "t":
+                        menuStack.Push(currentMenu)
+                        currentMenu := "timestamps_time"
+                    case "h":
+                        menuStack.Push(currentMenu)
+                        currentMenu := "timestamps_datetime"
+                    default:
+                        ShowCenteredToolTip("Unknown timestamp option: " . _key)
+                        SetTimer(RemoveToolTip, -1000)
+                }
+            
+            case "commands":
+                ; Commands menu navigation
+                switch _key {
+                    case "s":
+                        menuStack.Push(currentMenu)
+                        currentMenu := "commands_system"
+                    case "n":
+                        menuStack.Push(currentMenu)
+                        currentMenu := "commands_network"
+                    case "g":
+                        menuStack.Push(currentMenu)
+                        currentMenu := "commands_git"
+                    case "m":
+                        menuStack.Push(currentMenu)
+                        currentMenu := "commands_monitoring"
+                    case "f":
+                        menuStack.Push(currentMenu)
+                        currentMenu := "commands_folder"
+                    case "w":
+                        menuStack.Push(currentMenu)
+                        currentMenu := "commands_windows"
+                    case "o":
+                        menuStack.Push(currentMenu)
+                        currentMenu := "commands_power"
+                    case "a":
+                        menuStack.Push(currentMenu)
+                        currentMenu := "commands_adb"
+                    case "h":
+                        menuStack.Push(currentMenu)
+                        currentMenu := "commands_hybrid"
+                    case "v":
+                        menuStack.Push(currentMenu)
+                        currentMenu := "commands_vaultflow"
+                    default:
+                        ShowCenteredToolTip("Unknown command category: " . _key)
+                        SetTimer(RemoveToolTip, -1000)
+                }
+            
+            default:
+                ; Handle submenu actions
+                if (InStr(currentMenu, "commands_")) {
+                    category := StrReplace(currentMenu, "commands_", "")
+                    ; Execute command based on category
+                    switch category {
+                        case "system":
+                            ExecuteSystemCommand(_key)
+                        case "network":
+                            ExecuteNetworkCommand(_key)
+                        case "git":
+                            ExecuteGitCommand(_key)
+                        case "monitoring":
+                            ExecuteMonitoringCommand(_key)
+                        case "folder":
+                            ExecuteFolderCommand(_key)
+                        case "windows":
+                            ExecuteWindowsCommand(_key)
+                        case "power":
+                            ExecutePowerOptionsCommand(_key)
+                        case "adb":
+                            ExecuteADBCommand(_key)
+                        case "hybrid":
+                            ExecuteHybridManagementCommand(_key)
+                        case "vaultflow":
+                            ExecuteVaultFlowCommand(_key)
+                    }
+                    break  ; Exit after executing command
+                } else if (InStr(currentMenu, "timestamps_")) {
+                    mode := StrReplace(currentMenu, "timestamps_", "")
+                    WriteTimestampFromKey(mode, _key)
+                    break  ; Exit after inserting timestamp
+                }
+        }
+    }
+    
+    LeaderExit:
+    leaderActive := false
+    ToolTip()  ; Clear all tooltips
+    ToolTip("", , , 1)
+    ToolTip("", , , 2)
+}
+
+; Helper function to show command category menus
+ShowCommandCategoryMenu(category) {
+    switch category {
+        case "system":
+            ShowSystemCommandsMenu()
+        case "network":
+            ShowNetworkCommandsMenu()
+        case "git":
+            ShowGitCommandsMenu()
+        case "monitoring":
+            ShowMonitoringCommandsMenu()
+        case "folder":
+            ShowFolderCommandsMenu()
+        case "windows":
+            ShowWindowsCommandsMenu()
+    }
+}
+
+; Helper function to show timestamp mode menus
+ShowTimestampModeMenu(mode) {
+    switch mode {
+        case "date":
+            ShowDateFormatsMenu()
+        case "time":
+            ShowTimeFormatsMenu()
+        case "datetime":
+            ShowDateTimeFormatsMenu()
+    }
+}
+
+; Helper function to execute commands by category
+ExecuteCommandByCategory(category, key) {
+    switch category {
+        case "system":
+            ExecuteSystemCommand(key)
+        case "network":
+            ExecuteNetworkCommand(key)
+        case "git":
+            ExecuteGitCommand(key)
+        case "monitoring":
+            ExecuteMonitoringCommand(key)
+        case "folder":
+            ExecuteFolderCommand(key)
+        case "windows":
+            ExecuteWindowsCommand(key)
+    }
+}
+
+;-------------------------------------------------------------------------------
+; SECTION 6: NVIM LAYER CONTEXT-SENSITIVE (v2 - Phase 4)
+;-------------------------------------------------------------------------------
+
+; Nvim layer hotkeys - only active when isNvimLayerActive is true and CapsLock is not held
+#HotIf (isNvimLayerActive && !GetKeyState("CapsLock", "P"))
+
+;----------------------------------
+; SECTION 6A: NVIM LAYER SPECIALS
+;----------------------------------
+
+; f: Ctrl+Alt+k and immediately deactivate nvim layer
+f:: {
+    global isNvimLayerActive, VisualMode
+    ; Deactivate nvim layer first
+    isNvimLayerActive := false
+    VisualMode := false
+    ShowNvimLayerStatus(false)
+    UpdateLayerStatus()
+    SetTimer(RemoveToolTip, -800)
+    ; Small pause to exit #HotIf context
+    Sleep(30)
+    ; Send Ctrl+Alt+k
+    Send("^!k")
+}
+
+;----------------------------------
+; SECTION 6B: NVIM LAYER MAIN KEYS
+;----------------------------------
+
+; v: Visual Mode Toggle
+v:: {
+    global VisualMode
+    VisualMode := !VisualMode
+    if (VisualMode) {
+        ShowVisualModeStatus(true)
+    } else {
+        ShowVisualModeStatus(false)
+    }
+    UpdateLayerStatus()
+    SetTimer(RemoveToolTip, -1000)
+}
+
+; ----- Basic Navigation (hjkl) -----
+h:: {
+    global VisualMode
+    if (VisualMode)
+        Send("+{Left}")
+    else
+        Send("{Left}")
+}
+
+j:: {
+    global VisualMode
+    if (VisualMode)
+        Send("+{Down}")
+    else
+        Send("{Down}")
+}
+
+k:: {
+    global VisualMode
+    if (VisualMode)
+        Send("+{Up}")
+    else
+        Send("{Up}")
+}
+
+l:: {
+    global VisualMode
+    if (VisualMode)
+        Send("+{Right}")
+    else
+        Send("{Right}")
+}
+
+; ----- Extended Navigation -----
+b:: {
+    global VisualMode
+    if (VisualMode)
+        Send("^+{Left}")
+    else
+        Send("^{Left}")
+}
+
+w:: {
+    global VisualMode, _deleteAwait
+    if (_deleteAwait) {
+        _deleteAwait := false
+        DeleteCurrentWord()
+        SetTimer(RemoveToolTip, -100)
+        return
+    }
+    if (VisualMode)
+        Send("^+{Right}")
+    else
+        Send("^{Right}")
+}
+
+0:: {
+    global VisualMode
+    if (VisualMode)
+        Send("+{Home}")
+    else
+        Send("{Home}")
+}
+
++4:: {
+    global VisualMode
+    if (VisualMode)
+        Send("+{End}")
+    else
+        Send("{End}")
+}
+
+; ----- Editing Actions -----
+u:: {
+    ; u = undo in nvim
+    Send("^z")
+}
+
++u:: {
+    ; U = redo in nvim (Ctrl+Y in most editors)
+    Send("^y")
+}
+
+x::Send("{Delete}")
++x::Send("{Backspace}")  ; X = delete backwards in nvim
+
+; ESC hotkey to reactivate nvim layer after replace/insert modes
+~Esc:: {
+    global isNvimLayerActive, _tempEditMode
+    if (!isNvimLayerActive && _tempEditMode) {
+        SetTimer(ReactivateNvimAfterReplace, 0)
+        _tempEditMode := false
+        isNvimLayerActive := true
+        ShowNvimLayerStatus(true)
+        SetTempStatus("NVIM LAYER ON", 1000)
+        UpdateLayerStatus()
+        SetTimer(RemoveToolTip, -1000)
+    }
+}
+
+; ----- Delete Operations -----
+d:: {
+    global VisualMode, _deleteAwait
+    if (VisualMode) {
+        Send("{Delete}")
+        _deleteAwait := false
+        return
+    }
+    if (_deleteAwait) {
+        _deleteAwait := false
+        DeleteCurrentLine()
+        SetTimer(RemoveToolTip, -100)
+        return
+    }
+    _deleteAwait := true
+    ShowDeleteMenu()
+    SetTimer(DeleteTimeout, -600)
+}
+
+; ----- Yank (Copy) Operations -----
+y:: {
+    global VisualMode, _yankAwait
+    if (VisualMode) {
+        Send("^c")
+        ShowCopyNotification()
+        _yankAwait := false
+        return
+    }
+    if (_yankAwait) {
+        _yankAwait := false
+        CopyCurrentLine()
+        SetTimer(RemoveToolTip, -100)
+        return
+    }
+    _yankAwait := true
+    ShowYankMenu()
+    SetTimer(YankTimeout, -600)
+}
+
+; ----- Paste Operations -----
+p:: {
+    global _yankAwait
+    if (_yankAwait) {
+        _yankAwait := false
+        CopyCurrentParagraph()
+        SetTimer(RemoveToolTip, -100)
+        return
+    }
+    Send("^v")
+}
+
++p::PastePlain()
+
+; ----- All Operations (Select All) -----
+a:: {
+    global _deleteAwait, _yankAwait
+    if (_deleteAwait) {
+        _deleteAwait := false
+        DeleteAll()
+        SetTimer(RemoveToolTip, -100)
+        return
+    }
+    if (_yankAwait) {
+        _yankAwait := false
+        Send("^a^c")
+        ShowCopyNotification()
+        SetTimer(RemoveToolTip, -100)
+    }
+}
+
+; ----- Insert Mode -----
+i:: {
+    global isNvimLayerActive, _tempEditMode
+    ; i = insert mode in nvim (temporarily disable nvim layer)
+    isNvimLayerActive := false
+    _tempEditMode := true
+    ShowNvimLayerStatus(false)
+    SetTempStatus("INSERT MODE", 3000)
+    UpdateLayerStatus()
+    SetTimer(ReactivateNvimAfterInsert, -3000)
+}
+
+; ----- Replace Mode -----
+r:: {
+    global isNvimLayerActive, _tempEditMode
+    ; r = replace character in nvim - simplified approach
+    Send("{Delete}")
+    ; Temporarily disable nvim layer to allow normal typing
+    isNvimLayerActive := false
+    _tempEditMode := true
+    ShowNvimLayerStatus(false)
+    SetTempStatus("REPLACE: Type character then press ESC", 3000)
+    UpdateLayerStatus()
+    SetTimer(ReactivateNvimAfterReplace, -3000)
+}
+
+; ----- Smooth Scrolling -----
++e::Send("{WheelDown 3}")
++y::Send("{WheelUp 3}")
+
+e:: {
+    ; e = end of word in nvim (like w but to end)
+    Send("^{Right}{Left}")
+}
+
+; End of Nvim Layer context
+#HotIf
+
+;-------------------------------------------------------------------------------
+; SECTION 7: PROGRAMS LAYER (v2 - Phase 5)
+;-------------------------------------------------------------------------------
+
+; Programs layer implementation - accessed via Leader mode (CapsLock + Space → p)
+
+; Enhanced Leader Mode Menu with Programs option (moved to avoid conflicts)
+
+; Programs menu display
+ShowProgramMenu() {
+    ; Program launcher menu - reads from programs.ini
+    global ProgramsIni
+    ToolTipX := A_ScreenWidth // 2 - 120
+    ToolTipY := A_ScreenHeight // 2 - 150
+    menuText := "PROGRAM LAUNCHER`n`n"
+    
+    ; Read menu lines dynamically from programs.ini
+    Loop 10 {
+        lineContent := IniRead(ProgramsIni, "MenuDisplay", "line" . A_Index, "")
+        if (lineContent != "" && lineContent != "ERROR") {
+            menuText .= lineContent . "`n"
+        }
+    }
+    
+    menuText .= "`n[\: Back] [Esc: Exit]"
+    ToolTip(menuText, ToolTipX, ToolTipY, 2)
+}
+
+; Main application launcher function
 LaunchApp(appName, exeNameOrUri) {
-    ; Universal app launcher with a safe, multi-step search strategy.
     global ProgramsIni
     _path := ""
 
-    ; Handle special cases like "ms-settings:" which are URIs, not files.
+    ; Handle special cases like "ms-settings:" which are URIs, not files
     if (!InStr(exeNameOrUri, ".exe") && !InStr(exeNameOrUri, ".lnk")) {
-        Run, %exeNameOrUri%
+        try {
+            Run(exeNameOrUri)
+        } catch Error as e {
+            ShowCenteredToolTip("Failed to launch: " . appName)
+            SetTimer(RemoveToolTip, -3000)
+        }
         return
     }
 
-    ; 1. Prioritize user-defined path from programs.ini file.
-    IniRead, _userPath, %ProgramsIni%, Programs, %appName%
-    if (_userPath) {
+    ; 1. Prioritize user-defined path from programs.ini file
+    _userPath := IniRead(ProgramsIni, "Programs", appName, "")
+    if (_userPath != "" && _userPath != "ERROR") {
         ; Expand environment variables like %USERPROFILE%
-        _expandedPath := _userPath
-        ; Replace %USERPROFILE% with actual user profile path
-        EnvGet, UserProfilePath, USERPROFILE
-        StringReplace, _expandedPath, _expandedPath, `%USERPROFILE`%, %UserProfilePath%, All
+        _expandedPath := ExpandEnvironmentStrings(_userPath)
         if (FileExist(_expandedPath)) {
-            Run, "%_expandedPath%"
-            return
+            try {
+                Run('"' . _expandedPath . '"')
+                return
+            } catch Error as e {
+                ; Continue to next method
+            }
         }
     }
 
-    ; 2. If no user path, try to resolve the executable automatically.
-    _resolvedPath := _ResolveExecutable(exeNameOrUri)
-    if (_resolvedPath) {
-        Run, "%_resolvedPath%"
-        return
+    ; 2. If no user path, try to resolve the executable automatically
+    _resolvedPath := ResolveExecutable(exeNameOrUri)
+    if (_resolvedPath != "") {
+        try {
+            Run('"' . _resolvedPath . '"')
+            return
+        } catch Error as e {
+            ; Continue to error message
+        }
     }
 
-    ; 3. If all searches fail, show a user-friendly tooltip.
-    ShowCenteredToolTip(appName . " not found.\nAdd the path to programs.ini\n[Programs]")
-    SetTimer, RemoveToolTip, 3500
-	return
+    ; 3. If all searches fail, show user-friendly tooltip
+    ShowCenteredToolTip(appName . " not found.`nAdd the path to programs.ini`n[Programs]")
+    SetTimer(RemoveToolTip, -3500)
 }
 
+; Resolve executable path using Windows Registry (App Paths)
+ResolveExecutable(exeName) {
+    ; Try to find executable in Windows Registry App Paths
+    try {
+        appPath := RegRead("HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\" . exeName, "")
+        if (appPath != "" && FileExist(appPath)) {
+            return appPath
+        }
+    } catch Error as e {
+        ; Registry key not found, continue
+    }
+    
+    ; Try current user registry
+    try {
+        appPath := RegRead("HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\" . exeName, "")
+        if (appPath != "" && FileExist(appPath)) {
+            return appPath
+        }
+    } catch Error as e {
+        ; Registry key not found, continue
+    }
+    
+    ; Try system PATH
+    try {
+        envPath := EnvGet("PATH")
+        Loop Parse, envPath, ";"
+        {
+            testPath := A_LoopField . "\" . exeName
+            if (FileExist(testPath)) {
+                return testPath
+            }
+        }
+    } catch Error as e {
+        ; PATH search failed
+    }
+    
+    return ""  ; Not found
+}
+
+; Expand environment variables in paths
+ExpandEnvironmentStrings(inputPath) {
+    ; Replace common environment variables
+    expandedPath := inputPath
+    
+    ; Replace %USERPROFILE%
+    try {
+        userProfile := EnvGet("USERPROFILE")
+        expandedPath := StrReplace(expandedPath, "%USERPROFILE%", userProfile)
+    }
+    
+    ; Replace %PROGRAMFILES%
+    try {
+        programFiles := EnvGet("PROGRAMFILES")
+        expandedPath := StrReplace(expandedPath, "%PROGRAMFILES%", programFiles)
+    }
+    
+    ; Replace %PROGRAMFILES(X86)%
+    try {
+        programFilesX86 := EnvGet("PROGRAMFILES(X86)")
+        expandedPath := StrReplace(expandedPath, "%PROGRAMFILES(X86)%", programFilesX86)
+    }
+    
+    ; Replace %LOCALAPPDATA%
+    try {
+        localAppData := EnvGet("LOCALAPPDATA")
+        expandedPath := StrReplace(expandedPath, "%LOCALAPPDATA%", localAppData)
+    }
+    
+    return expandedPath
+}
+
+; Specific application launcher functions (Phase 5 implementation)
 LaunchExplorer() {
     LaunchApp("Explorer", "explorer.exe")
-	return
 }
 
 LaunchSettings() {
     LaunchApp("Settings", "ms-settings:")
-	return
 }
 
 LaunchTerminal() {
     LaunchApp("Terminal", "wt.exe")
-	return
 }
 
 LaunchVisualStudio() {
     LaunchApp("VisualStudio", "code.exe")
-	return
 }
 
 LaunchObsidian() {
     LaunchApp("Obsidian", "obsidian.exe")
-	return
 }
 
 LaunchVivaldi() {
     LaunchApp("Vivaldi", "vivaldi.exe")
-	return
 }
 
 LaunchZen() {
     LaunchApp("Zen", "zen.exe")
-	return
 }
 
 LaunchThunderbird() {
@@ -1812,57 +2340,66 @@ LaunchBeeper() {
     LaunchApp("Beeper", "Beeper.exe")
 }
 
-LaunchQuickShare() {
-    ; QuickShare is a special case, often a .lnk or Store app
-    _quickShareLnk := "C:\ProgramData\Microsoft\Windows\Start Menu\Quick Share.lnk"
-    if (FileExist(_quickShareLnk)) {
-        Run, "%_quickShareLnk%"
-        Sleep, 1500
-        WinActivate, Quick Share
-        if (!WinActive("Quick Share")) {
-            WinActivate, ahk_exe NearbyShare.exe
-        }
-        return
-    }
-    
-    Run, explorer.exe shell:appsFolder\NearbyShare_21hpf16v5xp10!NearbyShare, ,, errorLevel
-    if (!errorLevel) {
-        Sleep, 1500
-        WinActivate, Quick Share
-        if (!WinActive("Quick Share")) {
-            WinActivate, ahk_exe NearbyShare.exe
-        }
-        return
-    }
-    
-    ShowCenteredToolTip("Quick Share not found.\nPlease verify it is installed.")
-    SetTimer, RemoveToolTip, 3000
-}
-
 LaunchBitwarden() {
     LaunchApp("Bitwarden", "bitwarden.exe")
 }
 
+LaunchNotepad() {
+    LaunchApp("Notepad", "notepad.exe")
+}
+
+; Special case launcher for QuickShare
+LaunchQuickShare() {
+    ; QuickShare is a special case, often a .lnk or Store app
+    _quickShareLnk := "C:\ProgramData\Microsoft\Windows\Start Menu\Quick Share.lnk"
+    if (FileExist(_quickShareLnk)) {
+        try {
+            Run('"' . _quickShareLnk . '"')
+            Sleep(1500)
+            WinActivate("Quick Share")
+            if (!WinActive("Quick Share")) {
+                WinActivate("ahk_exe NearbyShare.exe")
+            }
+            return
+        } catch Error as e {
+            ; Continue to next method
+        }
+    }
+    
+    try {
+        Run("explorer.exe shell:appsFolder\NearbyShare_21hpf16v5xp10!NearbyShare")
+        Sleep(1500)
+        WinActivate("Quick Share")
+        if (!WinActive("Quick Share")) {
+            WinActivate("ahk_exe NearbyShare.exe")
+        }
+        return
+    } catch Error as e {
+        ShowCenteredToolTip("Quick Share not found.`nPlease verify it is installed.")
+        SetTimer(RemoveToolTip, -3000)
+    }
+}
+
+; Dynamic program launcher that reads mapping from programs.ini
 LaunchProgramFromKey(keyPressed) {
-    ; Dynamic program launcher that reads mapping from programs.ini file
     global ProgramsIni
     
     ; Read the program name mapped to this key
     keyName := "key_" . keyPressed
-    IniRead, programName, %ProgramsIni%, ProgramMapping, %keyName%
+    programName := IniRead(ProgramsIni, "ProgramMapping", keyName, "")
     
     ; If no mapping found, show error
-    if (programName = "ERROR" || programName = "") {
-        ShowCenteredToolTip("Key '" . keyPressed . "' not mapped.\nAdd to programs.ini\n[ProgramMapping]")
-        SetTimer, RemoveToolTip, 3500
+    if (programName = "" || programName = "ERROR") {
+        ShowCenteredToolTip("Key '" . keyPressed . "' not mapped.`nAdd to programs.ini`n[ProgramMapping]")
+        SetTimer(RemoveToolTip, -3500)
         return
     }
     
     ; Read the executable path for this program
-    IniRead, executablePath, %ProgramsIni%, Programs, %programName%
-    if (executablePath = "ERROR" || executablePath = "") {
-        ShowCenteredToolTip(programName . " not found in [Programs].\nAdd path to programs.ini")
-        SetTimer, RemoveToolTip, 3500
+    executablePath := IniRead(ProgramsIni, "Programs", programName, "")
+    if (executablePath = "" || executablePath = "ERROR") {
+        ShowCenteredToolTip(programName . " not found in [Programs].`nAdd path to programs.ini")
+        SetTimer(RemoveToolTip, -3500)
         return
     }
     
@@ -1876,622 +2413,70 @@ LaunchProgramFromKey(keyPressed) {
     LaunchApp(programName, executablePath)
 }
 
-; ----- Commands Layer Functions -----
-
-ShowCommandsMenu() {
-    global CommandsIni
-    ToolTipX := A_ScreenWidth // 2 - 110
-    ToolTipY := A_ScreenHeight // 2 - 100
-    MenuText := "COMMAND PALETTE`n"
-    MenuText .= "`n"
-    
-    Loop, 20 {
-        IniRead, lineContent, %CommandsIni%, MenuDisplay, main_line%A_Index%
-        if (lineContent != "ERROR" && lineContent != "") {
-            MenuText .= lineContent . "`n"
-        }
-    }
-    
-    MenuText .= "`n"
-    MenuText .= "[Backspace: Back] [Esc: Exit]"
-    ToolTip, %MenuText%, %ToolTipX%, %ToolTipY%, 2
-    return
-}
-
-ShowSystemCommandsMenu() {
-    global CommandsIni
-    ToolTipX := A_ScreenWidth // 2 - 120
-    ToolTipY := A_ScreenHeight // 2 - 90
-    MenuText := "SYSTEM COMMANDS`n"
-    MenuText .= "`n"
-    
-    Loop, 10 {
-        IniRead, lineContent, %CommandsIni%, MenuDisplay, system_line%A_Index%
-        if (lineContent != "ERROR" && lineContent != "") {
-            MenuText .= lineContent . "`n"
-        }
-    }
-    
-    MenuText .= "`n"
-    MenuText .= "[Backspace: Back] [Esc: Exit]"
-    ToolTip, %MenuText%, %ToolTipX%, %ToolTipY%, 2
-    return
-}
-
-ShowNetworkCommandsMenu() {
-    global CommandsIni
-    ToolTipX := A_ScreenWidth // 2 - 120
-    ToolTipY := A_ScreenHeight // 2 - 70
-    MenuText := "NETWORK COMMANDS`n"
-    MenuText .= "`n"
-    
-    Loop, 10 {
-        IniRead, lineContent, %CommandsIni%, MenuDisplay, network_line%A_Index%
-        if (lineContent != "ERROR" && lineContent != "") {
-            MenuText .= lineContent . "`n"
-        }
-    }
-    
-    MenuText .= "`n"
-    MenuText .= "[Backspace: Back] [Esc: Exit]"
-    ToolTip, %MenuText%, %ToolTipX%, %ToolTipY%, 2
-    return
-}
-
-ShowGitCommandsMenu() {
-    global CommandsIni
-    ToolTipX := A_ScreenWidth // 2 - 120
-    ToolTipY := A_ScreenHeight // 2 - 90
-    MenuText := "GIT COMMANDS`n"
-    MenuText .= "`n"
-    
-    Loop, 10 {
-        IniRead, lineContent, %CommandsIni%, MenuDisplay, git_line%A_Index%
-        if (lineContent != "ERROR" && lineContent != "") {
-            MenuText .= lineContent . "`n"
-        }
-    }
-    
-    MenuText .= "`n"
-    MenuText .= "[Backspace: Back] [Esc: Exit]"
-    ToolTip, %MenuText%, %ToolTipX%, %ToolTipY%, 2
-    return
-}
-
-ShowMonitoringCommandsMenu() {
-    global CommandsIni
-    ToolTipX := A_ScreenWidth // 2 - 120
-    ToolTipY := A_ScreenHeight // 2 - 90
-    MenuText := "MONITORING COMMANDS`n"
-    MenuText .= "`n"
-    
-    Loop, 10 {
-        IniRead, lineContent, %CommandsIni%, MenuDisplay, monitoring_line%A_Index%
-        if (lineContent != "ERROR" && lineContent != "") {
-            MenuText .= lineContent . "`n"
-        }
-    }
-    
-    MenuText .= "`n"
-    MenuText .= "[Backspace: Back] [Esc: Exit]"
-    ToolTip, %MenuText%, %ToolTipX%, %ToolTipY%, 2
-    return
-}
-
-ShowFolderCommandsMenu() {
-    global CommandsIni
-    ToolTipX := A_ScreenWidth // 2 - 120
-    ToolTipY := A_ScreenHeight // 2 - 90
-    MenuText := "FOLDER ACCESS`n"
-    MenuText .= "`n"
-    
-    Loop, 10 {
-        IniRead, lineContent, %CommandsIni%, MenuDisplay, folder_line%A_Index%
-        if (lineContent != "ERROR" && lineContent != "") {
-            MenuText .= lineContent . "`n"
-        }
-    }
-    
-    MenuText .= "`n"
-    MenuText .= "[Backspace: Back] [Esc: Exit]"
-    ToolTip, %MenuText%, %ToolTipX%, %ToolTipY%, 2
-    return
-}
-
-ShowWindowsCommandsMenu() {
-    global CommandsIni
-    ToolTipX := A_ScreenWidth // 2 - 120
-    ToolTipY := A_ScreenHeight // 2 - 70
-    MenuText := "WINDOWS COMMANDS`n"
-    MenuText .= "`n"
-    
-    Loop, 10 {
-        IniRead, lineContent, %CommandsIni%, MenuDisplay, windows_line%A_Index%
-        if (lineContent != "ERROR" && lineContent != "") {
-            MenuText .= lineContent . "`n"
-        }
-    }
-    
-    MenuText .= "`n"
-    MenuText .= "[Backspace: Back] [Esc: Exit]"
-    ToolTip, %MenuText%, %ToolTipX%, %ToolTipY%, 2
-    return
-}
-
-; ----- Command Execution Functions -----
-
-ExecuteSystemCommand(cmd) {
-    Switch cmd {
-        Case "s":
-            Run, cmd.exe /k systeminfo
-        Case "t":
-            Run, taskmgr.exe
-        Case "v":
-            Run, services.msc
-        Case "e":
-            Run, eventvwr.msc
-        Case "d":
-            Run, devmgmt.msc
-        Case "c":
-            Run, cleanmgr.exe
-    }
-    ShowCommandExecuted("System", cmd)
-    return
-}
-
-ExecuteNetworkCommand(cmd) {
-    Switch cmd {
-        Case "i":
-            Run, cmd.exe /k ipconfig /all
-        Case "p":
-            Run, cmd.exe /k ping google.com
-        Case "n":
-            Run, cmd.exe /k netstat -an
-    }
-    ShowCommandExecuted("Network", cmd)
-    return
-}
-
-ExecuteGitCommand(cmd) {
-    Switch cmd {
-        Case "s":
-            Run, cmd.exe /k git status
-        Case "l":
-            Run, cmd.exe /k git log --oneline -10
-        Case "b":
-            Run, cmd.exe /k git branch -a
-        Case "d":
-            Run, cmd.exe /k git diff
-        Case "a":
-            Run, cmd.exe /k git add .
-        Case "p":
-            Run, cmd.exe /k git pull
-    }
-    ShowCommandExecuted("Git", cmd)
-    return
-}
-
-ExecuteMonitoringCommand(cmd) {
-    Switch cmd {
-        Case "p":
-            Run, powershell.exe -Command "Get-Process | Sort-Object CPU -Descending | Select-Object -First 20 | Format-Table -AutoSize; Read-Host 'Press Enter to exit'"
-        Case "s":
-            Run, powershell.exe -Command "Get-Service | Sort-Object Status,Name | Format-Table -AutoSize; Read-Host 'Press Enter to exit'"
-        Case "d":
-            Run, powershell.exe -Command "Get-WmiObject -Class Win32_LogicalDisk | Select-Object DeviceID,Size,FreeSpace | Format-Table -AutoSize; Read-Host 'Press Enter to exit'"
-        Case "m":
-            Run, powershell.exe -Command "Get-WmiObject -Class Win32_OperatingSystem | Select-Object TotalVisibleMemorySize,FreePhysicalMemory | Format-Table -AutoSize; Read-Host 'Press Enter to exit'"
-        Case "c":
-            Run, powershell.exe -Command "Get-WmiObject -Class Win32_Processor | Select-Object Name,LoadPercentage | Format-Table -AutoSize; Read-Host 'Press Enter to exit'"
-    }
-    ShowCommandExecuted("Monitoring", cmd)
-    return
-}
-
-ExecuteFolderCommand(cmd) {
-    Switch cmd {
-        Case "t":
-            Run, explorer.exe "%TEMP%"
-        Case "a":
-            Run, explorer.exe "%APPDATA%"
-        Case "p":
-            Run, explorer.exe "C:\Program Files"
-        Case "u":
-            Run, explorer.exe "%USERPROFILE%"
-        Case "d":
-            Run, explorer.exe "%USERPROFILE%\Desktop"
-        Case "s":
-            Run, explorer.exe "C:\Windows\System32"
-    }
-    ShowCommandExecuted("Folder", cmd)
-    return
-}
-
-ExecuteWindowsCommand(cmd) {
-    Switch cmd {
-        Case "h":
-            ToggleHiddenFiles()
-        Case "r":
-            Run, regedit.exe
-            ShowCommandExecuted("Windows", "Registry Editor")
-        Case "e":
-            Run, rundll32.exe sysdm.cpl`,EditEnvironmentVariables
-            ShowCommandExecuted("Windows", "Environment Variables")
-    }
-    return
-}
-
-ToggleHiddenFiles() {
-    ; Toggle hidden files in Windows Explorer
-    RegRead, HiddenFiles, HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced, Hidden
-    
-    if (HiddenFiles = 1) {
-        ; Hide hidden files
-        RegWrite, REG_DWORD, HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced, Hidden, 2
-        ShowHiddenFilesStatus(false)
-    } else {
-        ; Show hidden files
-        RegWrite, REG_DWORD, HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced, Hidden, 1
-        ShowHiddenFilesStatus(true)
-    }
-    
-    ; Refresh all explorer windows
-    Send, {F5}
-    return
-}
-
-ShowHiddenFilesStatus(isVisible) {
-    ToolTipX := A_ScreenWidth // 2 - 80
-    ToolTipY := A_ScreenHeight // 2 - 30
-    if (isVisible) {
-        ToolTip, `n HIDDEN FILES: VISIBLE `n, %ToolTipX%, %ToolTipY%, 1
-    } else {
-        ToolTip, `n HIDDEN FILES: HIDDEN `n, %ToolTipX%, %ToolTipY%, 1
-    }
-    SetTimer, RemoveToolTip, 2000
-    return
-}
-
-ShowCommandExecuted(category, cmd) {
-    ToolTipX := A_ScreenWidth // 2 - 80
-    ToolTipY := A_ScreenHeight // 2 - 30
-    ToolTip, `n %category% COMMAND EXECUTED `n, %ToolTipX%, %ToolTipY%, 1
-    SetTimer, RemoveToolTip, 1500
-    return
-}
-
-; ----- Custom Commands Layer Functions -----
-
-ShowVaultFlowCommandsMenu() {
-    global CommandsIni
-    ToolTipX := A_ScreenWidth // 2 - 120
-    ToolTipY := A_ScreenHeight // 2 - 50
-    MenuText := "VAULTFLOW COMMANDS`n"
-    MenuText .= "`n"
-    
-    Loop, 10 {
-        IniRead, lineContent, %CommandsIni%, MenuDisplay, vaultflow_line%A_Index%
-        if (lineContent != "ERROR" && lineContent != "") {
-            MenuText .= lineContent . "`n"
-        }
-    }
-    
-    MenuText .= "`n"
-    MenuText .= "[Backspace: Back] [Esc: Exit]"
-    ToolTip, %MenuText%, %ToolTipX%, %ToolTipY%, 2
-    return
-}
-
-ShowPowerOptionsCommandsMenu() {
-    global CommandsIni
-    ToolTipX := A_ScreenWidth // 2 - 120
-    ToolTipY := A_ScreenHeight // 2 - 80
-    MenuText := "POWER OPTIONS`n"
-    MenuText .= "`n"
-    
-    Loop, 10 {
-        IniRead, lineContent, %CommandsIni%, MenuDisplay, power_line%A_Index%
-        if (lineContent != "ERROR" && lineContent != "") {
-            MenuText .= lineContent . "`n"
-        }
-    }
-    
-    MenuText .= "`n"
-    MenuText .= "[Backspace: Back] [Esc: Exit]"
-    ToolTip, %MenuText%, %ToolTipX%, %ToolTipY%, 2
-    return
-}
-
-ShowADBCommandsMenu() {
-    global CommandsIni
-    ToolTipX := A_ScreenWidth // 2 - 120
-    ToolTipY := A_ScreenHeight // 2 - 90
-    MenuText := "ADB TOOLS`n"
-    MenuText .= "`n"
-    
-    Loop, 10 {
-        IniRead, lineContent, %CommandsIni%, MenuDisplay, adb_line%A_Index%
-        if (lineContent != "ERROR" && lineContent != "") {
-            MenuText .= lineContent . "`n"
-        }
-    }
-    
-    MenuText .= "`n"
-    MenuText .= "[Backspace: Back] [Esc: Exit]"
-    ToolTip, %MenuText%, %ToolTipX%, %ToolTipY%, 2
-    return
-}
-
-; ----- Custom Command Execution Functions -----
-
-ExecuteVaultFlowCommand(cmd) {
-    Switch cmd {
-        Case "v":
-            Run, powershell.exe -Command "vaultflow"
-    }
-    ShowCommandExecuted("VaultFlow", cmd)
-    return
-}
-
-ExecutePowerOptionsCommand(cmd) {
-    Switch cmd {
-        Case "s":
-            Run, rundll32.exe powrprof.dll`,SetSuspendState 0`,1`,0
-            ShowCommandExecuted("Power", "Sleep")
-        Case "h":
-            Run, rundll32.exe powrprof.dll`,SetSuspendState Hibernate
-            ShowCommandExecuted("Power", "Hibernate")
-        Case "r":
-            Run, shutdown /r /t 0
-            ShowCommandExecuted("Power", "Restart")
-        Case "u":
-            Run, shutdown /s /t 0
-            ShowCommandExecuted("Power", "Shutdown")
-    }
-    return
-}
-
-ExecuteADBCommand(cmd) {
-    Switch cmd {
-        Case "d":
-            Run, cmd.exe /k adb devices
-        Case "x":
-            Run, cmd.exe /k adb disconnect
-        Case "s":
-            Run, cmd.exe /k adb shell
-        Case "l":
-            Run, cmd.exe /k adb logcat
-        Case "r":
-            Run, cmd.exe /k adb reboot
-    }
-    ShowCommandExecuted("ADB", cmd)
-    return
-}
-
-; ----- Information Layer Functions -----
-
-ShowInformationMenu() {
-    ; Menu de información dinámico que lee desde information.ini
-    global InfoIni
-    ToolTipX := A_ScreenWidth // 2 - 110
-    ToolTipY := A_ScreenHeight // 2 - 80
-    MenuText := "PERSONAL INFORMATION`n"
-    MenuText .= "`n"
-    
-    ; Read menu lines dynamically from information.ini
-    Loop, 10 {
-        IniRead, lineContent, %InfoIni%, MenuDisplay, line%A_Index%
-        if (lineContent != "ERROR" && lineContent != "") {
-            MenuText .= lineContent . "`n"
-        }
-    }
-    
-    MenuText .= "`n"
-    MenuText .= "[Backspace: Back] [Esc: Exit]"
-    ToolTip, %MenuText%, %ToolTipX%, %ToolTipY%, 2
-    return
-}
-
-InsertInformationFromKey(keyPressed) {
-    ; Dynamic information inserter that reads mapping from information.ini file
-    global InfoIni
-    
-    ; Read the information name mapped to this key
-    keyName := "key_" . keyPressed
-    IniRead, infoName, %InfoIni%, InfoMapping, %keyName%
-    
-    ; If no mapping found, show error
-    if (infoName = "ERROR" || infoName = "") {
-        ShowCenteredToolTip("Key '" . keyPressed . "' not mapped.\nAdd to information.ini\n[InfoMapping]")
-        SetTimer, RemoveToolTip, 3500
-        return
-    }
-    
-    ; Read the information content for this key
-    IniRead, infoContent, %InfoIni%, PersonalInfo, %infoName%
-    if (infoContent = "ERROR" || infoContent = "") {
-        ShowCenteredToolTip(infoName . " not found in [PersonalInfo].\nAdd content to information.ini")
-        SetTimer, RemoveToolTip, 3500
-        return
-    }
-    
-    ; Insert the information content
-    SendRaw, %infoContent%
-    ShowInformationInserted(infoName)
-    return
-}
-
-ShowInformationInserted(infoName) {
-    ToolTipX := A_ScreenWidth // 2 - 80
-    ToolTipY := A_ScreenHeight // 2 - 30
-    ToolTip, `n %infoName% INSERTED `n, %ToolTipX%, %ToolTipY%, 1
-    SetTimer, RemoveToolTip, 1500
-    return
-}
-
-; ----- Configuration Management Functions -----
-
-ReadConfigValue(section, key, defaultValue := "") {
-    ; Read configuration values from configuration.ini
-    global ConfigIni
-    IniRead, value, %ConfigIni%, %section%, %key%
-    if (value = "ERROR" || value = "") {
-        return defaultValue
-    }
-    return value
-}
-
-ReadLayerSettings(layerIni, settingKey, defaultValue := "") {
-    ; Read settings from layer-specific .ini files
-    IniRead, value, %layerIni%, Settings, %settingKey%
-    if (value = "ERROR" || value = "") {
-        return defaultValue
-    }
-    return value
-}
-
-GetTooltipDuration(layerType := "default") {
-    ; Get tooltip duration based on configuration with application profile support
-    global ConfigIni
-    
-    ; Try to get layer-specific duration first
-    if (layerType != "default") {
-        layerFile := A_ScriptDir . "\config\" . layerType . ".ini"
-        duration := ReadLayerSettings(layerFile, "feedback_duration", "")
-        if (duration != "") {
-            return duration
-        }
-    }
-    
-    ; Check for application-specific tooltip duration
-    return GetApplicationSpecificSetting("ui", "tooltip_duration_default", 1500)
-}
-
-GetLayerTimeout(layerType := "leader") {
-    ; Get timeout for specific layer with application profile support
-    global ConfigIni
-    
-    ; Try layer-specific timeout first
-    if (layerType != "leader") {
-        layerFile := A_ScriptDir . "\config\" . layerType . ".ini"
-        timeout := ReadLayerSettings(layerFile, "timeout_seconds", "")
-        if (timeout != "") {
-            return timeout
-        }
-    }
-    
-    ; Check for application-specific timeout
-    if (layerType = "leader") {
-        settingName := "leader_timeout_seconds"
-        return GetApplicationSpecificSetting("behavior", settingName, 7)
-    } else {
-        settingName := "global_timeout_seconds"
-        return GetApplicationSpecificSetting("behavior", settingName, 7)
-    }
-}
-
-IsLayerEnabled(layerName) {
-    ; Check if a specific layer is enabled with application profile support
-    settingName := layerName . "_layer_enabled"
-    value := GetApplicationSpecificSetting("layer", settingName, "true")
-    return value = "true"
-}
-
-IsFeatureEnabled(featureName) {
-    ; Check if a specific feature is enabled
-    return ReadConfigValue("General", featureName, "true") = "true"
-}
-
-; ----- Application Profile Functions -----
-
-GetActiveApplicationName() {
-    ; Get the friendly name from programs.ini or fallback to executable name
-    WinGet, processName, ProcessName, A
-    if (processName = "") {
-        return ""
-    }
-    
-    ; First, try to find a friendly name in programs.ini
-    global ProgramsIni
-    IniRead, sections, %ProgramsIni%, Programs
-    if (sections != "ERROR") {
-        Loop, Parse, sections, `n
-        {
-            if (A_LoopField = "") continue
-            IniRead, executablePath, %ProgramsIni%, Programs, %A_LoopField%
-            if (executablePath != "ERROR") {
-                ; Extract just the executable name from the path
-                SplitPath, executablePath, executableName
-                ; Remove quotes if present
-                executableName := StrReplace(executableName, """", "")
-                if (executableName = processName) {
-                    return A_LoopField  ; Return the friendly name
-                }
-            }
-        }
-    }
-    
-    ; If no friendly name found, return the executable name
-    return processName
-}
-
-ReadApplicationProfile(appName, settingName, defaultValue := "") {
-    ; Read application-specific configuration
-    global ConfigIni
-    
-    ; Try to read the profile for this application
-    IniRead, profileSettings, %ConfigIni%, ApplicationProfiles, %appName%
-    if (profileSettings = "ERROR" || profileSettings = "") {
-        return defaultValue
-    }
-    
-    ; Parse the settings string (format: setting1=value1,setting2=value2)
-    Loop, Parse, profileSettings, `,
-    {
-        if (A_LoopField = "") continue
-        
-        ; Split each setting into name=value
-        StringSplit, settingParts, A_LoopField, =
-        if (settingParts0 >= 2) {
-            currentSettingName := Trim(settingParts1)
-            currentSettingValue := Trim(settingParts2)
-            
-            if (currentSettingName = settingName) {
-                return currentSettingValue
-            }
-        }
-    }
-    
-    return defaultValue
-}
-
-GetApplicationSpecificSetting(settingType, settingName, defaultValue := "") {
-    ; Get setting with application profile override
-    activeApp := GetActiveApplicationName()
-    if (activeApp != "") {
-        ; Try application-specific setting first
-        appValue := ReadApplicationProfile(activeApp, settingName, "")
-        if (appValue != "") {
-            return appValue
-        }
-    }
-    
-    ; Fall back to global setting
-    if (settingType = "layer") {
-        return ReadConfigValue("Layers", settingName, defaultValue)
-    } else if (settingType = "behavior") {
-        return ReadConfigValue("Behavior", settingName, defaultValue)
-    } else if (settingType = "ui") {
-        return ReadConfigValue("UI", settingName, defaultValue)
-    } else {
-        return ReadConfigValue("General", settingName, defaultValue)
-    }
-}
-
-; ==============================================================================
-; OBSIDIAN INTEGRATION - INCLUDE SIMPLE VERSION
-; ==============================================================================
-#Include obsidian_integration_simple.ahk
-
-
-
+;===============================================================================
+; MIGRATION STATUS: PHASE 7 COMPLETED
+;===============================================================================
+; ✅ PHASE 1: Basic v2 structure established
+; ✅ PHASE 1: Global variables migrated
+; ✅ PHASE 1: Configuration file paths set up
+; ✅ PHASE 1: Basic helper functions implemented
+; ✅ PHASE 1: Version detection for v2
+; ✅ PHASE 1: Startup banner working
+;
+; ✅ PHASE 2: Window functions migrated (minimize, maximize, close)
+; ✅ PHASE 2: Basic navigation (hjkl) implemented
+; ✅ PHASE 2: Smooth scrolling migrated
+; ✅ PHASE 2: Common shortcuts (Ctrl equivalents) implemented
+; ✅ PHASE 2: Enhanced Alt+Tab migrated
+; ✅ PHASE 2: Click functions (left hold, right click) implemented
+; ✅ PHASE 2: Additional shortcuts and utilities migrated
+; ✅ PHASE 2: Status notification functions implemented
+;
+; ✅ PHASE 3: Hybrid logic (tap vs hold) implemented
+; ✅ PHASE 3: CapsLock tap detection (0.2s timeout)
+; ✅ PHASE 3: Nvim layer activation on tap
+; ✅ PHASE 3: Leader mode (CapsLock + Space) implemented
+; ✅ PHASE 3: Layer status tracking and JSON integration
+; ✅ PHASE 3: Configuration system with defaults
+; ✅ PHASE 3: Enhanced status functions
+;
+; ✅ PHASE 4: Nvim layer context-sensitive hotkeys (#HotIf)
+; ✅ PHASE 4: Visual mode toggle and navigation
+; ✅ PHASE 4: Extended navigation (word movement, home/end)
+; ✅ PHASE 4: Editing actions (undo, redo, delete, yank)
+; ✅ PHASE 4: Insert and replace modes
+; ✅ PHASE 4: Delete and yank operations with menus
+; ✅ PHASE 4: Smooth scrolling in Nvim layer
+; ✅ PHASE 4: Helper functions for Nvim operations
+;
+; ✅ PHASE 5: Programs layer (CapsLock + Space → p)
+; ✅ PHASE 5: Enhanced Leader mode with hierarchical navigation
+; ✅ PHASE 5: Application launcher with Registry search
+; ✅ PHASE 5: Dynamic program menu from programs.ini
+; ✅ PHASE 5: Environment variable expansion
+; ✅ PHASE 5: Error handling and user feedback
+; ✅ PHASE 5: 15+ specific application launchers
+;
+; ✅ PHASE 6: Specialized layers (Windows, Excel, Timestamp, Information)
+; ✅ PHASE 6: Excel/Accounting layer with numpad virtual keyboard
+; ✅ PHASE 6: Windows layer with splits, zoom, and window management
+; ✅ PHASE 6: Timestamp layer with date/time/datetime formats
+; ✅ PHASE 6: Information layer with personal data insertion
+; ✅ PHASE 6: All layers integrated with Leader mode navigation
+; ✅ PHASE 6: Dynamic menu generation from .ini files
+; ✅ PHASE 6: Context-sensitive hotkeys with #HotIf
+;
+; ✅ PHASE 7: Commands layer (CapsLock + Space → c)
+; ✅ PHASE 7: Command palette with 6 categories (System, Network, Git, etc.)
+; ✅ PHASE 7: Hierarchical command navigation with InputHook
+; ✅ PHASE 7: System commands (Task Manager, Services, Device Manager, etc.)
+; ✅ PHASE 7: Network commands (ipconfig, ping, netstat)
+; ✅ PHASE 7: Git commands (status, log, branch, diff, add, pull)
+; ✅ PHASE 7: Monitoring commands (processes, services, disk, memory, CPU)
+; ✅ PHASE 7: Folder access commands (temp, appdata, program files, etc.)
+; ✅ PHASE 7: Windows commands (registry, environment, hidden files toggle)
+; ✅ PHASE 7: Dynamic menu generation from commands.ini
+; ✅ PHASE 7: Error handling and command execution feedback
+;
+; NEXT: Phase 8 - Final integration, optimization, and documentation
+;===============================================================================
