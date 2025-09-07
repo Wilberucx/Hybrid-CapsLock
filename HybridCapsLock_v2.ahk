@@ -721,15 +721,30 @@ WriteTimestampFromKey(mode, keyPressed) {
 ShowCommandsMenu() {
     global CommandsIni
     ToolTipX := A_ScreenWidth // 2 - 110
-    ToolTipY := A_ScreenHeight // 2 - 100
+    ToolTipY := A_ScreenHeight // 2 - 120
     menuText := "COMMAND PALETTE`n`n"
     
-    ; Read menu lines dynamically from commands.ini
+    ; Try to read from commands.ini, fallback to hardcoded menu
+    hasConfigMenu := false
     Loop 20 {
         lineContent := IniRead(CommandsIni, "MenuDisplay", "main_line" . A_Index, "")
         if (lineContent != "" && lineContent != "ERROR") {
             menuText .= lineContent . "`n"
+            hasConfigMenu := true
         }
+    }
+    
+    ; If no config found, show hardcoded menu with all options
+    if (!hasConfigMenu) {
+        menuText .= "s - System Commands`n"
+        menuText .= "n - Network Commands`n"
+        menuText .= "g - Git Commands`n"
+        menuText .= "m - Monitoring Commands`n"
+        menuText .= "f - Folder Commands`n"
+        menuText .= "w - Windows Commands`n"
+        menuText .= "o - Power Options`n"
+        menuText .= "a - ADB Tools`n"
+        menuText .= "h - Hybrid Management`n"
     }
     
     menuText .= "`n[\: Back] [Esc: Exit]"
@@ -965,6 +980,48 @@ ShowWindowsCommandsMenu() {
     ToolTip(menuText, ToolTipX, ToolTipY, 2)
 }
 
+ShowPowerOptionsCommandsMenu() {
+    ToolTipX := A_ScreenWidth // 2 - 120
+    ToolTipY := A_ScreenHeight // 2 - 90
+    menuText := "POWER OPTIONS`n`n"
+    menuText .= "s - Sleep`n"
+    menuText .= "h - Hibernate`n"
+    menuText .= "r - Restart`n"
+    menuText .= "d - Shutdown`n"
+    menuText .= "l - Lock Screen`n"
+    menuText .= "o - Sign Out`n"
+    menuText .= "`n[\: Back] [Esc: Exit]"
+    ToolTip(menuText, ToolTipX, ToolTipY, 2)
+}
+
+ShowADBCommandsMenu() {
+    ToolTipX := A_ScreenWidth // 2 - 120
+    ToolTipY := A_ScreenHeight // 2 - 100
+    menuText := "ADB TOOLS`n`n"
+    menuText .= "d - List Devices`n"
+    menuText .= "i - Install APK`n"
+    menuText .= "u - Uninstall Package`n"
+    menuText .= "l - Logcat`n"
+    menuText .= "s - Shell`n"
+    menuText .= "r - Reboot Device`n"
+    menuText .= "c - Clear App Data`n"
+    menuText .= "`n[\: Back] [Esc: Exit]"
+    ToolTip(menuText, ToolTipX, ToolTipY, 2)
+}
+
+ShowHybridManagementMenu() {
+    ToolTipX := A_ScreenWidth // 2 - 120
+    ToolTipY := A_ScreenHeight // 2 - 80
+    menuText := "HYBRID MANAGEMENT`n`n"
+    menuText .= "r - Reload Script`n"
+    menuText .= "e - Exit Script`n"
+    menuText .= "c - Open Config Folder`n"
+    menuText .= "l - View Log File`n"
+    menuText .= "v - Show Version Info`n"
+    menuText .= "`n[\: Back] [Esc: Exit]"
+    ToolTip(menuText, ToolTipX, ToolTipY, 2)
+}
+
 ; Command execution functions
 ExecuteSystemCommand(cmd) {
     switch cmd {
@@ -1080,6 +1137,110 @@ ExecuteWindowsCommand(cmd) {
             ShowCommandExecuted("Windows", "Environment Variables")
         default:
             ShowCenteredToolTip("Unknown windows command: " . cmd)
+            SetTimer(RemoveToolTip, -1500)
+            return
+    }
+}
+
+ExecutePowerOptionsCommand(cmd) {
+    switch cmd {
+        case "s":
+            ; Sleep
+            DllCall("PowrProf.dll\SetSuspendState", "int", 0, "int", 0, "int", 0)
+            ShowCommandExecuted("Power", "Sleep")
+        case "h":
+            ; Hibernate
+            DllCall("PowrProf.dll\SetSuspendState", "int", 1, "int", 0, "int", 0)
+            ShowCommandExecuted("Power", "Hibernate")
+        case "r":
+            ; Restart
+            Run("shutdown.exe /r /t 0")
+            ShowCommandExecuted("Power", "Restart")
+        case "d":
+            ; Shutdown
+            Run("shutdown.exe /s /t 0")
+            ShowCommandExecuted("Power", "Shutdown")
+        case "l":
+            ; Lock Screen
+            DllCall("user32.dll\LockWorkStation")
+            ShowCommandExecuted("Power", "Lock Screen")
+        case "o":
+            ; Sign Out
+            Run("shutdown.exe /l")
+            ShowCommandExecuted("Power", "Sign Out")
+        default:
+            ShowCenteredToolTip("Unknown power command: " . cmd)
+            SetTimer(RemoveToolTip, -1500)
+            return
+    }
+}
+
+ExecuteADBCommand(cmd) {
+    switch cmd {
+        case "d":
+            Run("cmd.exe /k adb devices")
+            ShowCommandExecuted("ADB", "List Devices")
+        case "i":
+            Run("cmd.exe /k echo Select APK file to install && pause && adb install")
+            ShowCommandExecuted("ADB", "Install APK")
+        case "u":
+            Run("cmd.exe /k echo Enter package name to uninstall && pause && adb uninstall")
+            ShowCommandExecuted("ADB", "Uninstall Package")
+        case "l":
+            Run("cmd.exe /k adb logcat")
+            ShowCommandExecuted("ADB", "Logcat")
+        case "s":
+            Run("cmd.exe /k adb shell")
+            ShowCommandExecuted("ADB", "Shell")
+        case "r":
+            Run("cmd.exe /k adb reboot")
+            ShowCommandExecuted("ADB", "Reboot Device")
+        case "c":
+            Run("cmd.exe /k echo Enter package name to clear data && pause && adb shell pm clear")
+            ShowCommandExecuted("ADB", "Clear App Data")
+        default:
+            ShowCenteredToolTip("Unknown ADB command: " . cmd)
+            SetTimer(RemoveToolTip, -1500)
+            return
+    }
+}
+
+ExecuteHybridManagementCommand(cmd) {
+    switch cmd {
+        case "r":
+            ; Reload Script
+            ShowCenteredToolTip("RELOADING SCRIPT...")
+            SetTimer(RemoveToolTip, -1000)
+            Sleep(1000)
+            Reload()
+        case "e":
+            ; Exit Script
+            ShowCenteredToolTip("EXITING SCRIPT...")
+            SetTimer(RemoveToolTip, -1000)
+            Sleep(1000)
+            ExitApp()
+        case "c":
+            ; Open Config Folder
+            Run('explorer.exe "' . A_ScriptDir . '\config"')
+            ShowCommandExecuted("Hybrid", "Config Folder")
+        case "l":
+            ; View Log File (if exists)
+            logFile := A_ScriptDir . "\hybrid_log.txt"
+            if (FileExist(logFile)) {
+                Run('notepad.exe "' . logFile . '"')
+            } else {
+                ShowCenteredToolTip("No log file found")
+                SetTimer(RemoveToolTip, -2000)
+                return
+            }
+            ShowCommandExecuted("Hybrid", "Log File")
+        case "v":
+            ; Show Version Info
+            ShowCenteredToolTip("HybridCapsLock v2`nAutoHotkey " . A_AhkVersion . "`nScript: " . A_ScriptName)
+            SetTimer(RemoveToolTip, -3000)
+            return
+        default:
+            ShowCenteredToolTip("Unknown hybrid command: " . cmd)
             SetTimer(RemoveToolTip, -1500)
             return
     }
@@ -1426,6 +1587,12 @@ CapsLock & Space:: {
                             ShowFolderCommandsMenu()
                         case "windows":
                             ShowWindowsCommandsMenu()
+                        case "power":
+                            ShowPowerOptionsCommandsMenu()
+                        case "adb":
+                            ShowADBCommandsMenu()
+                        case "hybrid":
+                            ShowHybridManagementMenu()
                     }
                 } else if (InStr(currentMenu, "timestamps_")) {
                     mode := StrReplace(currentMenu, "timestamps_", "")
@@ -1570,6 +1737,15 @@ CapsLock & Space:: {
                     case "w":
                         menuStack.Push(currentMenu)
                         currentMenu := "commands_windows"
+                    case "o":
+                        menuStack.Push(currentMenu)
+                        currentMenu := "commands_power"
+                    case "a":
+                        menuStack.Push(currentMenu)
+                        currentMenu := "commands_adb"
+                    case "h":
+                        menuStack.Push(currentMenu)
+                        currentMenu := "commands_hybrid"
                     default:
                         ShowCenteredToolTip("Unknown command category: " . _key)
                         SetTimer(RemoveToolTip, -1000)
@@ -1593,6 +1769,12 @@ CapsLock & Space:: {
                             ExecuteFolderCommand(_key)
                         case "windows":
                             ExecuteWindowsCommand(_key)
+                        case "power":
+                            ExecutePowerOptionsCommand(_key)
+                        case "adb":
+                            ExecuteADBCommand(_key)
+                        case "hybrid":
+                            ExecuteHybridManagementCommand(_key)
                     }
                     break  ; Exit after executing command
                 } else if (InStr(currentMenu, "timestamps_")) {
