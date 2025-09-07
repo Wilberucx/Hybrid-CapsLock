@@ -117,8 +117,8 @@ doc/                        # Comprehensive documentation
 
 ### 🚧 **Known Issues & In Development**
 - **Elevated Service System** - Partial implementation available but requires stability improvements
-  - Files: `HybridCapsLock_Elevated.ahk`, `install_elevated_service.bat/ps1`, `privilege_dropper.ahk`
-  - Issues: NSSM service stability, permission synchronization between elevated/normal processes
+  - Files: Archivos de servicios elevados (eliminados por no ser necesarios)
+  - Issues: Sistema de servicios elevados removido por complejidad innecesaria
   - Status: Basic installation works, needs refinement for production use
 - **Experimental Scroll Features** - Basic implementation with potential interference
   - `hold_capslock_slash_scroll` and `nvim_shift_touchpad_scroll` in configuration.ini
@@ -126,7 +126,7 @@ doc/                        # Comprehensive documentation
   - Recommended to keep disabled until further development
 
 ### 🔮 **Future Roadmap**
-- Stabilize elevated service system for seamless admin app compatibility
+- Sistema de servicios elevados removido - usar ejecución directa del script
 - Improve touchpad scroll gesture detection and reliability
 - Implement visual theme system for tooltips and notifications
 - Enhance Zebar integration with more status indicators

@@ -86,7 +86,7 @@ Accede a un menú contextual con sub-capas organizadas:
 
 ### Opción B: Servicio de Windows (Recomendado)
 1. **Requisito:** [AutoHotkey v1.1+](https://www.autohotkey.com/)
-2. **Instalación:** Clic derecho en `install_elevated_service.bat` → "Ejecutar como administrador"
+2. **Instalación:** Ejecutar directamente `HybridCapsLock.ahk` o `HybridCapsLock_v2.ahk`
 3. **Ventajas:** 
    - Funciona con aplicaciones elevadas
    - Lanza aplicaciones con privilegios normales
@@ -183,7 +183,7 @@ El script genera automáticamente `layer_status.json` que se sincroniza con el w
 
 ### 🔧 Sistema de Elevación de Privilegios (En Progreso)
 - **Estado**: Implementación parcial disponible
-- **Archivos**: `HybridCapsLock_Elevated.ahk`, `install_elevated_service.bat/ps1`, `privilege_dropper.ahk`
+- **Archivos**: Archivos de servicios elevados (eliminados por no ser necesarios)
 - **Objetivo**: Compatibilidad completa con aplicaciones que requieren permisos de administrador
 - **Desafíos actuales**:
   - Estabilidad del servicio de Windows con NSSM

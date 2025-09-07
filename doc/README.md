@@ -31,7 +31,7 @@ Esta carpeta contiene toda la documentación detallada de HybridCapsLock.
 ## 🚀 Inicio Rápido
 
 1. **Instalación básica**: Ejecutar `HybridCapsLock.ahk`
-2. **Instalación como servicio**: Ejecutar `install_elevated_service.bat` como administrador
+2. **Instalación**: Ejecutar directamente el script principal
 3. **Personalización**: Editar archivos `.ini` según necesidades
 4. **Documentación específica**: Consultar archivos individuales para cada funcionalidad
 
