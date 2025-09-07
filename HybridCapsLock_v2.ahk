@@ -351,7 +351,7 @@ ShowWindowMenu() {
     menuText .= "c - Zoom with cursor`n`n"
     menuText .= "WINDOW SWITCHING:`n"
     menuText .= "j/k - Persistent Window Switch`n`n"
-    menuText .= "[Backspace: Back] [Esc: Exit]"
+    menuText .= "[\: Back] [Esc: Exit]"
     ToolTip(menuText, ToolTipX, ToolTipY, 2)
 }
 
@@ -363,7 +363,7 @@ ShowTimeMenu() {
     menuText .= "d - Date Formats`n"
     menuText .= "t - Time Formats`n"
     menuText .= "h - Date+Time Formats`n`n"
-    menuText .= "[Backspace: Back] [Esc: Exit]"
+    menuText .= "[\: Back] [Esc: Exit]"
     ToolTip(menuText, ToolTipX, ToolTipY, 2)
 }
 
@@ -381,7 +381,7 @@ ShowInformationMenu() {
         }
     }
     
-    menuText .= "`n[Backspace: Back] [Esc: Exit]"
+    menuText .= "`n[\: Back] [Esc: Exit]"
     ToolTip(menuText, ToolTipX, ToolTipY, 2)
 }
 
@@ -466,6 +466,7 @@ StartPersistentBlindSwitch() {
         
         ; Check what happened
         if (ih.EndReason = "Timeout") {
+            ih.Stop()  ; Clean up InputHook
             ShowCenteredToolTip("BLIND SWITCH TIMEOUT")
             SetTimer(RemoveToolTip, -1000)
             break
@@ -473,6 +474,7 @@ StartPersistentBlindSwitch() {
         
         ; Get the input character
         key := ih.Input
+        ih.Stop()  ; Clean up InputHook after getting input
         
         ; Handle the key
         if (key = "j") {
@@ -513,9 +515,11 @@ HandleTimestampMode(mode) {
                 dateInput.Wait()
                 
                 if (dateInput.EndReason = "Timeout" || dateInput.Input = Chr(27)) {  ; Escape
+                    dateInput.Stop()  ; Clean up InputHook
                     return  ; Exit timestamp mode
                 }
                 if (dateInput.Input = Chr(8)) {  ; Backspace
+                    dateInput.Stop()  ; Clean up InputHook
                     break  ; Back to timestamp menu
                 }
                 
@@ -531,9 +535,11 @@ HandleTimestampMode(mode) {
                 timeInput.Wait()
                 
                 if (timeInput.EndReason = "Timeout" || timeInput.Input = Chr(27)) {  ; Escape
+                    timeInput.Stop()  ; Clean up InputHook
                     return  ; Exit timestamp mode
                 }
                 if (timeInput.Input = Chr(8)) {  ; Backspace
+                    timeInput.Stop()  ; Clean up InputHook
                     break  ; Back to timestamp menu
                 }
                 
@@ -549,9 +555,11 @@ HandleTimestampMode(mode) {
                 datetimeInput.Wait()
                 
                 if (datetimeInput.EndReason = "Timeout" || datetimeInput.Input = Chr(27)) {  ; Escape
+                    datetimeInput.Stop()  ; Clean up InputHook
                     return  ; Exit timestamp mode
                 }
                 if (datetimeInput.Input = Chr(8)) {  ; Backspace
+                    datetimeInput.Stop()  ; Clean up InputHook
                     break  ; Back to timestamp menu
                 }
                 
@@ -612,7 +620,7 @@ ShowDateFormatsMenu() {
         }
     }
     
-    menuText .= "`n[Backspace: Back] [Esc: Exit]"
+    menuText .= "`n[\: Back] [Esc: Exit]"
     ToolTip(menuText, ToolTipX, ToolTipY, 2)
 }
 
@@ -630,7 +638,7 @@ ShowTimeFormatsMenu() {
         }
     }
     
-    menuText .= "`n[Backspace: Back] [Esc: Exit]"
+    menuText .= "`n[\: Back] [Esc: Exit]"
     ToolTip(menuText, ToolTipX, ToolTipY, 2)
 }
 
@@ -648,7 +656,7 @@ ShowDateTimeFormatsMenu() {
         }
     }
     
-    menuText .= "`n[Backspace: Back] [Esc: Exit]"
+    menuText .= "`n[\: Back] [Esc: Exit]"
     ToolTip(menuText, ToolTipX, ToolTipY, 2)
 }
 
@@ -724,7 +732,7 @@ ShowCommandsMenu() {
         }
     }
     
-    menuText .= "`n[Backspace: Back] [Esc: Exit]"
+    menuText .= "`n[\: Back] [Esc: Exit]"
     ToolTip(menuText, ToolTipX, ToolTipY, 2)
 }
 
@@ -740,13 +748,16 @@ HandleCommandCategory(category) {
                 categoryInput.Wait()
                 
                 if (categoryInput.EndReason = "Timeout" || categoryInput.Input = Chr(27)) {  ; Escape
+                    categoryInput.Stop()  ; Clean up InputHook
                     return  ; Exit command category
                 }
                 if (categoryInput.Input = Chr(8)) {  ; Backspace
+                    categoryInput.Stop()  ; Clean up InputHook
                     return  ; Back to commands menu (exit this category)
                 }
                 
                 ExecuteSystemCommand(categoryInput.Input)
+                categoryInput.Stop()  ; Clean up InputHook
                 return  ; Exit after executing command
             }
         case "n":
@@ -758,13 +769,16 @@ HandleCommandCategory(category) {
                 categoryInput.Wait()
                 
                 if (categoryInput.EndReason = "Timeout" || categoryInput.Input = Chr(27)) {  ; Escape
+                    categoryInput.Stop()  ; Clean up InputHook
                     return  ; Exit command category
                 }
                 if (categoryInput.Input = Chr(8)) {  ; Backspace
+                    categoryInput.Stop()  ; Clean up InputHook
                     return  ; Back to commands menu (exit this category)
                 }
                 
                 ExecuteNetworkCommand(categoryInput.Input)
+                categoryInput.Stop()  ; Clean up InputHook
                 return  ; Exit after executing command
             }
         case "g":
@@ -776,13 +790,16 @@ HandleCommandCategory(category) {
                 categoryInput.Wait()
                 
                 if (categoryInput.EndReason = "Timeout" || categoryInput.Input = Chr(27)) {  ; Escape
+                    categoryInput.Stop()  ; Clean up InputHook
                     return  ; Exit command category
                 }
                 if (categoryInput.Input = Chr(8)) {  ; Backspace
+                    categoryInput.Stop()  ; Clean up InputHook
                     return  ; Back to commands menu (exit this category)
                 }
                 
                 ExecuteGitCommand(categoryInput.Input)
+                categoryInput.Stop()  ; Clean up InputHook
                 return  ; Exit after executing command
             }
         case "m":
@@ -859,7 +876,7 @@ ShowSystemCommandsMenu() {
         }
     }
     
-    menuText .= "`n[Backspace: Back] [Esc: Exit]"
+    menuText .= "`n[\: Back] [Esc: Exit]"
     ToolTip(menuText, ToolTipX, ToolTipY, 2)
 }
 
@@ -876,7 +893,7 @@ ShowNetworkCommandsMenu() {
         }
     }
     
-    menuText .= "`n[Backspace: Back] [Esc: Exit]"
+    menuText .= "`n[\: Back] [Esc: Exit]"
     ToolTip(menuText, ToolTipX, ToolTipY, 2)
 }
 
@@ -893,7 +910,7 @@ ShowGitCommandsMenu() {
         }
     }
     
-    menuText .= "`n[Backspace: Back] [Esc: Exit]"
+    menuText .= "`n[\: Back] [Esc: Exit]"
     ToolTip(menuText, ToolTipX, ToolTipY, 2)
 }
 
@@ -910,7 +927,7 @@ ShowMonitoringCommandsMenu() {
         }
     }
     
-    menuText .= "`n[Backspace: Back] [Esc: Exit]"
+    menuText .= "`n[\: Back] [Esc: Exit]"
     ToolTip(menuText, ToolTipX, ToolTipY, 2)
 }
 
@@ -927,7 +944,7 @@ ShowFolderCommandsMenu() {
         }
     }
     
-    menuText .= "`n[Backspace: Back] [Esc: Exit]"
+    menuText .= "`n[\: Back] [Esc: Exit]"
     ToolTip(menuText, ToolTipX, ToolTipY, 2)
 }
 
@@ -944,7 +961,7 @@ ShowWindowsCommandsMenu() {
         }
     }
     
-    menuText .= "`n[Backspace: Back] [Esc: Exit]"
+    menuText .= "`n[\: Back] [Esc: Exit]"
     ToolTip(menuText, ToolTipX, ToolTipY, 2)
 }
 
@@ -1104,7 +1121,7 @@ ShowLeaderModeMenu() {
     menuText .= "i - Information`n"
     menuText .= "w - Windows`n"
     menuText .= "n - Excel/Numbers`n"
-    menuText .= "ESC - Exit`n"
+    menuText .= "`n\\ - Back | ESC - Exit`n"
     
     ToolTipX := A_ScreenWidth // 2 - 100
     ToolTipY := A_ScreenHeight // 2 - 100
@@ -1395,22 +1412,64 @@ CapsLock & Space:: {
                 ; Handle submenu cases
                 if (InStr(currentMenu, "commands_")) {
                     category := StrReplace(currentMenu, "commands_", "")
-                    ShowCommandCategoryMenu(category)
+                    ; Show the appropriate command category menu
+                    switch category {
+                        case "system":
+                            ShowSystemCommandsMenu()
+                        case "network":
+                            ShowNetworkCommandsMenu()
+                        case "git":
+                            ShowGitCommandsMenu()
+                        case "monitoring":
+                            ShowMonitoringCommandsMenu()
+                        case "folder":
+                            ShowFolderCommandsMenu()
+                        case "windows":
+                            ShowWindowsCommandsMenu()
+                    }
                 } else if (InStr(currentMenu, "timestamps_")) {
                     mode := StrReplace(currentMenu, "timestamps_", "")
-                    ShowTimestampModeMenu(mode)
+                    ; Show the appropriate timestamp menu
+                    switch mode {
+                        case "date":
+                            ShowDateFormatsMenu()
+                        case "time":
+                            ShowTimeFormatsMenu()
+                        case "datetime":
+                            ShowDateTimeFormatsMenu()
+                    }
                 }
         }
         
         userInput := InputHook("L1 T7")
+        userInput.KeyOpt("{Backspace}", "+")  ; Enable Backspace detection
+        userInput.KeyOpt("{Escape}", "+")     ; Enable Escape detection
         userInput.Start()
         userInput.Wait()
         
-        if (userInput.EndReason = "Timeout" || userInput.Input = Chr(27)) {  ; Escape
+        if (userInput.EndReason = "Timeout") {
+            userInput.Stop()  ; Clean up InputHook
             break  ; Exit completely
         }
         
-        if (userInput.Input = Chr(8)) {  ; Backspace
+        ; Check if it was a special key
+        if (userInput.EndReason = "KeyDown") {
+            if (userInput.EndKey = "Escape") {
+                userInput.Stop()
+                break  ; Exit completely
+            }
+        }
+        
+        _key := userInput.Input
+        userInput.Stop()  ; Clean up InputHook after getting input
+        
+        ; Check for Escape via input (backup method)
+        if (_key = Chr(27)) {  ; Escape
+            break  ; Exit completely
+        }
+        
+        ; Use backslash (\) as temporary back navigation key
+        if (_key = "\") {
             if (menuStack.Length > 0) {
                 currentMenu := menuStack.Pop()  ; Go back to previous menu
                 continue
@@ -1418,8 +1477,6 @@ CapsLock & Space:: {
                 break  ; Exit if at main menu
             }
         }
-        
-        _key := userInput.Input
         
         ; Handle navigation based on current menu
         switch currentMenu {
@@ -1522,7 +1579,21 @@ CapsLock & Space:: {
                 ; Handle submenu actions
                 if (InStr(currentMenu, "commands_")) {
                     category := StrReplace(currentMenu, "commands_", "")
-                    ExecuteCommandByCategory(category, _key)
+                    ; Execute command based on category
+                    switch category {
+                        case "system":
+                            ExecuteSystemCommand(_key)
+                        case "network":
+                            ExecuteNetworkCommand(_key)
+                        case "git":
+                            ExecuteGitCommand(_key)
+                        case "monitoring":
+                            ExecuteMonitoringCommand(_key)
+                        case "folder":
+                            ExecuteFolderCommand(_key)
+                        case "windows":
+                            ExecuteWindowsCommand(_key)
+                    }
                     break  ; Exit after executing command
                 } else if (InStr(currentMenu, "timestamps_")) {
                     mode := StrReplace(currentMenu, "timestamps_", "")
@@ -1716,6 +1787,25 @@ u:: {
 x::Send("{Delete}")
 +x::Send("{Backspace}")  ; X = delete backwards in nvim
 
+; ESC hotkey to reactivate nvim layer after replace/insert modes
+; Only when we're in a temporary edit mode
+~Esc:: {
+    global isNvimLayerActive, _tempEditMode
+    ; Only reactivate if we're in a temporary edit mode
+    if (!isNvimLayerActive && _tempEditMode) {
+        ; Cancel the auto-reactivation timer
+        SetTimer(ReactivateNvimAfterReplace, 0)
+        ; Clear temp edit mode flag
+        _tempEditMode := false
+        ; Reactivate nvim layer immediately
+        isNvimLayerActive := true
+        ShowNvimLayerStatus(true)
+        SetTempStatus("NVIM LAYER ON", 1000)
+        UpdateLayerStatus()
+        SetTimer(RemoveToolTip, -1000)
+    }
+}
+
 ; ----- Delete Operations -----
 d:: {
     global VisualMode, _deleteAwait
@@ -1848,7 +1938,7 @@ ShowProgramMenu() {
         }
     }
     
-    menuText .= "`n[Backspace: Back] [Esc: Exit]"
+    menuText .= "`n[\: Back] [Esc: Exit]"
     ToolTip(menuText, ToolTipX, ToolTipY, 2)
 }
 

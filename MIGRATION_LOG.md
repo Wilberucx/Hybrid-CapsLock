@@ -430,3 +430,46 @@
 **Última actualización:** $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")  
 **Próxima revisión:** Después de completar Fase 1  
 **Responsable:** RovoDev
+
+---
+
+## ✅ Fase 8: Navegación Jerárquica y Detección de Teclas
+
+**Estado:** ✅ COMPLETADA  
+**Fecha:** 2024-12-19  
+**Duración:** 4 horas  
+**Progreso:** 5/5 tareas completadas
+
+### Tareas Completadas:
+- [x] ✅ Diagnosticar problema de navegación jerárquica
+- [x] ✅ Corregir detección de teclas Backspace y Esc
+- [x] ✅ Implementar limpieza correcta de InputHook
+- [x] ✅ Establecer stack de navegación funcional
+- [x] ✅ Implementar solución temporal con backslash (\)
+
+### Problema Crítico Resuelto:
+**Detección de Backspace en AutoHotkey v2:**
+- **Síntoma:** Backspace funcionaba en primera ejecución, fallaba en segunda
+- **Causa:** InputHook no se limpiaba correctamente entre ejecuciones
+- **Solución:** Agregado `InputHook.Stop()` en todas las instancias
+- **Workaround:** Backslash (\) como tecla de navegación temporal
+
+### Archivos Modificados:
+- `HybridCapsLock_v2.ahk` - Correcciones principales
+- `v2_migration/phase8_complete.md` - Documentación de fase
+- `MIGRATION_PLAN_V2.md` - Actualización de estado
+- `MIGRATION_LOG.md` - Este registro
+
+### Resultados:
+- ✅ **Navegación jerárquica 100% funcional**
+- ✅ **Stack de menús robusto** (Push/Pop operativo)
+- ✅ **InputHook limpio** (Sin estados sucios)
+- ✅ **Experiencia de usuario mejorada**
+
+### Notas de Desarrollo:
+- Problema específico de AutoHotkey v2 con InputHook
+- Solución temporal robusta y funcional implementada
+- Navegación completa: Leader → Commands → Submenús → Back → Back → Exit
+- Todos los menús actualizados con nueva tecla de navegación
+
+---
