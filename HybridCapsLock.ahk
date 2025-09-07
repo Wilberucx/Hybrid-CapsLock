@@ -66,6 +66,15 @@ global excelLayerActive := false
 ; Variable to track if CapsLock was held beyond the threshold
 global capsLockWasHeld := false
 
+; Variable to track if CapsLock was used as a modifier with another key
+global capsLockUsedAsModifier := false
+
+; Helper function to mark CapsLock as used as modifier
+MarkCapsLockAsModifier() {
+    global capsLockUsedAsModifier
+    capsLockUsedAsModifier := true
+}
+
 ; Click derecho sostenido state
 global rightClickHeld := false
 
@@ -1238,7 +1247,9 @@ ExecuteHybridManagementCommand(cmd) {
             ShowCenteredToolTip("RELOADING SCRIPT...")
             SetTimer(RemoveToolTip, -1000)
             Sleep(1000)
-            Reload()
+            ; Use A_ScriptFullPath to reload the current script regardless of name or location
+            Run('"' . A_AhkPath . '" "' . A_ScriptFullPath . '"')
+            ExitApp()
         case "e":
             ; Exit Script
             ShowCenteredToolTip("EXITING SCRIPT...")
@@ -1387,31 +1398,78 @@ CapsLock & f:: {
 }
 
 ; ----- Basic Navigation (Vim Style) -----
-CapsLock & h::Send("{Left}")
-CapsLock & j::Send("{Down}")
-CapsLock & k::Send("{Up}")
-CapsLock & l::Send("{Right}")
+CapsLock & h:: {
+    MarkCapsLockAsModifier()
+    Send("{Left}")
+}
+CapsLock & j:: {
+    MarkCapsLockAsModifier()
+    Send("{Down}")
+}
+CapsLock & k:: {
+    MarkCapsLockAsModifier()
+    Send("{Up}")
+}
+CapsLock & l:: {
+    MarkCapsLockAsModifier()
+    Send("{Right}")
+}
 
 ; ----- Smooth Scrolling -----
-CapsLock & e::Send("{WheelDown 3}")
-CapsLock & d::Send("{WheelUp 3}")
+CapsLock & e:: {
+    MarkCapsLockAsModifier()
+    Send("{WheelDown 3}")
+}
+CapsLock & d:: {
+    MarkCapsLockAsModifier()
+    Send("{WheelUp 3}")
+}
 
 ; ----- Common Shortcuts (Ctrl equivalents) -----
-CapsLock & a::Send("^a")  ; Select all
-CapsLock & s::Send("^s")  ; Save
+CapsLock & a:: {
+    MarkCapsLockAsModifier()
+    Send("^a")  ; Select all
+}
+CapsLock & s:: {
+    MarkCapsLockAsModifier()
+    Send("^s")  ; Save
+}
 CapsLock & c:: {
+    MarkCapsLockAsModifier()
     Send("^c")  ; Copy
     ShowCopyNotification()
 }
-CapsLock & v::Send("^v")  ; Paste
-CapsLock & x::Send("^x")  ; Cut
-CapsLock & z::Send("^z")  ; Undo
-CapsLock & o::Send("^o")  ; Open
-CapsLock & t::Send("^t")  ; New tab
-CapsLock & r::Send("{F5}")  ; Refresh
+CapsLock & v:: {
+    MarkCapsLockAsModifier()
+    Send("^v")  ; Paste
+}
+CapsLock & x:: {
+    MarkCapsLockAsModifier()
+    Send("^x")  ; Cut
+}
+CapsLock & z:: {
+    MarkCapsLockAsModifier()
+    Send("^z")  ; Undo
+}
+CapsLock & o:: {
+    MarkCapsLockAsModifier()
+    Send("^o")  ; Open
+}
+CapsLock & t:: {
+    MarkCapsLockAsModifier()
+    Send("^t")  ; New tab
+}
+CapsLock & r:: {
+    MarkCapsLockAsModifier()
+    Send("{F5}")  ; Refresh
+}
 
 ; ----- Enhanced Alt+Tab -----
 CapsLock & Tab:: {
+    global capsLockUsedAsModifier
+    ; Mark that CapsLock was used as a modifier
+    capsLockUsedAsModifier := true
+    
     ; Start Alt+Tab sequence
     Send("{Alt down}{Tab}")
     
@@ -1433,7 +1491,10 @@ CapsLock & Tab:: {
 
 ; ----- Click Functions -----
 CapsLock & `;:: {
-    global rightClickHeld
+    global rightClickHeld, capsLockUsedAsModifier
+    ; Mark that CapsLock was used as a modifier
+    capsLockUsedAsModifier := true
+    
     ; Start left click hold
     Click("Left", , , 1, 0, "D")  ; Down
     rightClickHeld := true
@@ -1453,6 +1514,10 @@ CapsLock & `;:: {
 }
 
 CapsLock & ':: {
+    global capsLockUsedAsModifier
+    ; Mark that CapsLock was used as a modifier
+    capsLockUsedAsModifier := true
+    
     ; Simple right click
     Click("Right")
     ShowRightClickStatus(true)
@@ -1461,22 +1526,64 @@ CapsLock & ':: {
 }
 
 ; ----- Additional Shortcuts -----
-CapsLock & 2::Send("^+!{2}")
-CapsLock & 3::Send("!a")
-CapsLock & 4::Send("!s")
-CapsLock & i::Send("^!k")
-CapsLock & w::Send("^w")
-CapsLock & m::Send("^{PgDn}")
-CapsLock & u::Send("^{PgUp}")
-CapsLock & g::Send("^!+g")  ; Missing hotkey from v1
-CapsLock & [::Send("^!+{[}")
-CapsLock & ]::Send("^!+{]}")
+CapsLock & 2:: {
+    MarkCapsLockAsModifier()
+    Send("^+!{2}")
+}
+CapsLock & 3:: {
+    MarkCapsLockAsModifier()
+    Send("!a")
+}
+CapsLock & 4:: {
+    MarkCapsLockAsModifier()
+    Send("!s")
+}
+CapsLock & i:: {
+    MarkCapsLockAsModifier()
+    Send("^!k")
+}
+CapsLock & w:: {
+    MarkCapsLockAsModifier()
+    Send("^w")
+}
+CapsLock & m:: {
+    MarkCapsLockAsModifier()
+    Send("^{PgDn}")
+}
+CapsLock & u:: {
+    MarkCapsLockAsModifier()
+    Send("^{PgUp}")
+}
+CapsLock & g:: {
+    MarkCapsLockAsModifier()
+    Send("^!+g")  ; Missing hotkey from v1
+}
+CapsLock & [:: {
+    MarkCapsLockAsModifier()
+    Send("^!+{[}")
+}
+CapsLock & ]:: {
+    MarkCapsLockAsModifier()
+    Send("^!+{]}")
+}
 
 ; ----- Window Management (GlazeWM) -----
-CapsLock & Left::Send("!+h")
-CapsLock & Up::Send("!+k")
-CapsLock & Down::Send("!+j")
-CapsLock & Right::Send("!+l")
+CapsLock & Left:: {
+    MarkCapsLockAsModifier()
+    Send("!+h")
+}
+CapsLock & Up:: {
+    MarkCapsLockAsModifier()
+    Send("!+k")
+}
+CapsLock & Down:: {
+    MarkCapsLockAsModifier()
+    Send("!+j")
+}
+CapsLock & Right:: {
+    MarkCapsLockAsModifier()
+    Send("!+l")
+}
 
 ; ----- Utility Functions -----
 CapsLock & \::SendText("your.email@example.com")
@@ -1535,7 +1642,7 @@ CapsLock & F12:: {
 
 ; Core hybrid functionality: CapsLock tap vs hold detection
 CapsLock:: {
-    global capsActsNormal, capsLockWasHeld
+    global capsActsNormal, capsLockWasHeld, capsLockUsedAsModifier
     
     ; If CapsLock is in normal mode, act as regular CapsLock
     if (capsActsNormal) {
@@ -1543,28 +1650,31 @@ CapsLock:: {
         return
     }
     
-    ; Reset the hold flag when key is pressed
+    ; Reset the flags when key is pressed
     capsLockWasHeld := false
+    capsLockUsedAsModifier := false
     
     ; Wait for key release with timeout (0.2 seconds)
     ; If timeout expires, user is HOLDING the key
     if (!KeyWait("CapsLock", "T0.2")) {
         ; Timeout expired - user is holding CapsLock
         capsLockWasHeld := true
+        ; Wait for final release
+        KeyWait("CapsLock")
     }
 }
 
 CapsLock Up:: {
-    global capsActsNormal, capsLockWasHeld, isNvimLayerActive, VisualMode
+    global capsActsNormal, capsLockWasHeld, capsLockUsedAsModifier, isNvimLayerActive, VisualMode
     
     ; If CapsLock is in normal mode, do nothing
     if (capsActsNormal) {
         return
     }
     
-    ; Only activate Nvim layer if it was a TAP (not held beyond threshold)
-    if (!capsLockWasHeld) {
-        ; Toggle Nvim layer on tap
+    ; Only activate Nvim layer if it was a clean TAP (not held and not used as modifier)
+    if (!capsLockWasHeld && !capsLockUsedAsModifier) {
+        ; Toggle Nvim layer on clean tap
         isNvimLayerActive := !isNvimLayerActive
         
         if (isNvimLayerActive) {
@@ -1580,13 +1690,17 @@ CapsLock Up:: {
         SetTimer(RemoveToolTip, -1500)
     }
     
-    ; Reset the flag for next use
+    ; Reset the flags for next use
     capsLockWasHeld := false
+    capsLockUsedAsModifier := false
 }
 
 ; Leader Mode: CapsLock + Space activates command palette
 CapsLock & Space:: {
-    global leaderActive, isNvimLayerActive, VisualMode
+    global leaderActive, isNvimLayerActive, VisualMode, capsLockUsedAsModifier
+    
+    ; Mark that CapsLock was used as a modifier
+    capsLockUsedAsModifier := true
     
     ; Deactivate Nvim Layer if it's active when leader is called
     if (isNvimLayerActive) {
