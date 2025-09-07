@@ -108,21 +108,17 @@ RemoveToolTip() {
 }
 
 
-; Configuration reading function (Phase 3 basic implementation)
+; Configuration reading function
 ReadConfigValue(section, key, defaultValue := "") {
-    ; Basic implementation - will be enhanced in later phases
-    ; For now, return sensible defaults for hybrid logic
-    
     if (section = "Hybrid" && key = "tap_timeout") {
-        return "200"  ; 200ms timeout for tap vs hold
+        return "200"
     }
     if (section = "Hybrid" && key = "leader_timeout") {
-        return "5000"  ; 5 second timeout for leader mode
+        return "5000"
     }
     if (section = "Advanced" && key = "nvim_shift_touchpad_scroll") {
         return "false"
     }
-    
     return defaultValue
 }
 
@@ -744,6 +740,7 @@ ShowCommandsMenu() {
         menuText .= "w - Windows Commands`n"
         menuText .= "o - Power Options`n"
         menuText .= "a - ADB Tools`n"
+        menuText .= "v - VaultFlow`n"
         menuText .= "h - Hybrid Management`n"
     }
     
@@ -1022,6 +1019,34 @@ ShowHybridManagementMenu() {
     ToolTip(menuText, ToolTipX, ToolTipY, 2)
 }
 
+ShowVaultFlowCommandsMenu() {
+    global CommandsIni
+    ToolTipX := A_ScreenWidth // 2 - 120
+    ToolTipY := A_ScreenHeight // 2 - 60
+    menuText := "VAULTFLOW COMMANDS`n`n"
+    
+    ; Try to read from commands.ini first
+    hasConfigMenu := false
+    Loop 10 {
+        lineContent := IniRead(CommandsIni, "MenuDisplay", "vaultflow_line" . A_Index, "")
+        if (lineContent != "" && lineContent != "ERROR") {
+            menuText .= lineContent . "`n"
+            hasConfigMenu := true
+        }
+    }
+    
+    ; If no config found, show hardcoded menu
+    if (!hasConfigMenu) {
+        menuText .= "v - Run VaultFlow`n"
+        menuText .= "s - VaultFlow Status`n"
+        menuText .= "l - List Vaults`n"
+        menuText .= "h - VaultFlow Help`n"
+    }
+    
+    menuText .= "`n[\: Back] [Esc: Exit]"
+    ToolTip(menuText, ToolTipX, ToolTipY, 2)
+}
+
 ; Command execution functions
 ExecuteSystemCommand(cmd) {
     switch cmd {
@@ -1241,6 +1266,31 @@ ExecuteHybridManagementCommand(cmd) {
             return
         default:
             ShowCenteredToolTip("Unknown hybrid command: " . cmd)
+            SetTimer(RemoveToolTip, -1500)
+            return
+    }
+}
+
+ExecuteVaultFlowCommand(cmd) {
+    switch cmd {
+        case "v":
+            ; Run VaultFlow
+            Run("powershell.exe -Command `"vaultflow`"")
+            ShowCommandExecuted("VaultFlow", "Run VaultFlow")
+        case "s":
+            ; VaultFlow Status
+            Run("cmd.exe /k vaultflow status")
+            ShowCommandExecuted("VaultFlow", "Status")
+        case "l":
+            ; List Vaults
+            Run("cmd.exe /k vaultflow list")
+            ShowCommandExecuted("VaultFlow", "List Vaults")
+        case "h":
+            ; VaultFlow Help
+            Run("cmd.exe /k vaultflow --help")
+            ShowCommandExecuted("VaultFlow", "Help")
+        default:
+            ShowCenteredToolTip("Unknown VaultFlow command: " . cmd)
             SetTimer(RemoveToolTip, -1500)
             return
     }
@@ -1593,6 +1643,8 @@ CapsLock & Space:: {
                             ShowADBCommandsMenu()
                         case "hybrid":
                             ShowHybridManagementMenu()
+                        case "vaultflow":
+                            ShowVaultFlowCommandsMenu()
                     }
                 } else if (InStr(currentMenu, "timestamps_")) {
                     mode := StrReplace(currentMenu, "timestamps_", "")
@@ -1746,6 +1798,9 @@ CapsLock & Space:: {
                     case "h":
                         menuStack.Push(currentMenu)
                         currentMenu := "commands_hybrid"
+                    case "v":
+                        menuStack.Push(currentMenu)
+                        currentMenu := "commands_vaultflow"
                     default:
                         ShowCenteredToolTip("Unknown command category: " . _key)
                         SetTimer(RemoveToolTip, -1000)
@@ -1775,6 +1830,8 @@ CapsLock & Space:: {
                             ExecuteADBCommand(_key)
                         case "hybrid":
                             ExecuteHybridManagementCommand(_key)
+                        case "vaultflow":
+                            ExecuteVaultFlowCommand(_key)
                     }
                     break  ; Exit after executing command
                 } else if (InStr(currentMenu, "timestamps_")) {
@@ -1970,16 +2027,11 @@ x::Send("{Delete}")
 +x::Send("{Backspace}")  ; X = delete backwards in nvim
 
 ; ESC hotkey to reactivate nvim layer after replace/insert modes
-; Only when we're in a temporary edit mode
 ~Esc:: {
     global isNvimLayerActive, _tempEditMode
-    ; Only reactivate if we're in a temporary edit mode
     if (!isNvimLayerActive && _tempEditMode) {
-        ; Cancel the auto-reactivation timer
         SetTimer(ReactivateNvimAfterReplace, 0)
-        ; Clear temp edit mode flag
         _tempEditMode := false
-        ; Reactivate nvim layer immediately
         isNvimLayerActive := true
         ShowNvimLayerStatus(true)
         SetTempStatus("NVIM LAYER ON", 1000)

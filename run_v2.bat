@@ -1,3 +1,0 @@
-@echo off
-echo Ejecutando HybridCapsLock con AutoHotkey v2...
-"C:\Program Files\AutoHotkey\v2\AutoHotkey.exe" "%~dp0HybridCapsLock_v2.ahk"
