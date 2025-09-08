@@ -54,9 +54,19 @@ namespace TooltipApp
             var screenWidth = SystemParameters.PrimaryScreenWidth;
             var screenHeight = SystemParameters.PrimaryScreenHeight;
             
-            // Centro horizontal, 50px desde abajo
-            this.Left = (screenWidth - this.ActualWidth) / 2;
-            this.Top = screenHeight - this.ActualHeight - 50;
+            // Check if this is a persistent status tooltip
+            if (currentTooltip?.tooltip_type == "status_persistent")
+            {
+                // Position in bottom-left corner
+                this.Left = 20; // 20px from left edge
+                this.Top = screenHeight - this.ActualHeight - 20; // 20px from bottom
+            }
+            else
+            {
+                // Centro horizontal, 50px desde abajo para tooltips regulares
+                this.Left = (screenWidth - this.ActualWidth) / 2;
+                this.Top = screenHeight - this.ActualHeight - 50;
+            }
         }
 
         private void ShowBasicTooltip()
@@ -81,6 +91,43 @@ namespace TooltipApp
             
             this.Visibility = Visibility.Visible;
             PositionWindow();
+        }
+
+        private void ApplyPersistentStatusStyle()
+        {
+            // Estilo para tooltips de estado persistentes
+            TooltipBorder.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#1e1e1e"));
+            TooltipBorder.BorderBrush = SystemParameters.WindowGlassBrush; // Color de acento del sistema
+            TooltipBorder.BorderThickness = new Thickness(2);
+            TooltipBorder.Padding = new Thickness(12, 8);
+            TooltipBorder.CornerRadius = new CornerRadius(3);
+            
+            // Título en mayúsculas y bold
+            TitleText.FontWeight = FontWeights.Bold;
+            TitleText.FontSize = 12;
+            TitleText.Text = TitleText.Text.ToUpper();
+            
+            // Ocultar items grid y navigation para estados
+            ItemsGrid.Visibility = Visibility.Collapsed;
+            NavigationPanel.Visibility = Visibility.Collapsed;
+        }
+
+        private void ApplyRegularTooltipStyle()
+        {
+            // Estilo para tooltips regulares
+            TooltipBorder.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#1e1e1e"));
+            TooltipBorder.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#404040"));
+            TooltipBorder.BorderThickness = new Thickness(1);
+            TooltipBorder.Padding = new Thickness(16, 12);
+            TooltipBorder.CornerRadius = new CornerRadius(4);
+            
+            // Título normal
+            TitleText.FontWeight = FontWeights.Bold;
+            TitleText.FontSize = 14;
+            
+            // Mostrar items grid y navigation
+            ItemsGrid.Visibility = Visibility.Visible;
+            NavigationPanel.Visibility = Visibility.Visible;
         }
 
         private void CreateItemsLayout(TooltipItem[] items)
@@ -215,18 +262,31 @@ namespace TooltipApp
                     return;
                 }
 
+                // Guardar referencia al comando actual
+                currentTooltip = command;
+
                 // Actualizar título
                 if (!string.IsNullOrEmpty(command.Title))
                 {
                     TitleText.Text = command.Title;
                 }
 
-                // Actualizar items si están presentes
-                if (command.Items?.Count > 0)
+                // Aplicar estilo según el tipo de tooltip
+                if (command.TooltipType == "status_persistent")
                 {
-                    ItemsGrid.Children.Clear();
-                    ItemsGrid.RowDefinitions.Clear();
-                    CreateItemsLayout(command.Items.ToArray());
+                    ApplyPersistentStatusStyle();
+                }
+                else
+                {
+                    ApplyRegularTooltipStyle();
+                    
+                    // Actualizar items si están presentes (solo para tooltips regulares)
+                    if (command.Items?.Count > 0)
+                    {
+                        ItemsGrid.Children.Clear();
+                        ItemsGrid.RowDefinitions.Clear();
+                        CreateItemsLayout(command.Items.ToArray());
+                    }
                 }
 
                 // Actualizar navegación si está presente

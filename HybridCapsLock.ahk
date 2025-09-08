@@ -45,7 +45,8 @@ if (SubStr(A_AhkVersion, 1, 1) != "2") {
 ; Startup banner to confirm correct script loaded
 if (tooltipConfig.enabled) {
     StartTooltipApp()
-    Sleep(500)  ; Give time for C# app to start
+    StartStatusApp()  ; Iniciar aplicación de estado por separado
+    Sleep(500)  ; Give time for apps to start
     ShowCenteredToolTipCS("HybridCapsLock v2.0 loaded`n" . A_ScriptFullPath, 1500)
 } else {
     ShowCenteredToolTip("HybridCapsLock v2.0 loaded`n" . A_ScriptFullPath)

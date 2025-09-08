@@ -128,7 +128,7 @@ ShowCSharpTooltip(title, items, navigation := "", timeout := 0) {
     jsonData .= '"show": true'
     jsonData .= "}"
     
-    ; Escribir archivo JSON
+    ; Escribir archivo JSON (sobrescribir contenido)
     try {
         FileDelete("tooltip_commands.json")
     }
@@ -138,6 +138,7 @@ ShowCSharpTooltip(title, items, navigation := "", timeout := 0) {
 ; Función para ocultar tooltip C#
 HideCSharpTooltip() {
     jsonData := '{"show": false}'
+    ; Sobrescribir archivo con show: false
     try {
         FileDelete("tooltip_commands.json")
     }
@@ -173,13 +174,25 @@ StartTooltipApp() {
                 try {
                     Run('"' . path . '"', , "Hide")
                     Sleep(500)
-                    return true
+                    break
                 }
             }
         }
-        
-        ; Si no se encuentra el ejecutable, mostrar error
-        MsgBox("No se encontró TooltipApp.exe. Compila la aplicación C# primero.", "Error", "IconX")
+    }
+    return true
+}
+
+; Función separada para iniciar la aplicación de estado
+StartStatusApp() {
+    statusScript := "tooltip_csharp\\StatusWindow.ps1"
+    if (FileExist(statusScript)) {
+        try {
+            Run('powershell.exe -WindowStyle Hidden -ExecutionPolicy Bypass -File "' . statusScript . '"', , "Hide")
+            Sleep(500)
+            return true
+        }
+    } else {
+        MsgBox("No se encontró StatusWindow.ps1", "Error", "IconX")
         return false
     }
     return true
@@ -270,7 +283,67 @@ ShowCommandsMenuCS() {
 }
 
 ; ===================================================================
-; FUNCIONES DE NOTIFICACIÓN MEJORADAS
+; FUNCIONES DE ESTADO PERSISTENTE (VENTANA INDEPENDIENTE)
+; ===================================================================
+
+; Función para mostrar estado persistente en ventana independiente
+ShowPersistentStatus(statusText) {
+    jsonData := "{"
+    jsonData .= '"show": true,'
+    jsonData .= '"status": "' . statusText . '"'
+    jsonData .= "}"
+    
+    ; Escribir SOLO archivo JSON para ventana de estado (NO tocar tooltip_commands.json)
+    try {
+        FileDelete("status_commands.json")
+    }
+    FileAppend(jsonData, "status_commands.json")
+}
+
+; Función para ocultar estado persistente
+HidePersistentStatus() {
+    jsonData := '{"show": false}'
+    try {
+        FileDelete("status_commands.json")
+    }
+    FileAppend(jsonData, "status_commands.json")
+}
+
+; Funciones específicas para cada estado persistente
+ShowNvimStatus() {
+    ShowPersistentStatus("NVIM")
+}
+
+HideNvimStatus() {
+    HidePersistentStatus()
+}
+
+ShowVisualStatus() {
+    ShowPersistentStatus("VISUAL")
+}
+
+HideVisualStatus() {
+    HidePersistentStatus()
+}
+
+ShowYankStatus() {
+    ShowPersistentStatus("YANK")
+}
+
+HideYankStatus() {
+    HidePersistentStatus()
+}
+
+ShowExcelStatus() {
+    ShowPersistentStatus("EXCEL")
+}
+
+HideExcelStatus() {
+    HidePersistentStatus()
+}
+
+; ===================================================================
+; FUNCIONES DE NOTIFICACIÓN MEJORADAS (TEMPORALES)
 ; ===================================================================
 
 ; Reemplazar ShowCenteredToolTip() con versión C#
@@ -291,17 +364,17 @@ ShowCopyNotificationCS() {
 
 ShowNvimLayerStatusCS(isActive) {
     if (isActive) {
-        ShowCSharpStatusNotification("LAYER STATUS", "NVIM LAYER ON")
+        ShowNvimStatus()
     } else {
-        ShowCSharpStatusNotification("LAYER STATUS", "NVIM LAYER OFF")
+        HideNvimStatus()
     }
 }
 
 ShowExcelLayerStatusCS(isActive) {
     if (isActive) {
-        ShowCSharpStatusNotification("LAYER STATUS", "EXCEL LAYER ON")
+        ShowExcelStatus()
     } else {
-        ShowCSharpStatusNotification("LAYER STATUS", "EXCEL LAYER OFF")
+        HideExcelStatus()
     }
 }
 
@@ -415,14 +488,19 @@ ShowVaultFlowCommandsMenuCS() {
 ; FUNCIÓN DE LIMPIEZA
 ; ===================================================================
 
-; Función para cerrar la aplicación C# tooltip
+; Función para cerrar las aplicaciones C#
 StopTooltipApp() {
     try {
         ProcessClose("TooltipApp.exe")
     }
-    ; Limpiar archivo JSON
+    ; Cerrar PowerShell que ejecuta StatusWindow
+    try {
+        RunWait("powershell.exe -Command `"Get-Process | Where-Object {`$_.ProcessName -eq 'powershell' -and `$_.CommandLine -like '*StatusWindow.ps1*'} | Stop-Process -Force`"", , "Hide")
+    }
+    ; Limpiar archivos JSON
     try {
         FileDelete("tooltip_commands.json")
+        FileDelete("status_commands.json")
     }
 }
 
