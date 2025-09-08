@@ -182,20 +182,34 @@ StartTooltipApp() {
     return true
 }
 
-; Función separada para iniciar la aplicación de estado
+; Función separada para iniciar todas las aplicaciones de estado
 StartStatusApp() {
-    statusScript := "tooltip_csharp\\StatusWindow.ps1"
-    if (FileExist(statusScript)) {
-        try {
-            Run('powershell.exe -WindowStyle Hidden -ExecutionPolicy Bypass -File "' . statusScript . '"', , "Hide")
-            Sleep(500)
-            return true
+    statusScripts := [
+        "tooltip_csharp\\StatusWindow_Nvim.ps1",
+        "tooltip_csharp\\StatusWindow_Visual.ps1", 
+        "tooltip_csharp\\StatusWindow_Yank.ps1",
+        "tooltip_csharp\\StatusWindow_Excel.ps1"
+    ]
+    
+    allStarted := true
+    for index, script in statusScripts {
+        if (FileExist(script)) {
+            try {
+                Run('powershell.exe -WindowStyle Hidden -ExecutionPolicy Bypass -File "' . script . '"', , "Hide")
+                Sleep(200)  ; Pequeño delay entre cada inicio
+            } catch {
+                allStarted := false
+            }
+        } else {
+            MsgBox("No se encontró " . script, "Error", "IconX")
+            allStarted := false
         }
-    } else {
-        MsgBox("No se encontró StatusWindow.ps1", "Error", "IconX")
-        return false
     }
-    return true
+    
+    if (allStarted) {
+        Sleep(500)  ; Tiempo adicional para que todas inicien
+    }
+    return allStarted
 }
 
 ; ===================================================================
@@ -286,60 +300,63 @@ ShowCommandsMenuCS() {
 ; FUNCIONES DE ESTADO PERSISTENTE (VENTANA INDEPENDIENTE)
 ; ===================================================================
 
-; Función para mostrar estado persistente en ventana independiente
-ShowPersistentStatus(statusText) {
+; Función para mostrar estado persistente específico
+ShowPersistentStatus(statusText, statusType) {
     jsonData := "{"
     jsonData .= '"show": true,'
-    jsonData .= '"status": "' . statusText . '"'
+    jsonData .= '"status": "' . statusText . '",'
+    jsonData .= '"type": "' . statusType . '"'
     jsonData .= "}"
     
-    ; Escribir SOLO archivo JSON para ventana de estado (NO tocar tooltip_commands.json)
+    ; Escribir archivo JSON específico para cada tipo de estado
+    statusFile := "status_" . statusType . "_commands.json"
     try {
-        FileDelete("status_commands.json")
+        FileDelete(statusFile)
     }
-    FileAppend(jsonData, "status_commands.json")
+    FileAppend(jsonData, statusFile)
 }
 
-; Función para ocultar estado persistente
-HidePersistentStatus() {
+; Función para ocultar estado persistente específico
+HidePersistentStatus(statusType) {
     jsonData := '{"show": false}'
+    statusFile := "status_" . statusType . "_commands.json"
     try {
-        FileDelete("status_commands.json")
+        FileDelete(statusFile)
     }
-    FileAppend(jsonData, "status_commands.json")
+    FileAppend(jsonData, statusFile)
 }
 
 ; Funciones específicas para cada estado persistente
 ShowNvimStatus() {
-    ShowPersistentStatus("NVIM")
+    ShowPersistentStatus("NVIM", "nvim")
 }
 
 HideNvimStatus() {
-    HidePersistentStatus()
+    HidePersistentStatus("nvim")
 }
 
 ShowVisualStatus() {
-    ShowPersistentStatus("VISUAL")
+    ShowPersistentStatus("VISUAL", "visual")
 }
 
 HideVisualStatus() {
-    HidePersistentStatus()
+    HidePersistentStatus("visual")
 }
 
 ShowYankStatus() {
-    ShowPersistentStatus("YANK")
+    ShowPersistentStatus("YANK", "yank")
 }
 
 HideYankStatus() {
-    HidePersistentStatus()
+    HidePersistentStatus("yank")
 }
 
 ShowExcelStatus() {
-    ShowPersistentStatus("EXCEL")
+    ShowPersistentStatus("EXCEL", "excel")
 }
 
 HideExcelStatus() {
-    HidePersistentStatus()
+    HidePersistentStatus("excel")
 }
 
 ; ===================================================================
@@ -494,14 +511,20 @@ StopTooltipApp() {
     try {
         ProcessClose("TooltipApp.exe")
     }
-    ; Cerrar PowerShell que ejecuta StatusWindow
-    try {
-        RunWait("powershell.exe -Command `"Get-Process | Where-Object {`$_.ProcessName -eq 'powershell' -and `$_.CommandLine -like '*StatusWindow.ps1*'} | Stop-Process -Force`"", , "Hide")
+    ; Cerrar todos los PowerShell que ejecutan StatusWindow
+    statusTypes := ["Nvim", "Visual", "Yank", "Excel"]
+    for index, statusType in statusTypes {
+        try {
+            RunWait("powershell.exe -Command `"Get-Process | Where-Object {`$_.ProcessName -eq 'powershell' -and `$_.CommandLine -like '*StatusWindow_" . statusType . "*'} | Stop-Process -Force`"", , "Hide")
+        }
     }
     ; Limpiar archivos JSON
     try {
         FileDelete("tooltip_commands.json")
-        FileDelete("status_commands.json")
+        FileDelete("status_nvim_commands.json")
+        FileDelete("status_visual_commands.json")
+        FileDelete("status_yank_commands.json")
+        FileDelete("status_excel_commands.json")
     }
 }
 

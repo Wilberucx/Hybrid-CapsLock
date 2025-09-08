@@ -1,1 +1,1 @@
-{"tooltip_type": "leader","title": "LEADER MODE","items": [{"key": "p", "description": "Programs"},{"key": "t", "description": "Timestamps"},{"key": "c", "description": "Commands"},{"key": "i", "description": "Information"},{"key": "w", "description": "Windows"},{"key": "n", "description": "Excel/Numbers"}],"navigation": ["\\: Back","ESC: Exit"],"timeout_ms": 10000,"show": true}
+{"tooltip_type": "leader","title": "COMMAND EXECUTED","items": [{"key": "status", "description": "VaultFlow command executed"}],"navigation": ["ESC: Exit"],"timeout_ms": 2000,"show": true}
