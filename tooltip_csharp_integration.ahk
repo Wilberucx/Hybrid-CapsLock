@@ -390,17 +390,6 @@ ShowCommandExecutedCS(category, command) {
 ; FUNCIONES ESPECÍFICAS PARA NVIM LAYER OPTIONS
 ; ===================================================================
 
-; Menú de opciones Yank (y)
-ShowYankMenuCS() {
-    items := "y:Yank Line|w:Yank Word|a:Yank All|p:Yank Paragraph"
-    ShowCSharpOptionsMenu("YANK OPTIONS", items, "ESC: Cancel")
-}
-
-; Menú de opciones Delete (d)
-ShowDeleteMenuCS() {
-    items := "d:Delete Line|w:Delete Word|a:Delete All"
-    ShowCSharpOptionsMenu("DELETE OPTIONS", items, "ESC: Cancel")
-}
 
 ; Menú de opciones Visual (v)
 ShowVisualMenuCS() {
@@ -418,6 +407,18 @@ ShowInsertMenuCS() {
 ShowReplaceMenuCS() {
     items := "r:Replace Character|R:Replace Mode|s:Substitute"
     ShowCSharpOptionsMenu("REPLACE OPTIONS", items, "ESC: Cancel")
+}
+
+; Menú de opciones Yank (y) - Actualizado para mostrar opciones
+ShowYankMenuCS() {
+    items := "y:Yank Line|w:Yank Word|a:Yank All|p:Yank Paragraph"
+    ShowCSharpOptionsMenu("YANK OPTIONS", items, "ESC: Cancel")
+}
+
+; Menú de opciones Delete (d) - Actualizado para mostrar opciones  
+ShowDeleteMenuCS() {
+    items := "d:Delete Line|w:Delete Word|a:Delete All"
+    ShowCSharpOptionsMenu("DELETE OPTIONS", items, "ESC: Cancel")
 }
 
 ; ===================================================================

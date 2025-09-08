@@ -219,23 +219,39 @@ ShowNvimLayerStatus(isActive) {
     }
 }
 
-; Visual mode status function (Phase 4 implementation)
+; Visual mode status function (Enhanced with C# status windows)
 ShowVisualModeStatus(isActive) {
-    if (isActive) {
-        ShowCenteredToolTip("VISUAL MODE ON")
+    if (tooltipConfig.enabled) {
+        if (isActive) {
+            ShowVisualStatus()
+        } else {
+            HideVisualStatus()
+        }
     } else {
-        ShowCenteredToolTip("VISUAL MODE OFF")
+        if (isActive) {
+            ShowCenteredToolTip("VISUAL MODE ON")
+        } else {
+            ShowCenteredToolTip("VISUAL MODE OFF")
+        }
     }
 }
 
-; Delete menu function (Phase 4 implementation)
+; Delete menu function (Enhanced with C# options)
 ShowDeleteMenu() {
-    ShowCenteredToolTip("DELETE: w=word, d=line, a=all")
+    if (tooltipConfig.enabled) {
+        ShowDeleteMenuCS()  ; Mostrar opciones de delete
+    } else {
+        ShowCenteredToolTip("DELETE: w=word, d=line, a=all")
+    }
 }
 
-; Yank menu function (Phase 4 implementation)
+; Yank menu function (Enhanced with C# options)
 ShowYankMenu() {
-    ShowCenteredToolTip("YANK: y=line, w=word, a=all, p=paragraph")
+    if (tooltipConfig.enabled) {
+        ShowYankMenuCS()  ; Mostrar opciones de yank
+    } else {
+        ShowCenteredToolTip("YANK: y=line, w=word, a=all, p=paragraph")
+    }
 }
 
 ; Nvim helper functions (Phase 4 implementation)
@@ -278,13 +294,23 @@ PastePlain() {
 DeleteTimeout() {
     global _deleteAwait
     _deleteAwait := false
-    SetTimer(RemoveToolTip, -100)
+    if (tooltipConfig.enabled) {
+        ; No ocultar automáticamente - las opciones permanecen hasta completar operación
+        HideCSharpTooltip()  ; Solo ocultar tooltip de opciones
+    } else {
+        SetTimer(RemoveToolTip, -100)
+    }
 }
 
 YankTimeout() {
     global _yankAwait
     _yankAwait := false
-    SetTimer(RemoveToolTip, -100)
+    if (tooltipConfig.enabled) {
+        ; No ocultar automáticamente - las opciones permanecen hasta completar operación
+        HideCSharpTooltip()  ; Solo ocultar tooltip de opciones
+    } else {
+        SetTimer(RemoveToolTip, -100)
+    }
 }
 
 ReactivateNvimAfterInsert() {
@@ -2297,7 +2323,7 @@ d:: {
     }
     _deleteAwait := true
     ShowDeleteMenu()
-    SetTimer(DeleteTimeout, -600)
+    SetTimer(DeleteTimeout, -10000)
 }
 
 ; ----- Yank (Copy) Operations -----
@@ -2317,7 +2343,7 @@ y:: {
     }
     _yankAwait := true
     ShowYankMenu()
-    SetTimer(YankTimeout, -600)
+    SetTimer(YankTimeout, -10000)
 }
 
 ; ----- Paste Operations -----
