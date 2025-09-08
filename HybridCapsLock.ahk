@@ -31,6 +31,9 @@ if (SubStr(A_AhkVersion, 1, 1) != "2") {
     ExitApp()
 }
 
+; Include C# tooltip integration early
+#Include tooltip_csharp_integration.ahk
+
 ; _DOC: Run as admin to prevent permission issues.
 ; Uncomment the following lines if admin privileges are required:
 ;if (!A_IsAdmin) {
@@ -40,8 +43,14 @@ if (SubStr(A_AhkVersion, 1, 1) != "2") {
 
 ; _DOC: Permanently disable the native CapsLock function.
 ; Startup banner to confirm correct script loaded
-ShowCenteredToolTip("HybridCapsLock v2.0 loaded`n" . A_ScriptFullPath)
-SetTimer(RemoveToolTip, -1500)  ; Negative value for one-time execution
+if (tooltipConfig.enabled) {
+    StartTooltipApp()
+    Sleep(500)  ; Give time for C# app to start
+    ShowCenteredToolTipCS("HybridCapsLock v2.0 loaded`n" . A_ScriptFullPath, 1500)
+} else {
+    ShowCenteredToolTip("HybridCapsLock v2.0 loaded`n" . A_ScriptFullPath)
+    SetTimer(RemoveToolTip, -1500)
+}
 SetCapsLockState("AlwaysOff")
 
 ;-------------------------------------------------------------------------------
@@ -102,7 +111,7 @@ global _deleteAwait := false
 global capsActsNormal := false
 
 ;-------------------------------------------------------------------------------
-; SECTION 3: HELPER FUNCTIONS (v2 - Basic Implementation)
+; SECTION 3: HELPER FUNCTIONS (v2 - Enhanced with C# Tooltips)
 ;-------------------------------------------------------------------------------
 
 ; Basic tooltip function for startup
@@ -132,34 +141,62 @@ ReadConfigValue(section, key, defaultValue := "") {
     return defaultValue
 }
 
-; Status notification functions (Phase 2 implementation)
+; Status notification functions (Enhanced with C# tooltips)
 ShowCopyNotification() {
-    ShowCenteredToolTip("COPIED")
-    SetTimer(RemoveToolTip, -800)
+    if (tooltipConfig.enabled) {
+        ShowCopyNotificationCS()
+    } else {
+        ShowCenteredToolTip("COPIED")
+        SetTimer(RemoveToolTip, -800)
+    }
 }
 
 ShowLeftClickStatus(isActive) {
-    if (isActive) {
-        ShowCenteredToolTip("LEFT CLICK HELD")
+    if (tooltipConfig.enabled) {
+        if (isActive) {
+            ShowCSharpStatusNotification("MOUSE", "LEFT CLICK HELD")
+        } else {
+            ShowCSharpStatusNotification("MOUSE", "LEFT CLICK RELEASED")
+        }
     } else {
-        ShowCenteredToolTip("LEFT CLICK RELEASED")
+        if (isActive) {
+            ShowCenteredToolTip("LEFT CLICK HELD")
+        } else {
+            ShowCenteredToolTip("LEFT CLICK RELEASED")
+        }
     }
 }
 
 ShowRightClickStatus(isActive) {
-    ShowCenteredToolTip("RIGHT CLICK")
+    if (tooltipConfig.enabled) {
+        ShowCSharpStatusNotification("MOUSE", "RIGHT CLICK")
+    } else {
+        ShowCenteredToolTip("RIGHT CLICK")
+    }
 }
 
 ShowCapsLockStatus(isNormal) {
-    if (isNormal) {
-        ShowCenteredToolTip("CAPSLOCK NORMAL MODE")
+    if (tooltipConfig.enabled) {
+        if (isNormal) {
+            ShowCSharpStatusNotification("CAPSLOCK", "NORMAL MODE")
+        } else {
+            ShowCSharpStatusNotification("CAPSLOCK", "HYBRID MODE")
+        }
     } else {
-        ShowCenteredToolTip("CAPSLOCK HYBRID MODE")
+        if (isNormal) {
+            ShowCenteredToolTip("CAPSLOCK NORMAL MODE")
+        } else {
+            ShowCenteredToolTip("CAPSLOCK HYBRID MODE")
+        }
     }
 }
 
 ShowProcessTerminated() {
-    ShowCenteredToolTip("PROCESS TERMINATED")
+    if (tooltipConfig.enabled) {
+        ShowProcessTerminatedCS()
+    } else {
+        ShowCenteredToolTip("PROCESS TERMINATED")
+    }
 }
 
 SetTempStatus(status, duration) {
@@ -168,12 +205,16 @@ SetTempStatus(status, duration) {
     tempStatusExpiry := A_TickCount + duration
 }
 
-; Nvim Layer status functions (Phase 3 implementation)
+; Nvim Layer status functions (Enhanced with C# tooltips)
 ShowNvimLayerStatus(isActive) {
-    if (isActive) {
-        ShowCenteredToolTip("NVIM LAYER ON")
+    if (tooltipConfig.enabled) {
+        ShowNvimLayerStatusCS(isActive)
     } else {
-        ShowCenteredToolTip("NVIM LAYER OFF")
+        if (isActive) {
+            ShowCenteredToolTip("NVIM LAYER ON")
+        } else {
+            ShowCenteredToolTip("NVIM LAYER OFF")
+        }
     }
 }
 
@@ -333,62 +374,81 @@ r::Send("^r")           ; Fill right
 ; End of Excel Layer context
 #HotIf
 
-; Specialized layer helper functions (Phase 6 implementation)
+; Specialized layer helper functions (Enhanced with C# tooltips)
 ShowExcelLayerStatus(isActive) {
-    if (isActive) {
-        ShowCenteredToolTip("EXCEL LAYER ON")
+    if (tooltipConfig.enabled) {
+        ShowExcelLayerStatusCS(isActive)
     } else {
-        ShowCenteredToolTip("EXCEL LAYER OFF")
+        if (isActive) {
+            ShowCenteredToolTip("EXCEL LAYER ON")
+        } else {
+            ShowCenteredToolTip("EXCEL LAYER OFF")
+        }
     }
 }
 
 ShowWindowMenu() {
-    ToolTipX := A_ScreenWidth // 2 - 110
-    ToolTipY := A_ScreenHeight // 2 - 120
-    menuText := "WINDOW MANAGER`n`n"
-    menuText .= "SPLITS:`n"
-    menuText .= "2 - Split 50/50    3 - Split 33/67`n"
-    menuText .= "4 - Quarter Split`n`n"
-    menuText .= "ACTIONS:`n"
-    menuText .= "x - Close          m - Maximize`n"
-    menuText .= "- - Minimize`n`n"
-    menuText .= "ZOOM TOOLS:`n"
-    menuText .= "d - Draw           z - Zoom`n"
-    menuText .= "c - Zoom with cursor`n`n"
-    menuText .= "WINDOW SWITCHING:`n"
-    menuText .= "j/k - Persistent Window Switch`n`n"
-    menuText .= "[\: Back] [Esc: Exit]"
-    ToolTip(menuText, ToolTipX, ToolTipY, 2)
+    if (tooltipConfig.enabled) {
+        ShowWindowMenuCS()
+    } else {
+        ; Fallback to native tooltips
+        ToolTipX := A_ScreenWidth // 2 - 110
+        ToolTipY := A_ScreenHeight // 2 - 120
+        menuText := "WINDOW MANAGER`n`n"
+        menuText .= "SPLITS:`n"
+        menuText .= "2 - Split 50/50    3 - Split 33/67`n"
+        menuText .= "4 - Quarter Split`n`n"
+        menuText .= "ACTIONS:`n"
+        menuText .= "x - Close          m - Maximize`n"
+        menuText .= "- - Minimize`n`n"
+        menuText .= "ZOOM TOOLS:`n"
+        menuText .= "d - Draw           z - Zoom`n"
+        menuText .= "c - Zoom with cursor`n`n"
+        menuText .= "WINDOW SWITCHING:`n"
+        menuText .= "j/k - Persistent Window Switch`n`n"
+        menuText .= "[\: Back] [Esc: Exit]"
+        ToolTip(menuText, ToolTipX, ToolTipY, 2)
+    }
 }
 
 ShowTimeMenu() {
-    global TimestampsIni
-    ToolTipX := A_ScreenWidth // 2 - 110
-    ToolTipY := A_ScreenHeight // 2 - 80
-    menuText := "TIMESTAMP MANAGER`n`n"
-    menuText .= "d - Date Formats`n"
-    menuText .= "t - Time Formats`n"
-    menuText .= "h - Date+Time Formats`n`n"
-    menuText .= "[\: Back] [Esc: Exit]"
-    ToolTip(menuText, ToolTipX, ToolTipY, 2)
+    if (tooltipConfig.enabled) {
+        ShowTimeMenuCS()
+    } else {
+        ; Fallback to native tooltips
+        global TimestampsIni
+        ToolTipX := A_ScreenWidth // 2 - 110
+        ToolTipY := A_ScreenHeight // 2 - 80
+        menuText := "TIMESTAMP MANAGER`n`n"
+        menuText .= "d - Date Formats`n"
+        menuText .= "t - Time Formats`n"
+        menuText .= "h - Date+Time Formats`n`n"
+        menuText .= "[\: Back] [Esc: Exit]"
+        ToolTip(menuText, ToolTipX, ToolTipY, 2)
+    }
 }
 
 ShowInformationMenu() {
-    global InfoIni
-    ToolTipX := A_ScreenWidth // 2 - 120
-    ToolTipY := A_ScreenHeight // 2 - 100
-    menuText := "INFORMATION MANAGER`n`n"
-    
-    ; Read menu lines dynamically from information.ini
-    Loop 10 {
-        lineContent := IniRead(InfoIni, "MenuDisplay", "info_line" . A_Index, "")
-        if (lineContent != "" && lineContent != "ERROR") {
-            menuText .= lineContent . "`n"
+    if (tooltipConfig.enabled) {
+        ShowInformationMenuCS()
+    } else {
+        ; Fallback to native tooltips
+        global InfoIni
+        ToolTipX := A_ScreenWidth // 2 - 120
+        ToolTipY := A_ScreenHeight // 2 - 100
+        menuText := "INFORMATION MANAGER`n`n"
+        
+        ; Read menu lines dynamically from information.ini
+        Loop 10 {
+            lineContent := IniRead(InfoIni, "MenuDisplay", "info_line" . A_Index, "")
+            if (lineContent != "" && lineContent != "ERROR") {
+                menuText .= lineContent . "`n"
+            }
         }
+        
+        menuText .= "`n[\: Back] [Esc: Exit]"
+        ToolTip(menuText, ToolTipX, ToolTipY, 2)
     }
-    
-    menuText .= "`n[\: Back] [Esc: Exit]"
-    ToolTip(menuText, ToolTipX, ToolTipY, 2)
 }
 
 ; Window action executor
@@ -516,7 +576,7 @@ HandleTimestampMode(mode) {
             ; Date formats submenu
             Loop {
                 ShowDateFormatsMenu()
-                dateInput := InputHook("L1 T7")
+                dateInput := InputHook("L1 T10")
                 dateInput.Start()
                 dateInput.Wait()
                 
@@ -536,7 +596,7 @@ HandleTimestampMode(mode) {
             ; Time formats submenu
             Loop {
                 ShowTimeFormatsMenu()
-                timeInput := InputHook("L1 T7")
+                timeInput := InputHook("L1 T10")
                 timeInput.Start()
                 timeInput.Wait()
                 
@@ -556,7 +616,7 @@ HandleTimestampMode(mode) {
             ; DateTime formats submenu
             Loop {
                 ShowDateTimeFormatsMenu()
-                datetimeInput := InputHook("L1 T7")
+                datetimeInput := InputHook("L1 T10")
                 datetimeInput.Start()
                 datetimeInput.Wait()
                 
@@ -725,37 +785,42 @@ WriteTimestampFromKey(mode, keyPressed) {
 
 ; Main commands menu
 ShowCommandsMenu() {
-    global CommandsIni
-    ToolTipX := A_ScreenWidth // 2 - 110
-    ToolTipY := A_ScreenHeight // 2 - 120
-    menuText := "COMMAND PALETTE`n`n"
-    
-    ; Try to read from commands.ini, fallback to hardcoded menu
-    hasConfigMenu := false
-    Loop 20 {
-        lineContent := IniRead(CommandsIni, "MenuDisplay", "main_line" . A_Index, "")
-        if (lineContent != "" && lineContent != "ERROR") {
-            menuText .= lineContent . "`n"
-            hasConfigMenu := true
+    if (tooltipConfig.enabled) {
+        ShowCommandsMenuCS()
+    } else {
+        ; Fallback to native tooltips
+        global CommandsIni
+        ToolTipX := A_ScreenWidth // 2 - 110
+        ToolTipY := A_ScreenHeight // 2 - 120
+        menuText := "COMMAND PALETTE`n`n"
+        
+        ; Try to read from commands.ini, fallback to hardcoded menu
+        hasConfigMenu := false
+        Loop 20 {
+            lineContent := IniRead(CommandsIni, "MenuDisplay", "main_line" . A_Index, "")
+            if (lineContent != "" && lineContent != "ERROR") {
+                menuText .= lineContent . "`n"
+                hasConfigMenu := true
+            }
         }
+        
+        ; If no config found, show hardcoded menu with all options
+        if (!hasConfigMenu) {
+            menuText .= "s - System Commands`n"
+            menuText .= "n - Network Commands`n"
+            menuText .= "g - Git Commands`n"
+            menuText .= "m - Monitoring Commands`n"
+            menuText .= "f - Folder Commands`n"
+            menuText .= "w - Windows Commands`n"
+            menuText .= "o - Power Options`n"
+            menuText .= "a - ADB Tools`n"
+            menuText .= "v - VaultFlow`n"
+            menuText .= "h - Hybrid Management`n"
+        }
+        
+        menuText .= "`n[\: Back] [Esc: Exit]"
+        ToolTip(menuText, ToolTipX, ToolTipY, 2)
     }
-    
-    ; If no config found, show hardcoded menu with all options
-    if (!hasConfigMenu) {
-        menuText .= "s - System Commands`n"
-        menuText .= "n - Network Commands`n"
-        menuText .= "g - Git Commands`n"
-        menuText .= "m - Monitoring Commands`n"
-        menuText .= "f - Folder Commands`n"
-        menuText .= "w - Windows Commands`n"
-        menuText .= "o - Power Options`n"
-        menuText .= "a - ADB Tools`n"
-        menuText .= "v - VaultFlow`n"
-        menuText .= "h - Hybrid Management`n"
-    }
-    
-    menuText .= "`n[\: Back] [Esc: Exit]"
-    ToolTip(menuText, ToolTipX, ToolTipY, 2)
 }
 
 ; Command category handler
@@ -765,7 +830,7 @@ HandleCommandCategory(category) {
             ; System Commands
             Loop {
                 ShowSystemCommandsMenu()
-                categoryInput := InputHook("L1 T7")
+                categoryInput := InputHook("L1 T10")
                 categoryInput.Start()
                 categoryInput.Wait()
                 
@@ -786,7 +851,7 @@ HandleCommandCategory(category) {
             ; Network Commands
             Loop {
                 ShowNetworkCommandsMenu()
-                categoryInput := InputHook("L1 T7")
+                categoryInput := InputHook("L1 T10")
                 categoryInput.Start()
                 categoryInput.Wait()
                 
@@ -807,7 +872,7 @@ HandleCommandCategory(category) {
             ; Git Commands
             Loop {
                 ShowGitCommandsMenu()
-                categoryInput := InputHook("L1 T7")
+                categoryInput := InputHook("L1 T10")
                 categoryInput.Start()
                 categoryInput.Wait()
                 
@@ -828,7 +893,7 @@ HandleCommandCategory(category) {
             ; Monitoring Commands
             Loop {
                 ShowMonitoringCommandsMenu()
-                categoryInput := InputHook("L1 T7")
+                categoryInput := InputHook("L1 T10")
                 categoryInput.Start()
                 categoryInput.Wait()
                 
@@ -846,7 +911,7 @@ HandleCommandCategory(category) {
             ; Folder Commands
             Loop {
                 ShowFolderCommandsMenu()
-                categoryInput := InputHook("L1 T7")
+                categoryInput := InputHook("L1 T10")
                 categoryInput.Start()
                 categoryInput.Wait()
                 
@@ -864,7 +929,7 @@ HandleCommandCategory(category) {
             ; Windows Commands
             Loop {
                 ShowWindowsCommandsMenu()
-                categoryInput := InputHook("L1 T7")
+                categoryInput := InputHook("L1 T10")
                 categoryInput.Start()
                 categoryInput.Wait()
                 
@@ -886,175 +951,225 @@ HandleCommandCategory(category) {
 
 ; Command menu functions
 ShowSystemCommandsMenu() {
-    global CommandsIni
-    ToolTipX := A_ScreenWidth // 2 - 120
-    ToolTipY := A_ScreenHeight // 2 - 90
-    menuText := "SYSTEM COMMANDS`n`n"
-    
-    Loop 10 {
-        lineContent := IniRead(CommandsIni, "MenuDisplay", "system_line" . A_Index, "")
-        if (lineContent != "" && lineContent != "ERROR") {
-            menuText .= lineContent . "`n"
+    if (tooltipConfig.enabled) {
+        ShowSystemCommandsMenuCS()
+    } else {
+        ; Fallback to native tooltips
+        global CommandsIni
+        ToolTipX := A_ScreenWidth // 2 - 120
+        ToolTipY := A_ScreenHeight // 2 - 90
+        menuText := "SYSTEM COMMANDS`n`n"
+        
+        Loop 10 {
+            lineContent := IniRead(CommandsIni, "MenuDisplay", "system_line" . A_Index, "")
+            if (lineContent != "" && lineContent != "ERROR") {
+                menuText .= lineContent . "`n"
+            }
         }
+        
+        menuText .= "`n[\: Back] [Esc: Exit]"
+        ToolTip(menuText, ToolTipX, ToolTipY, 2)
     }
-    
-    menuText .= "`n[\: Back] [Esc: Exit]"
-    ToolTip(menuText, ToolTipX, ToolTipY, 2)
 }
 
 ShowNetworkCommandsMenu() {
-    global CommandsIni
-    ToolTipX := A_ScreenWidth // 2 - 120
-    ToolTipY := A_ScreenHeight // 2 - 70
-    menuText := "NETWORK COMMANDS`n`n"
-    
-    Loop 10 {
-        lineContent := IniRead(CommandsIni, "MenuDisplay", "network_line" . A_Index, "")
-        if (lineContent != "" && lineContent != "ERROR") {
-            menuText .= lineContent . "`n"
+    if (tooltipConfig.enabled) {
+        ShowNetworkCommandsMenuCS()
+    } else {
+        ; Fallback to native tooltips
+        global CommandsIni
+        ToolTipX := A_ScreenWidth // 2 - 120
+        ToolTipY := A_ScreenHeight // 2 - 70
+        menuText := "NETWORK COMMANDS`n`n"
+        
+        Loop 10 {
+            lineContent := IniRead(CommandsIni, "MenuDisplay", "network_line" . A_Index, "")
+            if (lineContent != "" && lineContent != "ERROR") {
+                menuText .= lineContent . "`n"
+            }
         }
+        
+        menuText .= "`n[\: Back] [Esc: Exit]"
+        ToolTip(menuText, ToolTipX, ToolTipY, 2)
     }
-    
-    menuText .= "`n[\: Back] [Esc: Exit]"
-    ToolTip(menuText, ToolTipX, ToolTipY, 2)
 }
 
 ShowGitCommandsMenu() {
-    global CommandsIni
-    ToolTipX := A_ScreenWidth // 2 - 120
-    ToolTipY := A_ScreenHeight // 2 - 90
-    menuText := "GIT COMMANDS`n`n"
-    
-    Loop 10 {
-        lineContent := IniRead(CommandsIni, "MenuDisplay", "git_line" . A_Index, "")
-        if (lineContent != "" && lineContent != "ERROR") {
-            menuText .= lineContent . "`n"
+    if (tooltipConfig.enabled) {
+        ShowGitCommandsMenuCS()
+    } else {
+        ; Fallback to native tooltips
+        global CommandsIni
+        ToolTipX := A_ScreenWidth // 2 - 120
+        ToolTipY := A_ScreenHeight // 2 - 90
+        menuText := "GIT COMMANDS`n`n"
+        
+        Loop 10 {
+            lineContent := IniRead(CommandsIni, "MenuDisplay", "git_line" . A_Index, "")
+            if (lineContent != "" && lineContent != "ERROR") {
+                menuText .= lineContent . "`n"
+            }
         }
+        
+        menuText .= "`n[\: Back] [Esc: Exit]"
+        ToolTip(menuText, ToolTipX, ToolTipY, 2)
     }
-    
-    menuText .= "`n[\: Back] [Esc: Exit]"
-    ToolTip(menuText, ToolTipX, ToolTipY, 2)
 }
 
 ShowMonitoringCommandsMenu() {
-    global CommandsIni
-    ToolTipX := A_ScreenWidth // 2 - 120
-    ToolTipY := A_ScreenHeight // 2 - 90
-    menuText := "MONITORING COMMANDS`n`n"
-    
-    Loop 10 {
-        lineContent := IniRead(CommandsIni, "MenuDisplay", "monitoring_line" . A_Index, "")
-        if (lineContent != "" && lineContent != "ERROR") {
-            menuText .= lineContent . "`n"
+    if (tooltipConfig.enabled) {
+        ShowMonitoringCommandsMenuCS()
+    } else {
+        ; Fallback to native tooltips
+        global CommandsIni
+        ToolTipX := A_ScreenWidth // 2 - 120
+        ToolTipY := A_ScreenHeight // 2 - 90
+        menuText := "MONITORING COMMANDS`n`n"
+        
+        Loop 10 {
+            lineContent := IniRead(CommandsIni, "MenuDisplay", "monitoring_line" . A_Index, "")
+            if (lineContent != "" && lineContent != "ERROR") {
+                menuText .= lineContent . "`n"
+            }
         }
+        
+        menuText .= "`n[\: Back] [Esc: Exit]"
+        ToolTip(menuText, ToolTipX, ToolTipY, 2)
     }
-    
-    menuText .= "`n[\: Back] [Esc: Exit]"
-    ToolTip(menuText, ToolTipX, ToolTipY, 2)
 }
 
 ShowFolderCommandsMenu() {
-    global CommandsIni
-    ToolTipX := A_ScreenWidth // 2 - 120
-    ToolTipY := A_ScreenHeight // 2 - 90
-    menuText := "FOLDER ACCESS`n`n"
-    
-    Loop 10 {
-        lineContent := IniRead(CommandsIni, "MenuDisplay", "folder_line" . A_Index, "")
-        if (lineContent != "" && lineContent != "ERROR") {
-            menuText .= lineContent . "`n"
+    if (tooltipConfig.enabled) {
+        ShowFolderCommandsMenuCS()
+    } else {
+        ; Fallback to native tooltips
+        global CommandsIni
+        ToolTipX := A_ScreenWidth // 2 - 120
+        ToolTipY := A_ScreenHeight // 2 - 90
+        menuText := "FOLDER ACCESS`n`n"
+        
+        Loop 10 {
+            lineContent := IniRead(CommandsIni, "MenuDisplay", "folder_line" . A_Index, "")
+            if (lineContent != "" && lineContent != "ERROR") {
+                menuText .= lineContent . "`n"
+            }
         }
+        
+        menuText .= "`n[\: Back] [Esc: Exit]"
+        ToolTip(menuText, ToolTipX, ToolTipY, 2)
     }
-    
-    menuText .= "`n[\: Back] [Esc: Exit]"
-    ToolTip(menuText, ToolTipX, ToolTipY, 2)
 }
 
 ShowWindowsCommandsMenu() {
-    global CommandsIni
-    ToolTipX := A_ScreenWidth // 2 - 120
-    ToolTipY := A_ScreenHeight // 2 - 90
-    menuText := "WINDOWS COMMANDS`n`n"
-    
-    Loop 10 {
-        lineContent := IniRead(CommandsIni, "MenuDisplay", "windows_line" . A_Index, "")
-        if (lineContent != "" && lineContent != "ERROR") {
-            menuText .= lineContent . "`n"
+    if (tooltipConfig.enabled) {
+        ShowWindowsCommandsMenuCS()
+    } else {
+        ; Fallback to native tooltips
+        global CommandsIni
+        ToolTipX := A_ScreenWidth // 2 - 120
+        ToolTipY := A_ScreenHeight // 2 - 90
+        menuText := "WINDOWS COMMANDS`n`n"
+        
+        Loop 10 {
+            lineContent := IniRead(CommandsIni, "MenuDisplay", "windows_line" . A_Index, "")
+            if (lineContent != "" && lineContent != "ERROR") {
+                menuText .= lineContent . "`n"
+            }
         }
+        
+        menuText .= "`n[\: Back] [Esc: Exit]"
+        ToolTip(menuText, ToolTipX, ToolTipY, 2)
     }
-    
-    menuText .= "`n[\: Back] [Esc: Exit]"
-    ToolTip(menuText, ToolTipX, ToolTipY, 2)
 }
 
 ShowPowerOptionsCommandsMenu() {
-    ToolTipX := A_ScreenWidth // 2 - 120
-    ToolTipY := A_ScreenHeight // 2 - 90
-    menuText := "POWER OPTIONS`n`n"
-    menuText .= "s - Sleep`n"
-    menuText .= "h - Hibernate`n"
-    menuText .= "r - Restart`n"
-    menuText .= "d - Shutdown`n"
-    menuText .= "l - Lock Screen`n"
-    menuText .= "o - Sign Out`n"
-    menuText .= "`n[\: Back] [Esc: Exit]"
-    ToolTip(menuText, ToolTipX, ToolTipY, 2)
+    if (tooltipConfig.enabled) {
+        ShowPowerOptionsCommandsMenuCS()
+    } else {
+        ; Fallback to native tooltips
+        ToolTipX := A_ScreenWidth // 2 - 120
+        ToolTipY := A_ScreenHeight // 2 - 90
+        menuText := "POWER OPTIONS`n`n"
+        menuText .= "s - Sleep`n"
+        menuText .= "h - Hibernate`n"
+        menuText .= "r - Restart`n"
+        menuText .= "d - Shutdown`n"
+        menuText .= "l - Lock Screen`n"
+        menuText .= "o - Sign Out`n"
+        menuText .= "`n[\: Back] [Esc: Exit]"
+        ToolTip(menuText, ToolTipX, ToolTipY, 2)
+    }
 }
 
 ShowADBCommandsMenu() {
-    ToolTipX := A_ScreenWidth // 2 - 120
-    ToolTipY := A_ScreenHeight // 2 - 100
-    menuText := "ADB TOOLS`n`n"
-    menuText .= "d - List Devices`n"
-    menuText .= "i - Install APK`n"
-    menuText .= "u - Uninstall Package`n"
-    menuText .= "l - Logcat`n"
-    menuText .= "s - Shell`n"
-    menuText .= "r - Reboot Device`n"
-    menuText .= "c - Clear App Data`n"
-    menuText .= "`n[\: Back] [Esc: Exit]"
-    ToolTip(menuText, ToolTipX, ToolTipY, 2)
+    if (tooltipConfig.enabled) {
+        ShowADBCommandsMenuCS()
+    } else {
+        ; Fallback to native tooltips
+        ToolTipX := A_ScreenWidth // 2 - 120
+        ToolTipY := A_ScreenHeight // 2 - 100
+        menuText := "ADB TOOLS`n`n"
+        menuText .= "d - List Devices`n"
+        menuText .= "i - Install APK`n"
+        menuText .= "u - Uninstall Package`n"
+        menuText .= "l - Logcat`n"
+        menuText .= "s - Shell`n"
+        menuText .= "r - Reboot Device`n"
+        menuText .= "c - Clear App Data`n"
+        menuText .= "`n[\: Back] [Esc: Exit]"
+        ToolTip(menuText, ToolTipX, ToolTipY, 2)
+    }
 }
 
 ShowHybridManagementMenu() {
-    ToolTipX := A_ScreenWidth // 2 - 120
-    ToolTipY := A_ScreenHeight // 2 - 80
-    menuText := "HYBRID MANAGEMENT`n`n"
-    menuText .= "r - Reload Script`n"
-    menuText .= "e - Exit Script`n"
-    menuText .= "c - Open Config Folder`n"
-    menuText .= "l - View Log File`n"
-    menuText .= "v - Show Version Info`n"
-    menuText .= "`n[\: Back] [Esc: Exit]"
-    ToolTip(menuText, ToolTipX, ToolTipY, 2)
+    if (tooltipConfig.enabled) {
+        ShowHybridManagementMenuCS()
+    } else {
+        ; Fallback to native tooltips
+        ToolTipX := A_ScreenWidth // 2 - 120
+        ToolTipY := A_ScreenHeight // 2 - 80
+        menuText := "HYBRID MANAGEMENT`n`n"
+        menuText .= "r - Reload Script`n"
+        menuText .= "e - Exit Script`n"
+        menuText .= "c - Open Config Folder`n"
+        menuText .= "l - View Log File`n"
+        menuText .= "v - Show Version Info`n"
+        menuText .= "`n[\: Back] [Esc: Exit]"
+        ToolTip(menuText, ToolTipX, ToolTipY, 2)
+    }
 }
 
 ShowVaultFlowCommandsMenu() {
-    global CommandsIni
-    ToolTipX := A_ScreenWidth // 2 - 120
-    ToolTipY := A_ScreenHeight // 2 - 60
-    menuText := "VAULTFLOW COMMANDS`n`n"
-    
-    ; Try to read from commands.ini first
-    hasConfigMenu := false
-    Loop 10 {
-        lineContent := IniRead(CommandsIni, "MenuDisplay", "vaultflow_line" . A_Index, "")
-        if (lineContent != "" && lineContent != "ERROR") {
-            menuText .= lineContent . "`n"
-            hasConfigMenu := true
+    if (tooltipConfig.enabled) {
+        ShowVaultFlowCommandsMenuCS()
+    } else {
+        ; Fallback to native tooltips
+        global CommandsIni
+        ToolTipX := A_ScreenWidth // 2 - 120
+        ToolTipY := A_ScreenHeight // 2 - 60
+        menuText := "VAULTFLOW COMMANDS`n`n"
+        
+        ; Try to read from commands.ini first
+        hasConfigMenu := false
+        Loop 10 {
+            lineContent := IniRead(CommandsIni, "MenuDisplay", "vaultflow_line" . A_Index, "")
+            if (lineContent != "" && lineContent != "ERROR") {
+                menuText .= lineContent . "`n"
+                hasConfigMenu := true
+            }
         }
+        
+        ; If no config found, show hardcoded menu
+        if (!hasConfigMenu) {
+            menuText .= "v - Run VaultFlow`n"
+            menuText .= "s - VaultFlow Status`n"
+            menuText .= "l - List Vaults`n"
+            menuText .= "h - VaultFlow Help`n"
+        }
+        
+        menuText .= "`n[\: Back] [Esc: Exit]"
+        ToolTip(menuText, ToolTipX, ToolTipY, 2)
     }
-    
-    ; If no config found, show hardcoded menu
-    if (!hasConfigMenu) {
-        menuText .= "v - Run VaultFlow`n"
-        menuText .= "s - VaultFlow Status`n"
-        menuText .= "l - List Vaults`n"
-        menuText .= "h - VaultFlow Help`n"
-    }
-    
-    menuText .= "`n[\: Back] [Esc: Exit]"
-    ToolTip(menuText, ToolTipX, ToolTipY, 2)
 }
 
 ; Command execution functions
@@ -1310,8 +1425,12 @@ ExecuteVaultFlowCommand(cmd) {
 
 ; Helper functions for commands
 ShowCommandExecuted(category, command) {
-    ShowCenteredToolTip(category . " command executed: " . command)
-    SetTimer(RemoveToolTip, -2000)
+    if (tooltipConfig.enabled) {
+        ShowCommandExecutedCS(category, command)
+    } else {
+        ShowCenteredToolTip(category . " command executed: " . command)
+        SetTimer(RemoveToolTip, -2000)
+    }
 }
 
 ToggleHiddenFiles() {
@@ -1334,21 +1453,25 @@ ToggleHiddenFiles() {
     }
 }
 
-; Leader mode menu function (Phase 3 basic implementation)
+; Leader mode menu function (Enhanced with C# tooltips)
 ShowLeaderModeMenu() {
-    ; Basic leader menu - will be expanded in later phases
-    menuText := "`n LEADER MODE `n"
-    menuText .= "p - Programs`n"
-    menuText .= "t - Timestamps`n" 
-    menuText .= "c - Commands`n"
-    menuText .= "i - Information`n"
-    menuText .= "w - Windows`n"
-    menuText .= "n - Excel/Numbers`n"
-    menuText .= "`n\\ - Back | ESC - Exit`n"
-    
-    ToolTipX := A_ScreenWidth // 2 - 100
-    ToolTipY := A_ScreenHeight // 2 - 100
-    ToolTip(menuText, ToolTipX, ToolTipY)
+    if (tooltipConfig.enabled) {
+        ShowLeaderModeMenuCS()
+    } else {
+        ; Fallback to native tooltips
+        menuText := "`n LEADER MODE `n"
+        menuText .= "p - Programs`n"
+        menuText .= "t - Timestamps`n" 
+        menuText .= "c - Commands`n"
+        menuText .= "i - Information`n"
+        menuText .= "w - Windows`n"
+        menuText .= "n - Excel/Numbers`n"
+        menuText .= "`n\\ - Back | ESC - Exit`n"
+        
+        ToolTipX := A_ScreenWidth // 2 - 100
+        ToolTipY := A_ScreenHeight // 2 - 100
+        ToolTip(menuText, ToolTipX, ToolTipY)
+    }
 }
 
 ; Enhanced UpdateLayerStatus function
@@ -1775,7 +1898,7 @@ CapsLock & Space:: {
                 }
         }
         
-        userInput := InputHook("L1 T7")
+        userInput := InputHook("L1 T10")
         userInput.KeyOpt("{Backspace}", "+")  ; Enable Backspace detection
         userInput.KeyOpt("{Escape}", "+")     ; Enable Escape detection
         userInput.Start()
@@ -2141,9 +2264,11 @@ u:: {
 x::Send("{Delete}")
 +x::Send("{Backspace}")  ; X = delete backwards in nvim
 
-; ESC hotkey to reactivate nvim layer after replace/insert modes
+; ESC hotkey to reactivate nvim layer after replace/insert modes (Nvim context only)
 ~Esc:: {
     global isNvimLayerActive, _tempEditMode
+    
+    ; Reactivate Nvim layer if in temp edit mode
     if (!isNvimLayerActive && _tempEditMode) {
         SetTimer(ReactivateNvimAfterReplace, 0)
         _tempEditMode := false
@@ -2273,22 +2398,26 @@ e:: {
 
 ; Programs menu display
 ShowProgramMenu() {
-    ; Program launcher menu - reads from programs.ini
-    global ProgramsIni
-    ToolTipX := A_ScreenWidth // 2 - 120
-    ToolTipY := A_ScreenHeight // 2 - 150
-    menuText := "PROGRAM LAUNCHER`n`n"
-    
-    ; Read menu lines dynamically from programs.ini
-    Loop 10 {
-        lineContent := IniRead(ProgramsIni, "MenuDisplay", "line" . A_Index, "")
-        if (lineContent != "" && lineContent != "ERROR") {
-            menuText .= lineContent . "`n"
+    if (tooltipConfig.enabled) {
+        ShowProgramMenuCS()
+    } else {
+        ; Fallback to native tooltips
+        global ProgramsIni
+        ToolTipX := A_ScreenWidth // 2 - 120
+        ToolTipY := A_ScreenHeight // 2 - 150
+        menuText := "PROGRAM LAUNCHER`n`n"
+        
+        ; Read menu lines dynamically from programs.ini
+        Loop 10 {
+            lineContent := IniRead(ProgramsIni, "MenuDisplay", "line" . A_Index, "")
+            if (lineContent != "" && lineContent != "ERROR") {
+                menuText .= lineContent . "`n"
+            }
         }
+        
+        menuText .= "`n[\: Back] [Esc: Exit]"
+        ToolTip(menuText, ToolTipX, ToolTipY, 2)
     }
-    
-    menuText .= "`n[\: Back] [Esc: Exit]"
-    ToolTip(menuText, ToolTipX, ToolTipY, 2)
 }
 
 ; Main application launcher function
@@ -2528,7 +2657,28 @@ LaunchProgramFromKey(keyPressed) {
 }
 
 ;===============================================================================
-; MIGRATION STATUS: PHASE 7 COMPLETED
+; CLEANUP AND EXIT HANDLING
+;===============================================================================
+
+; Global Escape key to hide C# tooltips
+~Esc:: {
+    if (tooltipConfig.enabled) {
+        HideCSharpTooltip()
+    }
+}
+
+; Function to clean up C# tooltip app on exit
+OnExit(CleanupTooltips)
+
+CleanupTooltips(*) {
+    if (tooltipConfig.enabled) {
+        HideCSharpTooltip()
+        StopTooltipApp()
+    }
+}
+
+;===============================================================================
+; MIGRATION STATUS: PHASE 8 COMPLETED - C# TOOLTIPS INTEGRATED
 ;===============================================================================
 ; ✅ PHASE 1: Basic v2 structure established
 ; ✅ PHASE 1: Global variables migrated

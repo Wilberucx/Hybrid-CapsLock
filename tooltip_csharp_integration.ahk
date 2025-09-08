@@ -1,0 +1,435 @@
+; ===================================================================
+; INTEGRACIÓN C# TOOLTIP PARA HYBRIDCAPSLOCK v2
+; ===================================================================
+; Archivo de integración para reemplazar tooltips básicos con C# + WPF
+; Incluir este archivo en HybridCapsLock.ahk con: #Include tooltip_csharp_integration.ahk
+
+; ===================================================================
+; VARIABLES GLOBALES NECESARIAS
+; ===================================================================
+
+; Definir rutas de configuración si no están definidas
+if (!IsSet(ConfigIni)) {
+    global ConfigIni := A_ScriptDir . "\config\configuration.ini"
+}
+if (!IsSet(ProgramsIni)) {
+    global ProgramsIni := A_ScriptDir . "\config\programs.ini"
+}
+if (!IsSet(InfoIni)) {
+    global InfoIni := A_ScriptDir . "\config\information.ini"
+}
+
+; Variables globales para configuración de tooltips
+global tooltipConfig := ReadTooltipConfig()
+
+; ===================================================================
+; FUNCIONES DE CONFIGURACIÓN
+; ===================================================================
+
+; Función para leer configuración de tooltips desde configuration.ini
+ReadTooltipConfig() {
+    global ConfigIni
+    
+    config := {}
+    
+    ; Función helper para limpiar valores leídos (remover comentarios)
+    CleanIniValue(value) {
+        ; Remover comentarios (todo después de ;)
+        if (InStr(value, ";")) {
+            value := Trim(SubStr(value, 1, InStr(value, ";") - 1))
+        }
+        return Trim(value)
+    }
+    
+    ; Leer y limpiar valores
+    enabledValue := CleanIniValue(IniRead(ConfigIni, "Tooltips", "enable_csharp_tooltips", "true"))
+    config.enabled := enabledValue = "true"
+    
+    optionsTimeoutValue := CleanIniValue(IniRead(ConfigIni, "Tooltips", "options_menu_timeout", "10000"))
+    config.optionsTimeout := Integer(optionsTimeoutValue)
+    
+    statusTimeoutValue := CleanIniValue(IniRead(ConfigIni, "Tooltips", "status_notification_timeout", "2000"))
+    config.statusTimeout := Integer(statusTimeoutValue)
+    
+    autoHideValue := CleanIniValue(IniRead(ConfigIni, "Tooltips", "auto_hide_on_action", "true"))
+    config.autoHide := autoHideValue = "true"
+    
+    persistentValue := CleanIniValue(IniRead(ConfigIni, "Tooltips", "persistent_menus", "false"))
+    config.persistent := persistentValue = "true"
+    
+    fadeAnimationValue := CleanIniValue(IniRead(ConfigIni, "Tooltips", "tooltip_fade_animation", "true"))
+    config.fadeAnimation := fadeAnimationValue = "true"
+    
+    clickThroughValue := CleanIniValue(IniRead(ConfigIni, "Tooltips", "tooltip_click_through", "true"))
+    config.clickThrough := clickThroughValue = "true"
+    
+    return config
+}
+
+; Función para recargar configuración de tooltips
+ReloadTooltipConfig() {
+    global tooltipConfig
+    tooltipConfig := ReadTooltipConfig()
+}
+
+; ===================================================================
+; FUNCIONES PRINCIPALES DE TOOLTIP C#
+; ===================================================================
+
+; Función principal para mostrar tooltip C# (con timeout personalizado)
+ShowCSharpTooltip(title, items, navigation := "", timeout := 0) {
+    global tooltipConfig
+    
+    ; Si no se especifica timeout, usar el de opciones por defecto
+    if (timeout = 0) {
+        timeout := tooltipConfig.optionsTimeout
+    }
+    
+    ; Si persistent_menus está habilitado, usar timeout muy largo
+    if (tooltipConfig.persistent) {
+        timeout := 300000  ; 5 minutos (prácticamente infinito)
+    }
+    ; Construir JSON para items
+    itemsJson := ""
+    itemArray := StrSplit(items, "|")
+    
+    for index, item in itemArray {
+        if (index > 1)
+            itemsJson .= ","
+        
+        ; Separar key y description (formato: "key:description")
+        itemParts := StrSplit(item, ":")
+        key := itemParts[1]
+        desc := itemParts[2]
+        
+        itemsJson .= '{"key": "' . key . '", "description": "' . desc . '"}'
+    }
+    
+    ; Construir JSON para navegación
+    navJson := ""
+    if (navigation != "") {
+        navArray := StrSplit(navigation, "|")
+        for index, navItem in navArray {
+            if (index > 1)
+                navJson .= ","
+            navJson .= '"' . navItem . '"'
+        }
+    } else {
+        navJson := '"ESC: Exit"'
+    }
+    
+    ; Construir JSON completo
+    jsonData := "{"
+    jsonData .= '"tooltip_type": "leader",'
+    jsonData .= '"title": "' . title . '",'
+    jsonData .= '"items": [' . itemsJson . '],'
+    jsonData .= '"navigation": [' . navJson . '],'
+    jsonData .= '"timeout_ms": ' . timeout . ','
+    jsonData .= '"show": true'
+    jsonData .= "}"
+    
+    ; Escribir archivo JSON
+    try {
+        FileDelete("tooltip_commands.json")
+    }
+    FileAppend(jsonData, "tooltip_commands.json")
+}
+
+; Función para ocultar tooltip C#
+HideCSharpTooltip() {
+    jsonData := '{"show": false}'
+    try {
+        FileDelete("tooltip_commands.json")
+    }
+    FileAppend(jsonData, "tooltip_commands.json")
+}
+
+; Función específica para tooltips de OPCIONES/MENÚS (duración larga)
+ShowCSharpOptionsMenu(title, items, navigation := "") {
+    global tooltipConfig
+    ShowCSharpTooltip(title, items, navigation, tooltipConfig.optionsTimeout)
+}
+
+; Función específica para tooltips de ESTADO/NOTIFICACIONES (duración corta)
+ShowCSharpStatusNotification(title, message) {
+    global tooltipConfig
+    items := "status:" . message
+    ShowCSharpTooltip(title, items, "", tooltipConfig.statusTimeout)
+}
+
+; Función para iniciar la aplicación C# tooltip
+StartTooltipApp() {
+    ; Verificar si ya está ejecutándose
+    if (!ProcessExist("TooltipApp.exe")) {
+        ; Intentar ejecutar desde diferentes ubicaciones
+        tooltipPaths := [
+            "tooltip_csharp\\bin\\Debug\\net6.0-windows\\TooltipApp.exe",
+            "tooltip_csharp\\bin\\Release\\net6.0-windows\\win-x64\\publish\\TooltipApp.exe",
+            "tooltip_csharp\\bin\\Release\\net6.0-windows\\TooltipApp.exe"
+        ]
+        
+        for index, path in tooltipPaths {
+            if (FileExist(path)) {
+                try {
+                    Run('"' . path . '"', , "Hide")
+                    Sleep(500)
+                    return true
+                }
+            }
+        }
+        
+        ; Si no se encuentra el ejecutable, mostrar error
+        MsgBox("No se encontró TooltipApp.exe. Compila la aplicación C# primero.", "Error", "IconX")
+        return false
+    }
+    return true
+}
+
+; ===================================================================
+; REEMPLAZOS DE FUNCIONES EXISTENTES
+; ===================================================================
+
+; Reemplazar ShowLeaderModeMenu() original
+ShowLeaderModeMenuCS() {
+    items := "p:Programs|t:Timestamps|c:Commands|i:Information|w:Windows|n:Excel/Numbers"
+    ShowCSharpOptionsMenu("LEADER MODE", items, "\\: Back|ESC: Exit")
+}
+
+; Reemplazar ShowProgramMenu() original  
+ShowProgramMenuCS() {
+    items := ""
+    
+    ; Leer configuración dinámica desde programs.ini
+    Loop 10 {
+        lineContent := IniRead(ProgramsIni, "MenuDisplay", "line" . A_Index, "")
+        if (lineContent != "" && lineContent != "ERROR") {
+            ; Extraer key y description del formato "key - description"
+            if (InStr(lineContent, " - ")) {
+                parts := StrSplit(lineContent, " - ")
+                key := parts[1]
+                desc := parts[2]
+                if (items != "")
+                    items .= "|"
+                items .= key . ":" . desc
+            }
+        }
+    }
+    
+    ; Fallback si no hay configuración
+    if (items == "") {
+        items := "v:Visual Studio|c:Chrome|n:Notepad++|t:Terminal|f:Firefox|e:Explorer"
+    }
+    
+    ShowCSharpOptionsMenu("PROGRAM LAUNCHER", items, "\\: Back|ESC: Exit")
+}
+
+; Reemplazar ShowWindowMenu() original
+ShowWindowMenuCS() {
+    items := "2:Split 50/50|3:Split 33/67|4:Quarter Split|x:Close|m:Maximize|-:Minimize|d:Draw|z:Zoom|c:Zoom with cursor|j:Next Window|k:Previous Window"
+    ShowCSharpOptionsMenu("WINDOW MANAGER", items, "\\: Back|ESC: Exit")
+}
+
+; Reemplazar ShowTimeMenu() original
+ShowTimeMenuCS() {
+    items := "d:Date Formats|t:Time Formats|h:Date+Time Formats"
+    ShowCSharpOptionsMenu("TIMESTAMP MANAGER", items, "\\: Back|ESC: Exit")
+}
+
+; Reemplazar ShowInformationMenu() original
+ShowInformationMenuCS() {
+    items := ""
+    
+    ; Leer configuración dinámica desde information.ini
+    Loop 10 {
+        lineContent := IniRead(InfoIni, "MenuDisplay", "info_line" . A_Index, "")
+        if (lineContent != "" && lineContent != "ERROR") {
+            ; Extraer key y description del formato "key - description"
+            if (InStr(lineContent, " - ")) {
+                parts := StrSplit(lineContent, " - ")
+                key := parts[1]
+                desc := parts[2]
+                if (items != "")
+                    items .= "|"
+                items .= key . ":" . desc
+            }
+        }
+    }
+    
+    ; Fallback si no hay configuración
+    if (items == "") {
+        items := "n:Name|e:Email|p:Phone|a:Address|c:Company|w:Website"
+    }
+    
+    ShowCSharpOptionsMenu("INFORMATION MANAGER", items, "\\: Back|ESC: Exit")
+}
+
+; Reemplazar ShowCommandsMenu() original
+ShowCommandsMenuCS() {
+    items := "s:System Commands|n:Network Commands|g:Git Commands|m:Monitoring Commands|f:Folder Commands|w:Windows Commands|o:Power Options|a:ADB Tools|v:VaultFlow|h:Hybrid Management"
+    ShowCSharpOptionsMenu("COMMAND PALETTE", items, "\\: Back|ESC: Exit")
+}
+
+; ===================================================================
+; FUNCIONES DE NOTIFICACIÓN MEJORADAS
+; ===================================================================
+
+; Reemplazar ShowCenteredToolTip() con versión C#
+ShowCenteredToolTipCS(text, duration := 0) {
+    ; Usar duración de configuración si no se especifica
+    if (duration = 0) {
+        ShowCSharpStatusNotification("STATUS", text)
+    } else {
+        items := "info:" . text
+        ShowCSharpTooltip("STATUS", items, "", duration)
+    }
+}
+
+; Notificaciones específicas mejoradas
+ShowCopyNotificationCS() {
+    ShowCSharpStatusNotification("CLIPBOARD", "COPIED")
+}
+
+ShowNvimLayerStatusCS(isActive) {
+    if (isActive) {
+        ShowCSharpStatusNotification("LAYER STATUS", "NVIM LAYER ON")
+    } else {
+        ShowCSharpStatusNotification("LAYER STATUS", "NVIM LAYER OFF")
+    }
+}
+
+ShowExcelLayerStatusCS(isActive) {
+    if (isActive) {
+        ShowCSharpStatusNotification("LAYER STATUS", "EXCEL LAYER ON")
+    } else {
+        ShowCSharpStatusNotification("LAYER STATUS", "EXCEL LAYER OFF")
+    }
+}
+
+ShowProcessTerminatedCS() {
+    ShowCSharpStatusNotification("SYSTEM", "PROCESS TERMINATED")
+}
+
+ShowCommandExecutedCS(category, command) {
+    ShowCSharpStatusNotification("COMMAND EXECUTED", category . " command executed: " . command)
+}
+
+; ===================================================================
+; FUNCIONES ESPECÍFICAS PARA NVIM LAYER OPTIONS
+; ===================================================================
+
+; Menú de opciones Yank (y)
+ShowYankMenuCS() {
+    items := "y:Yank Line|w:Yank Word|a:Yank All|p:Yank Paragraph"
+    ShowCSharpOptionsMenu("YANK OPTIONS", items, "ESC: Cancel")
+}
+
+; Menú de opciones Delete (d)
+ShowDeleteMenuCS() {
+    items := "d:Delete Line|w:Delete Word|a:Delete All"
+    ShowCSharpOptionsMenu("DELETE OPTIONS", items, "ESC: Cancel")
+}
+
+; Menú de opciones Visual (v)
+ShowVisualMenuCS() {
+    items := "v:Visual Mode|l:Visual Line|b:Visual Block"
+    ShowCSharpOptionsMenu("VISUAL MODE", items, "ESC: Cancel")
+}
+
+; Menú de opciones Insert (i)
+ShowInsertMenuCS() {
+    items := "i:Insert Mode|a:Insert After|o:Insert New Line"
+    ShowCSharpOptionsMenu("INSERT MODE", items, "ESC: Cancel")
+}
+
+; Menú de opciones Replace (r)
+ShowReplaceMenuCS() {
+    items := "r:Replace Character|R:Replace Mode|s:Substitute"
+    ShowCSharpOptionsMenu("REPLACE OPTIONS", items, "ESC: Cancel")
+}
+
+; ===================================================================
+; FUNCIONES ESPECÍFICAS PARA SUBMENÚS DE COMANDOS
+; ===================================================================
+
+; Submenú System Commands (leader → c → s)
+ShowSystemCommandsMenuCS() {
+    items := "s:System Info|t:Task Manager|v:Services|e:Event Viewer|d:Device Manager|c:Disk Cleanup"
+    ShowCSharpOptionsMenu("SYSTEM COMMANDS", items, "\\: Back|ESC: Exit")
+}
+
+; Submenú Network Commands (leader → c → n)
+ShowNetworkCommandsMenuCS() {
+    items := "i:IP Config|p:Ping Google|n:Netstat"
+    ShowCSharpOptionsMenu("NETWORK COMMANDS", items, "\\: Back|ESC: Exit")
+}
+
+; Submenú Git Commands (leader → c → g)
+ShowGitCommandsMenuCS() {
+    items := "s:Status|l:Log|b:Branches|d:Diff|a:Add All|p:Pull"
+    ShowCSharpOptionsMenu("GIT COMMANDS", items, "\\: Back|ESC: Exit")
+}
+
+; Submenú Monitoring Commands (leader → c → m)
+ShowMonitoringCommandsMenuCS() {
+    items := "p:Processes|s:Services|d:Disk Usage|m:Memory|c:CPU Usage"
+    ShowCSharpOptionsMenu("MONITORING COMMANDS", items, "\\: Back|ESC: Exit")
+}
+
+; Submenú Folder Commands (leader → c → f)
+ShowFolderCommandsMenuCS() {
+    items := "t:Temp|a:AppData|p:Program Files|u:User Profile|d:Desktop|s:System32"
+    ShowCSharpOptionsMenu("FOLDER ACCESS", items, "\\: Back|ESC: Exit")
+}
+
+; Submenú Windows Commands (leader → c → w)
+ShowWindowsCommandsMenuCS() {
+    items := "h:Toggle Hidden Files|r:Registry Editor|e:Environment Variables"
+    ShowCSharpOptionsMenu("WINDOWS COMMANDS", items, "\\: Back|ESC: Exit")
+}
+
+; Submenú Power Options (leader → c → o)
+ShowPowerOptionsCommandsMenuCS() {
+    items := "s:Sleep|h:Hibernate|r:Restart|d:Shutdown|l:Lock Screen|o:Sign Out"
+    ShowCSharpOptionsMenu("POWER OPTIONS", items, "\\: Back|ESC: Exit")
+}
+
+; Submenú ADB Tools (leader → c → a)
+ShowADBCommandsMenuCS() {
+    items := "d:List Devices|i:Install APK|u:Uninstall Package|l:Logcat|s:Shell|r:Reboot Device|c:Clear App Data"
+    ShowCSharpOptionsMenu("ADB TOOLS", items, "\\: Back|ESC: Exit")
+}
+
+; Submenú Hybrid Management (leader → c → h)
+ShowHybridManagementMenuCS() {
+    items := "r:Reload Script|e:Exit Script|c:Open Config Folder|l:View Log File|v:Show Version Info"
+    ShowCSharpOptionsMenu("HYBRID MANAGEMENT", items, "\\: Back|ESC: Exit")
+}
+
+; Submenú VaultFlow Commands (leader → c → v)
+ShowVaultFlowCommandsMenuCS() {
+    items := "v:Run VaultFlow|s:VaultFlow Status|l:List Vaults|h:VaultFlow Help"
+    ShowCSharpOptionsMenu("VAULTFLOW COMMANDS", items, "\\: Back|ESC: Exit")
+}
+
+; ===================================================================
+; FUNCIÓN DE LIMPIEZA
+; ===================================================================
+
+; Función para cerrar la aplicación C# tooltip
+StopTooltipApp() {
+    try {
+        ProcessClose("TooltipApp.exe")
+    }
+    ; Limpiar archivo JSON
+    try {
+        FileDelete("tooltip_commands.json")
+    }
+}
+
+; ===================================================================
+; INICIALIZACIÓN AUTOMÁTICA
+; ===================================================================
+
+; Iniciar automáticamente la aplicación tooltip al cargar este archivo
+; (Comentar la siguiente línea si prefieres iniciar manualmente)
+; StartTooltipApp()
