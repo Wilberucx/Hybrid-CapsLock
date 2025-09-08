@@ -1,1 +1,1 @@
-{"tooltip_type": "leader","title": "COMMAND EXECUTED","items": [{"key": "status", "description": "VaultFlow command executed"}],"navigation": ["ESC: Exit"],"timeout_ms": 2000,"show": true}
+{"show": false}
