@@ -31,7 +31,29 @@ if (SubStr(A_AhkVersion, 1, 1) != "2") {
     ExitApp()
 }
 
-; Include C# tooltip integration early
+; _DOC: Global variables to control layer states - MUST BE DECLARED FIRST
+global isNvimLayerActive := false
+global _tempEditMode := false
+global VisualMode := false
+
+; Leader state flags
+global leaderActive := false
+
+; Ensure all layer variables are properly initialized
+global excelLayerActive := false
+global capsLockWasHeld := false
+global capsLockUsedAsModifier := false
+global rightClickHeld := false
+global scrollModeActive := false
+global _yankAwait := false
+global _deleteAwait := false
+global capsActsNormal := false
+
+; Global variables for temporary status tracking
+global currentTempStatus := ""
+global tempStatusExpiry := 0
+
+; Include C# tooltip integration after global variables
 #Include tooltip_csharp_integration.ahk
 
 ; _DOC: Run as admin to prevent permission issues.
@@ -55,30 +77,8 @@ if (tooltipConfig.enabled) {
 SetCapsLockState("AlwaysOff")
 
 ;-------------------------------------------------------------------------------
-; SECTION 2: GLOBAL VARIABLES (v2)
+; SECTION 2: ADDITIONAL GLOBAL VARIABLES (v2)
 ;-------------------------------------------------------------------------------
-
-; _DOC: Global variables to control layer states.
-global isNvimLayerActive := false
-global _tempEditMode := false
-global VisualMode := false
-
-; Leader state flags
-global leaderActive := false
-
-; Ensure all layer variables are properly initialized
-global excelLayerActive := false
-global capsLockWasHeld := false
-global capsLockUsedAsModifier := false
-global rightClickHeld := false
-global scrollModeActive := false
-global _yankAwait := false
-global _deleteAwait := false
-global capsActsNormal := false
-
-; Global variables for temporary status tracking
-global currentTempStatus := ""
-global tempStatusExpiry := 0
 
 ; Helper function to mark CapsLock as used as modifier
 MarkCapsLockAsModifier() {

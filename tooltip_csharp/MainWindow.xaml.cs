@@ -71,26 +71,31 @@ namespace TooltipApp
 
         private void ShowBasicTooltip()
         {
-            // Fase 1: Tooltip básico estático
-            TitleText.Text = "TEST TOOLTIP";
+            // Mostrar mensaje de carga exitosa
+            TitleText.Text = "HYBRIDCAPSLOCK LOADED";
             
             // Limpiar grid existente
             ItemsGrid.Children.Clear();
             ItemsGrid.RowDefinitions.Clear();
             
-            // Agregar algunos items de prueba
-            var testItems = new[]
+            // Mostrar información de carga
+            var loadItems = new[]
             {
-                new TooltipItem { Key = "w", Description = "Windows" },
-                new TooltipItem { Key = "p", Description = "Programs" },
-                new TooltipItem { Key = "t", Description = "Time" },
-                new TooltipItem { Key = "c", Description = "Commands" }
+                new TooltipItem { Key = "✓", Description = "System initialized successfully" },
+                new TooltipItem { Key = "✓", Description = "Configuration loaded" },
+                new TooltipItem { Key = "✓", Description = "Tooltips enabled" },
+                new TooltipItem { Key = "✓", Description = "Ready for use" }
             };
             
-            CreateItemsLayout(testItems);
+            CreateItemsLayout(loadItems);
             
             this.Visibility = Visibility.Visible;
             PositionWindow();
+            
+            // Auto-hide después de 2 segundos
+            _hideTimer.Interval = TimeSpan.FromMilliseconds(2000);
+            _hideTimer.Stop();
+            _hideTimer.Start();
         }
 
         private void ApplyPersistentStatusStyle()

@@ -118,7 +118,7 @@ ShowCSharpTooltip(title, items, navigation := "", timeout := 0) {
             navJson .= '"' . navItem . '"'
         }
     } else {
-        navJson := '"ESC: Exit"'
+        navJson := '"HybridCapsLock Ready"'
     }
     
     ; Construir JSON completo
