@@ -18,6 +18,9 @@ if (!IsSet(ProgramsIni)) {
 if (!IsSet(InfoIni)) {
     global InfoIni := A_ScriptDir . "\config\information.ini"
 }
+if (!IsSet(TimestampsIni)) {
+    global TimestampsIni := A_ScriptDir . "\config\timestamps.ini"
+}
 
 ; Variables globales para configuración de tooltips
 global tooltipConfig := ReadTooltipConfig()
@@ -230,21 +233,36 @@ ShowProgramMenuCS() {
     Loop 10 {
         lineContent := IniRead(ProgramsIni, "MenuDisplay", "line" . A_Index, "")
         if (lineContent != "" && lineContent != "ERROR") {
-            ; Extraer key y description del formato "key - description"
-            if (InStr(lineContent, " - ")) {
-                parts := StrSplit(lineContent, " - ")
-                key := parts[1]
-                desc := parts[2]
-                if (items != "")
-                    items .= "|"
-                items .= key . ":" . desc
+            ; Método simple: dividir por múltiples espacios y procesar cada parte
+            ; Primero, reemplazar múltiples espacios con un delimitador único
+            cleanLine := RegExReplace(lineContent, "\s{3,}", "|||")
+            
+            ; Dividir por el delimitador
+            parts := StrSplit(cleanLine, "|||")
+            
+            ; Procesar cada parte
+            for index, part in parts {
+                part := Trim(part)
+                if (part != "" && InStr(part, " - ")) {
+                    ; Extraer key y descripción
+                    dashPos := InStr(part, " - ")
+                    key := Trim(SubStr(part, 1, dashPos - 1))
+                    desc := Trim(SubStr(part, dashPos + 3))
+                    
+                    ; Validar que la key sea una sola letra
+                    if (StrLen(key) = 1 && RegExMatch(key, "^[a-z]$")) {
+                        if (items != "")
+                            items .= "|"
+                        items .= key . ":" . desc
+                    }
+                }
             }
         }
     }
     
     ; Fallback si no hay configuración
     if (items == "") {
-        items := "v:Visual Studio|c:Chrome|n:Notepad++|t:Terminal|f:Firefox|e:Explorer"
+        items := "e:Explorer|i:Settings|t:Terminal|v:VS Code|n:Notepad|o:Obsidian|b:Vivaldi|z:Zen Browser"
     }
     
     ShowCSharpOptionsMenu("PROGRAM LAUNCHER", items, "\\: Back|ESC: Exit")
@@ -294,6 +312,130 @@ ShowInformationMenuCS() {
 ShowCommandsMenuCS() {
     items := "s:System Commands|n:Network Commands|g:Git Commands|m:Monitoring Commands|f:Folder Commands|w:Windows Commands|o:Power Options|a:ADB Tools|v:VaultFlow|h:Hybrid Management"
     ShowCSharpOptionsMenu("COMMAND PALETTE", items, "\\: Back|ESC: Exit")
+}
+
+; ===================================================================
+; SUBMENÚS DE TIMESTAMP CON C#
+; ===================================================================
+
+; Reemplazar ShowDateFormatsMenu() original
+ShowDateFormatsMenuCS() {
+    items := ""
+    
+    ; Leer configuración dinámica desde timestamps.ini
+    Loop 10 {
+        lineContent := IniRead(TimestampsIni, "MenuDisplay", "date_line" . A_Index, "")
+        if (lineContent != "" && lineContent != "ERROR") {
+            ; Método simple: dividir por múltiples espacios y procesar cada parte
+            cleanLine := RegExReplace(lineContent, "\s{3,}", "|||")
+            parts := StrSplit(cleanLine, "|||")
+            
+            ; Procesar cada parte
+            for index, part in parts {
+                part := Trim(part)
+                if (part != "" && InStr(part, " - ")) {
+                    ; Extraer key y descripción
+                    dashPos := InStr(part, " - ")
+                    key := Trim(SubStr(part, 1, dashPos - 1))
+                    desc := Trim(SubStr(part, dashPos + 3))
+                    
+                    ; Validar que la key sea una letra o número
+                    if (StrLen(key) <= 2 && RegExMatch(key, "^[a-z0-9]+$")) {
+                        if (items != "")
+                            items .= "|"
+                        items .= key . ":" . desc
+                    }
+                }
+            }
+        }
+    }
+    
+    ; Fallback si no hay configuración
+    if (items == "") {
+        items := "d:Default|1:yyyy-MM-dd|2:dd/MM/yyyy|3:MM/dd/yyyy|4:dd-MMM-yyyy|5:ddd, dd MMM yyyy|6:yyyyMMdd"
+    }
+    
+    ShowCSharpOptionsMenu("DATE FORMATS", items, "\\: Back|ESC: Exit")
+}
+
+; Reemplazar ShowTimeFormatsMenu() original
+ShowTimeFormatsMenuCS() {
+    items := ""
+    
+    ; Leer configuración dinámica desde timestamps.ini
+    Loop 10 {
+        lineContent := IniRead(TimestampsIni, "MenuDisplay", "time_line" . A_Index, "")
+        if (lineContent != "" && lineContent != "ERROR") {
+            ; Método simple: dividir por múltiples espacios y procesar cada parte
+            cleanLine := RegExReplace(lineContent, "\s{3,}", "|||")
+            parts := StrSplit(cleanLine, "|||")
+            
+            ; Procesar cada parte
+            for index, part in parts {
+                part := Trim(part)
+                if (part != "" && InStr(part, " - ")) {
+                    ; Extraer key y descripción
+                    dashPos := InStr(part, " - ")
+                    key := Trim(SubStr(part, 1, dashPos - 1))
+                    desc := Trim(SubStr(part, dashPos + 3))
+                    
+                    ; Validar que la key sea una letra o número
+                    if (StrLen(key) <= 2 && RegExMatch(key, "^[a-z0-9]+$")) {
+                        if (items != "")
+                            items .= "|"
+                        items .= key . ":" . desc
+                    }
+                }
+            }
+        }
+    }
+    
+    ; Fallback si no hay configuración
+    if (items == "") {
+        items := "t:Default|1:HH:mm:ss|2:HH:mm|3:hh:mm tt|4:HHmmss|5:HH.mm.ss"
+    }
+    
+    ShowCSharpOptionsMenu("TIME FORMATS", items, "\\: Back|ESC: Exit")
+}
+
+; Reemplazar ShowDateTimeFormatsMenu() original
+ShowDateTimeFormatsMenuCS() {
+    items := ""
+    
+    ; Leer configuración dinámica desde timestamps.ini
+    Loop 10 {
+        lineContent := IniRead(TimestampsIni, "MenuDisplay", "datetime_line" . A_Index, "")
+        if (lineContent != "" && lineContent != "ERROR") {
+            ; Método simple: dividir por múltiples espacios y procesar cada parte
+            cleanLine := RegExReplace(lineContent, "\s{3,}", "|||")
+            parts := StrSplit(cleanLine, "|||")
+            
+            ; Procesar cada parte
+            for index, part in parts {
+                part := Trim(part)
+                if (part != "" && InStr(part, " - ")) {
+                    ; Extraer key y descripción
+                    dashPos := InStr(part, " - ")
+                    key := Trim(SubStr(part, 1, dashPos - 1))
+                    desc := Trim(SubStr(part, dashPos + 3))
+                    
+                    ; Validar que la key sea una letra o número
+                    if (StrLen(key) <= 2 && RegExMatch(key, "^[a-z0-9]+$")) {
+                        if (items != "")
+                            items .= "|"
+                        items .= key . ":" . desc
+                    }
+                }
+            }
+        }
+    }
+    
+    ; Fallback si no hay configuración
+    if (items == "") {
+        items := "h:Default|1:yyyy-MM-dd HH:mm:ss|2:dd/MM/yyyy HH:mm|3:yyyy-MM-dd HH:mm:ss|4:yyyyMMddHHmmss|5:ddd, dd MMM yyyy HH:mm"
+    }
+    
+    ShowCSharpOptionsMenu("DATE+TIME FORMATS", items, "\\: Back|ESC: Exit")
 }
 
 ; ===================================================================

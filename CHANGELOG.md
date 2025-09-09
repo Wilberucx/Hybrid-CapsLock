@@ -9,6 +9,15 @@
 - **Programs layer centralized** - All program settings moved to dedicated configuration file
 
 ### ✨ **Added**
+- **Sistema de Tooltips Mejorado (C# + WPF)** - Reemplazo completo de tooltips nativos de AutoHotkey
+  - Tooltips estilo Nvim con diseño profesional y colores personalizados
+  - Aplicación C# independiente (`TooltipApp.exe`) con comunicación JSON
+  - Posicionamiento preciso (centro-inferior de pantalla)
+  - Click-through habilitado y always-on-top para mejor experiencia
+  - Soporte para múltiples estados: Nvim, Visual, Yank, Excel
+  - Configuración completa desde `configuration.ini` (timeouts, animaciones, persistencia)
+  - Scripts PowerShell especializados para cada capa de estado
+  - Integración automática con inicialización del script principal
 - **`configuration.ini`** - Comprehensive main configuration with 75+ settings
   - UI customization (tooltips, themes, animations)
   - Performance optimization settings
@@ -51,6 +60,11 @@
   - Escape key support throughout all menus
 
 ### 🔄 **Changed**
+- **Sistema de Tooltips**
+  - Old: Tooltips nativos de AutoHotkey con limitaciones de diseño y posicionamiento
+  - New: Sistema C# + WPF con tooltips profesionales estilo Nvim
+  - Mejor control visual, colores personalizados y comunicación JSON
+  - Soporte para estados múltiples y configuración avanzada
 - **Configuration architecture**
   - Old: Single configuration file with limited options
   - New: Modular system with 5 specialized .ini files
@@ -86,6 +100,7 @@
 ### 📁 **New File Structure**
 ```
 HybridCapsLock.ahk          # Main script (2300+ lines)
+tooltip_csharp_integration.ahk # C# tooltip system integration
 config/                     # Configuration files directory
   ├── configuration.ini     # Main configuration (130+ settings)
   ├── programs.ini          # Programs Layer configuration
@@ -95,6 +110,11 @@ config/                     # Configuration files directory
 data/                       # Runtime data files
   ├── layer_status.json     # Zebar integration status
   └── menu_status.json      # Menu state tracking
+tooltip_csharp/             # C# tooltip application
+  ├── TooltipApp.exe        # Compiled C# application
+  ├── StatusWindow_*.ps1    # PowerShell scripts for each layer
+  ├── *.xaml               # WPF interface definitions
+  └── Models/               # C# data models
 doc/                        # Comprehensive documentation
 ```
 

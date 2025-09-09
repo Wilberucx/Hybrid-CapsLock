@@ -75,22 +75,30 @@ Accede a un menú contextual con sub-capas organizadas:
 
 ### Instalación y Configuración
 - **[Sistema de Configuración](doc/CONFIGURATION.md)** - Guía completa del sistema de configuración modular
-- **[Instalación como Servicio](doc/SERVICE_INSTALLATION.md)** - Servicio de Windows para compatibilidad completa
+- **[Integración de Tooltips](tooltip_csharp/README.md)** - Sistema de tooltips C# + WPF para mejor experiencia visual
 
 ## ⚙️ Instalación y Uso
 
-### Opción A: Ejecución Normal
-1. **Requisito:** [AutoHotkey v1.1+](https://www.autohotkey.com/)
-2. **Ejecutar:** Doble click en `HybridCapsLock.ahk`
-3. **Inicio automático:** Crear acceso directo en `shell:startup`
+### 📋 Versiones Disponibles
+- **`HybridCapsLock.ahk`** - **Versión principal (AutoHotkey v2)** - ⭐ **RECOMENDADA**
+  - Versión moderna con todas las características actualizadas
+  - Mejor rendimiento y compatibilidad
+  - Sistema de tooltips C# integrado
+- **`HybridCapsLock_v1_[DEPRECATED].ahk`** - Versión legacy (AutoHotkey v1.1) - ⚠️ **DESACTUALIZADA**
+  - Mantenida solo para compatibilidad
+  - No incluye las últimas características
+  - No recomendada para uso nuevo
 
-### Opción B: Servicio de Windows (Recomendado)
-1. **Requisito:** [AutoHotkey v1.1+](https://www.autohotkey.com/)
-2. **Instalación:** Ejecutar directamente `HybridCapsLock.ahk` o `HybridCapsLock_v2.ahk`
-3. **Ventajas:** 
-   - Funciona con aplicaciones elevadas
-   - Lanza aplicaciones con privilegios normales
-   - Inicio automático con Windows
+### 🚀 Instalación (Recomendada)
+1. **Requisito:** [AutoHotkey v2](https://www.autohotkey.com/) (para la versión principal)
+2. **Ejecutar:** Doble click en `HybridCapsLock.ahk`
+3. **Inicio automático:** Crear acceso directo en `shell:startup` para que inicie con Windows
+4. **Configuración:** Los archivos en `config/` se crean automáticamente en la primera ejecución
+
+### ⚡ Ejecución Directa (Sin Servicio)
+- **Funcionamiento:** El script se ejecuta directamente sin necesidad de instalación como servicio
+- **Compatibilidad:** Funciona con la mayoría de aplicaciones
+- **Privilegios:** Para aplicaciones elevadas, ejecutar el script como administrador si es necesario
 
 ## 🔧 Configuración
 
@@ -129,7 +137,7 @@ Cada archivo `.ini` incluye secciones especializadas:
 - **Por capa:** Cada archivo en `config/` controla una funcionalidad específica
 - **Global:** `config/configuration.ini` para ajustes del sistema
 - **Aplicaciones:** Perfiles específicos para diferentes programas
-- **Servicio:** Ver [Instalación como Servicio](doc/SERVICE_INSTALLATION.md)
+- **Tooltips:** Sistema C# integrado configurable desde `configuration.ini`
 - **Datos:** Archivos de estado en `data/` (JSON para Zebar)
 
 ## 📊 Integración con Zebar
@@ -149,6 +157,10 @@ El script genera automáticamente `layer_status.json` que se sincroniza con el w
 ## 📋 Versión Actual: 6.3
 
 ### Novedades v6.3 - MAJOR CONFIGURATION REFACTOR:
+- **🎨 Sistema de Tooltips Mejorado**: Reemplazo completo con C# + WPF estilo Nvim
+  - Tooltips profesionales con colores personalizados y posicionamiento preciso
+  - Aplicación independiente con comunicación JSON
+  - Soporte para múltiples estados (Nvim, Visual, Yank, Excel)
 - **🏗️ Sistema de Configuración Modular**: 5 archivos .ini especializados con 75+ opciones
 - **🆕 configuration.ini**: Configuración principal con UI, rendimiento, seguridad y perfiles por aplicación
 - **🆕 Configuración Dinámica**: Todos los menús y funciones ahora configurables sin tocar código

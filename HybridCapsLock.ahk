@@ -66,18 +66,19 @@ global VisualMode := false
 ; Leader state flags
 global leaderActive := false
 
+; Ensure all layer variables are properly initialized
+global excelLayerActive := false
+global capsLockWasHeld := false
+global capsLockUsedAsModifier := false
+global rightClickHeld := false
+global scrollModeActive := false
+global _yankAwait := false
+global _deleteAwait := false
+global capsActsNormal := false
+
 ; Global variables for temporary status tracking
 global currentTempStatus := ""
 global tempStatusExpiry := 0
-
-; Excel/Accounting layer state
-global excelLayerActive := false
-
-; Variable to track if CapsLock was held beyond the threshold
-global capsLockWasHeld := false
-
-; Variable to track if CapsLock was used as a modifier with another key
-global capsLockUsedAsModifier := false
 
 ; Helper function to mark CapsLock as used as modifier
 MarkCapsLockAsModifier() {
@@ -85,11 +86,6 @@ MarkCapsLockAsModifier() {
     capsLockUsedAsModifier := true
 }
 
-; Click derecho sostenido state
-global rightClickHeld := false
-
-; Scroll mode state
-global scrollModeActive := false
 
 ; Configuration file paths - maintain compatibility with v1
 global ConfigIni := A_ScriptDir . "\config\configuration.ini"
@@ -101,15 +97,6 @@ global ObsidianIni := A_ScriptDir . "\config\obsidian.ini"
 
 ; Layer status file for Zebar integration
 global LayerStatusFile := A_ScriptDir . "\data\layer_status.json"
-
-; Guard para operador yank secuencial
-global _yankAwait := false
-
-; Guard para operador delete secuencial
-global _deleteAwait := false
-
-; Toggle to let CapsLock behave as original toggle key
-global capsActsNormal := false
 
 ;-------------------------------------------------------------------------------
 ; SECTION 3: HELPER FUNCTIONS (v2 - Enhanced with C# Tooltips)
@@ -480,6 +467,13 @@ ShowInformationMenu() {
 
 ; Window action executor
 ExecuteWindowAction(action) {
+    global tooltipConfig
+    
+    ; Hide tooltip immediately if auto_hide_on_action is enabled
+    if (tooltipConfig.enabled && tooltipConfig.autoHide) {
+        HideCSharpTooltip()
+    }
+    
     switch action {
         case "2":
             ; Split 50/50
@@ -667,7 +661,12 @@ HandleTimestampMode(mode) {
 
 ; Information insertion from key
 InsertInformationFromKey(keyPressed) {
-    global InfoIni
+    global InfoIni, tooltipConfig
+    
+    ; Hide tooltip immediately if auto_hide_on_action is enabled
+    if (tooltipConfig.enabled && tooltipConfig.autoHide) {
+        HideCSharpTooltip()
+    }
     
     ; Read the information name mapped to this key
     keyName := "key_" . keyPressed
@@ -700,62 +699,82 @@ ShowInformationInserted(infoName) {
 
 ; Timestamp menu functions
 ShowDateFormatsMenu() {
-    global TimestampsIni
-    ToolTipX := A_ScreenWidth // 2 - 120
-    ToolTipY := A_ScreenHeight // 2 - 100
-    menuText := "DATE FORMATS`n`n"
-    
-    ; Read menu lines dynamically from timestamps.ini
-    Loop 10 {
-        lineContent := IniRead(TimestampsIni, "MenuDisplay", "date_line" . A_Index, "")
-        if (lineContent != "" && lineContent != "ERROR") {
-            menuText .= lineContent . "`n"
+    if (tooltipConfig.enabled) {
+        ShowDateFormatsMenuCS()
+    } else {
+        ; Fallback to native tooltips
+        global TimestampsIni
+        ToolTipX := A_ScreenWidth // 2 - 120
+        ToolTipY := A_ScreenHeight // 2 - 100
+        menuText := "DATE FORMATS`n`n"
+        
+        ; Read menu lines dynamically from timestamps.ini
+        Loop 10 {
+            lineContent := IniRead(TimestampsIni, "MenuDisplay", "date_line" . A_Index, "")
+            if (lineContent != "" && lineContent != "ERROR") {
+                menuText .= lineContent . "`n"
+            }
         }
+        
+        menuText .= "`n[\: Back] [Esc: Exit]"
+        ToolTip(menuText, ToolTipX, ToolTipY, 2)
     }
-    
-    menuText .= "`n[\: Back] [Esc: Exit]"
-    ToolTip(menuText, ToolTipX, ToolTipY, 2)
 }
 
 ShowTimeFormatsMenu() {
-    global TimestampsIni
-    ToolTipX := A_ScreenWidth // 2 - 120
-    ToolTipY := A_ScreenHeight // 2 - 100
-    menuText := "TIME FORMATS`n`n"
-    
-    ; Read menu lines dynamically from timestamps.ini
-    Loop 10 {
-        lineContent := IniRead(TimestampsIni, "MenuDisplay", "time_line" . A_Index, "")
-        if (lineContent != "" && lineContent != "ERROR") {
-            menuText .= lineContent . "`n"
+    if (tooltipConfig.enabled) {
+        ShowTimeFormatsMenuCS()
+    } else {
+        ; Fallback to native tooltips
+        global TimestampsIni
+        ToolTipX := A_ScreenWidth // 2 - 120
+        ToolTipY := A_ScreenHeight // 2 - 100
+        menuText := "TIME FORMATS`n`n"
+        
+        ; Read menu lines dynamically from timestamps.ini
+        Loop 10 {
+            lineContent := IniRead(TimestampsIni, "MenuDisplay", "time_line" . A_Index, "")
+            if (lineContent != "" && lineContent != "ERROR") {
+                menuText .= lineContent . "`n"
+            }
         }
+        
+        menuText .= "`n[\: Back] [Esc: Exit]"
+        ToolTip(menuText, ToolTipX, ToolTipY, 2)
     }
-    
-    menuText .= "`n[\: Back] [Esc: Exit]"
-    ToolTip(menuText, ToolTipX, ToolTipY, 2)
 }
 
 ShowDateTimeFormatsMenu() {
-    global TimestampsIni
-    ToolTipX := A_ScreenWidth // 2 - 140
-    ToolTipY := A_ScreenHeight // 2 - 120
-    menuText := "DATE+TIME FORMATS`n`n"
-    
-    ; Read menu lines dynamically from timestamps.ini
-    Loop 10 {
-        lineContent := IniRead(TimestampsIni, "MenuDisplay", "datetime_line" . A_Index, "")
-        if (lineContent != "" && lineContent != "ERROR") {
-            menuText .= lineContent . "`n"
+    if (tooltipConfig.enabled) {
+        ShowDateTimeFormatsMenuCS()
+    } else {
+        ; Fallback to native tooltips
+        global TimestampsIni
+        ToolTipX := A_ScreenWidth // 2 - 140
+        ToolTipY := A_ScreenHeight // 2 - 120
+        menuText := "DATE+TIME FORMATS`n`n"
+        
+        ; Read menu lines dynamically from timestamps.ini
+        Loop 10 {
+            lineContent := IniRead(TimestampsIni, "MenuDisplay", "datetime_line" . A_Index, "")
+            if (lineContent != "" && lineContent != "ERROR") {
+                menuText .= lineContent . "`n"
+            }
         }
+        
+        menuText .= "`n[\: Back] [Esc: Exit]"
+        ToolTip(menuText, ToolTipX, ToolTipY, 2)
     }
-    
-    menuText .= "`n[\: Back] [Esc: Exit]"
-    ToolTip(menuText, ToolTipX, ToolTipY, 2)
 }
 
 ; Timestamp writer function
 WriteTimestampFromKey(mode, keyPressed) {
-    global TimestampsIni
+    global TimestampsIni, tooltipConfig
+    
+    ; Hide tooltip immediately if auto_hide_on_action is enabled
+    if (tooltipConfig.enabled && tooltipConfig.autoHide) {
+        HideCSharpTooltip()
+    }
     
     ; Determine format key name based on mode and key pressed
     if (mode = "date") {
@@ -1201,6 +1220,13 @@ ShowVaultFlowCommandsMenu() {
 
 ; Command execution functions
 ExecuteSystemCommand(cmd) {
+    global tooltipConfig
+    
+    ; Hide tooltip immediately if auto_hide_on_action is enabled
+    if (tooltipConfig.enabled && tooltipConfig.autoHide) {
+        HideCSharpTooltip()
+    }
+    
     switch cmd {
         case "s":
             Run("cmd.exe /k systeminfo")
@@ -1223,6 +1249,13 @@ ExecuteSystemCommand(cmd) {
 }
 
 ExecuteNetworkCommand(cmd) {
+    global tooltipConfig
+    
+    ; Hide tooltip immediately if auto_hide_on_action is enabled
+    if (tooltipConfig.enabled && tooltipConfig.autoHide) {
+        HideCSharpTooltip()
+    }
+    
     switch cmd {
         case "i":
             Run("cmd.exe /k ipconfig /all")
@@ -1239,6 +1272,13 @@ ExecuteNetworkCommand(cmd) {
 }
 
 ExecuteGitCommand(cmd) {
+    global tooltipConfig
+    
+    ; Hide tooltip immediately if auto_hide_on_action is enabled
+    if (tooltipConfig.enabled && tooltipConfig.autoHide) {
+        HideCSharpTooltip()
+    }
+    
     switch cmd {
         case "s":
             Run("cmd.exe /k git status")
@@ -1261,6 +1301,13 @@ ExecuteGitCommand(cmd) {
 }
 
 ExecuteMonitoringCommand(cmd) {
+    global tooltipConfig
+    
+    ; Hide tooltip immediately if auto_hide_on_action is enabled
+    if (tooltipConfig.enabled && tooltipConfig.autoHide) {
+        HideCSharpTooltip()
+    }
+    
     switch cmd {
         case "p":
             Run("powershell.exe -Command `"Get-Process | Sort-Object CPU -Descending | Select-Object -First 20 | Format-Table -AutoSize; Read-Host 'Press Enter to exit'`"")
@@ -1281,6 +1328,13 @@ ExecuteMonitoringCommand(cmd) {
 }
 
 ExecuteFolderCommand(cmd) {
+    global tooltipConfig
+    
+    ; Hide tooltip immediately if auto_hide_on_action is enabled
+    if (tooltipConfig.enabled && tooltipConfig.autoHide) {
+        HideCSharpTooltip()
+    }
+    
     switch cmd {
         case "t":
             Run('explorer.exe "' . EnvGet("TEMP") . '"')
@@ -1303,6 +1357,13 @@ ExecuteFolderCommand(cmd) {
 }
 
 ExecuteWindowsCommand(cmd) {
+    global tooltipConfig
+    
+    ; Hide tooltip immediately if auto_hide_on_action is enabled
+    if (tooltipConfig.enabled && tooltipConfig.autoHide) {
+        HideCSharpTooltip()
+    }
+    
     switch cmd {
         case "h":
             ToggleHiddenFiles()
@@ -1320,6 +1381,13 @@ ExecuteWindowsCommand(cmd) {
 }
 
 ExecutePowerOptionsCommand(cmd) {
+    global tooltipConfig
+    
+    ; Hide tooltip immediately if auto_hide_on_action is enabled
+    if (tooltipConfig.enabled && tooltipConfig.autoHide) {
+        HideCSharpTooltip()
+    }
+    
     switch cmd {
         case "s":
             ; Sleep
@@ -1353,6 +1421,13 @@ ExecutePowerOptionsCommand(cmd) {
 }
 
 ExecuteADBCommand(cmd) {
+    global tooltipConfig
+    
+    ; Hide tooltip immediately if auto_hide_on_action is enabled
+    if (tooltipConfig.enabled && tooltipConfig.autoHide) {
+        HideCSharpTooltip()
+    }
+    
     switch cmd {
         case "d":
             Run("cmd.exe /k adb devices")
@@ -1383,6 +1458,13 @@ ExecuteADBCommand(cmd) {
 }
 
 ExecuteHybridManagementCommand(cmd) {
+    global tooltipConfig
+    
+    ; Hide tooltip immediately if auto_hide_on_action is enabled
+    if (tooltipConfig.enabled && tooltipConfig.autoHide) {
+        HideCSharpTooltip()
+    }
+    
     switch cmd {
         case "r":
             ; Reload Script
@@ -1426,6 +1508,13 @@ ExecuteHybridManagementCommand(cmd) {
 }
 
 ExecuteVaultFlowCommand(cmd) {
+    global tooltipConfig
+    
+    ; Hide tooltip immediately if auto_hide_on_action is enabled
+    if (tooltipConfig.enabled && tooltipConfig.autoHide) {
+        HideCSharpTooltip()
+    }
+    
     switch cmd {
         case "v":
             ; Run VaultFlow
@@ -1474,7 +1563,7 @@ ToggleHiddenFiles() {
         statusText := (newValue = 1) ? "HIDDEN FILES SHOWN" : "HIDDEN FILES HIDDEN"
         ShowCenteredToolTip(statusText)
         SetTimer(RemoveToolTip, -2000)
-    } catch Error as e {
+    } catch Error as err {
         ShowCenteredToolTip("Error toggling hidden files")
         SetTimer(RemoveToolTip, -2000)
     }
@@ -1524,7 +1613,7 @@ UpdateLayerStatus() {
     try {
         FileDelete(LayerStatusFile)
         FileAppend(jsonContent, LayerStatusFile)
-    } catch Error as e {
+    } catch Error as err {
         ; Silent fail - don't interrupt workflow if file can't be written
     }
 }
@@ -2456,7 +2545,7 @@ LaunchApp(appName, exeNameOrUri) {
     if (!InStr(exeNameOrUri, ".exe") && !InStr(exeNameOrUri, ".lnk")) {
         try {
             Run(exeNameOrUri)
-        } catch Error as e {
+        } catch Error as err {
             ShowCenteredToolTip("Failed to launch: " . appName)
             SetTimer(RemoveToolTip, -3000)
         }
@@ -2472,7 +2561,7 @@ LaunchApp(appName, exeNameOrUri) {
             try {
                 Run('"' . _expandedPath . '"')
                 return
-            } catch Error as e {
+            } catch Error as err {
                 ; Continue to next method
             }
         }
@@ -2484,7 +2573,7 @@ LaunchApp(appName, exeNameOrUri) {
         try {
             Run('"' . _resolvedPath . '"')
             return
-        } catch Error as e {
+        } catch Error as err {
             ; Continue to error message
         }
     }
@@ -2502,7 +2591,7 @@ ResolveExecutable(exeName) {
         if (appPath != "" && FileExist(appPath)) {
             return appPath
         }
-    } catch Error as e {
+    } catch Error as err {
         ; Registry key not found, continue
     }
     
@@ -2512,7 +2601,7 @@ ResolveExecutable(exeName) {
         if (appPath != "" && FileExist(appPath)) {
             return appPath
         }
-    } catch Error as e {
+    } catch Error as err {
         ; Registry key not found, continue
     }
     
@@ -2526,7 +2615,7 @@ ResolveExecutable(exeName) {
                 return testPath
             }
         }
-    } catch Error as e {
+    } catch Error as err {
         ; PATH search failed
     }
     
@@ -2631,7 +2720,7 @@ LaunchQuickShare() {
                 WinActivate("ahk_exe NearbyShare.exe")
             }
             return
-        } catch Error as e {
+        } catch Error as err {
             ; Continue to next method
         }
     }
@@ -2644,7 +2733,7 @@ LaunchQuickShare() {
             WinActivate("ahk_exe NearbyShare.exe")
         }
         return
-    } catch Error as e {
+    } catch Error as err {
         ShowCenteredToolTip("Quick Share not found.`nPlease verify it is installed.")
         SetTimer(RemoveToolTip, -3000)
     }
@@ -2652,7 +2741,12 @@ LaunchQuickShare() {
 
 ; Dynamic program launcher that reads mapping from programs.ini
 LaunchProgramFromKey(keyPressed) {
-    global ProgramsIni
+    global ProgramsIni, tooltipConfig
+    
+    ; Hide tooltip immediately if auto_hide_on_action is enabled
+    if (tooltipConfig.enabled && tooltipConfig.autoHide) {
+        HideCSharpTooltip()
+    }
     
     ; Read the program name mapped to this key
     keyName := "key_" . keyPressed
@@ -2703,71 +2797,3 @@ CleanupTooltips(*) {
         StopTooltipApp()
     }
 }
-
-;===============================================================================
-; MIGRATION STATUS: PHASE 8 COMPLETED - C# TOOLTIPS INTEGRATED
-;===============================================================================
-; ✅ PHASE 1: Basic v2 structure established
-; ✅ PHASE 1: Global variables migrated
-; ✅ PHASE 1: Configuration file paths set up
-; ✅ PHASE 1: Basic helper functions implemented
-; ✅ PHASE 1: Version detection for v2
-; ✅ PHASE 1: Startup banner working
-;
-; ✅ PHASE 2: Window functions migrated (minimize, maximize, close)
-; ✅ PHASE 2: Basic navigation (hjkl) implemented
-; ✅ PHASE 2: Smooth scrolling migrated
-; ✅ PHASE 2: Common shortcuts (Ctrl equivalents) implemented
-; ✅ PHASE 2: Enhanced Alt+Tab migrated
-; ✅ PHASE 2: Click functions (left hold, right click) implemented
-; ✅ PHASE 2: Additional shortcuts and utilities migrated
-; ✅ PHASE 2: Status notification functions implemented
-;
-; ✅ PHASE 3: Hybrid logic (tap vs hold) implemented
-; ✅ PHASE 3: CapsLock tap detection (0.2s timeout)
-; ✅ PHASE 3: Nvim layer activation on tap
-; ✅ PHASE 3: Leader mode (CapsLock + Space) implemented
-; ✅ PHASE 3: Layer status tracking and JSON integration
-; ✅ PHASE 3: Configuration system with defaults
-; ✅ PHASE 3: Enhanced status functions
-;
-; ✅ PHASE 4: Nvim layer context-sensitive hotkeys (#HotIf)
-; ✅ PHASE 4: Visual mode toggle and navigation
-; ✅ PHASE 4: Extended navigation (word movement, home/end)
-; ✅ PHASE 4: Editing actions (undo, redo, delete, yank)
-; ✅ PHASE 4: Insert and replace modes
-; ✅ PHASE 4: Delete and yank operations with menus
-; ✅ PHASE 4: Smooth scrolling in Nvim layer
-; ✅ PHASE 4: Helper functions for Nvim operations
-;
-; ✅ PHASE 5: Programs layer (CapsLock + Space → p)
-; ✅ PHASE 5: Enhanced Leader mode with hierarchical navigation
-; ✅ PHASE 5: Application launcher with Registry search
-; ✅ PHASE 5: Dynamic program menu from programs.ini
-; ✅ PHASE 5: Environment variable expansion
-; ✅ PHASE 5: Error handling and user feedback
-; ✅ PHASE 5: 15+ specific application launchers
-;
-; ✅ PHASE 6: Specialized layers (Windows, Excel, Timestamp, Information)
-; ✅ PHASE 6: Excel/Accounting layer with numpad virtual keyboard
-; ✅ PHASE 6: Windows layer with splits, zoom, and window management
-; ✅ PHASE 6: Timestamp layer with date/time/datetime formats
-; ✅ PHASE 6: Information layer with personal data insertion
-; ✅ PHASE 6: All layers integrated with Leader mode navigation
-; ✅ PHASE 6: Dynamic menu generation from .ini files
-; ✅ PHASE 6: Context-sensitive hotkeys with #HotIf
-;
-; ✅ PHASE 7: Commands layer (CapsLock + Space → c)
-; ✅ PHASE 7: Command palette with 6 categories (System, Network, Git, etc.)
-; ✅ PHASE 7: Hierarchical command navigation with InputHook
-; ✅ PHASE 7: System commands (Task Manager, Services, Device Manager, etc.)
-; ✅ PHASE 7: Network commands (ipconfig, ping, netstat)
-; ✅ PHASE 7: Git commands (status, log, branch, diff, add, pull)
-; ✅ PHASE 7: Monitoring commands (processes, services, disk, memory, CPU)
-; ✅ PHASE 7: Folder access commands (temp, appdata, program files, etc.)
-; ✅ PHASE 7: Windows commands (registry, environment, hidden files toggle)
-; ✅ PHASE 7: Dynamic menu generation from commands.ini
-; ✅ PHASE 7: Error handling and command execution feedback
-;
-; NEXT: Phase 8 - Final integration, optimization, and documentation
-;===============================================================================
