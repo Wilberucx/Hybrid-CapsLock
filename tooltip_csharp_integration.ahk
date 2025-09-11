@@ -158,7 +158,7 @@ ShowCSharpOptionsMenu(title, items, navigation := "") {
 ShowCSharpStatusNotification(title, message) {
     global tooltipConfig
     items := "status:" . message
-    ShowCSharpTooltip(title, items, "", tooltipConfig.statusTimeout)
+    ShowCSharpTooltip(title, items, "Esc: Close", tooltipConfig.statusTimeout)
 }
 
 ; Función para iniciar la aplicación C# tooltip
@@ -622,7 +622,7 @@ ShowWindowsCommandsMenuCS() {
 
 ; Submenú Power Options (leader → c → o)
 ShowPowerOptionsCommandsMenuCS() {
-    items := "s:Sleep|h:Hibernate|r:Restart|d:Shutdown|l:Lock Screen|o:Sign Out"
+    items := "s:Sleep|h:Hibernate|r:Restart|S:Shutdown|l:Lock Screen|o:Sign Out"
     ShowCSharpOptionsMenu("POWER OPTIONS", items, "\\: Back|ESC: Exit")
 }
 

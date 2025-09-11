@@ -62,7 +62,7 @@ HideCSharpTooltip() {
 
 ; Reemplazar ShowLeaderMenu() original
 ShowLeaderMenu() {
-    items := "w:Windows|p:Programs|t:Time|c:Commands|i:Information|o:Obsidian"
+    items := "w:Windo|p:Programs|t:Time|c:Commands|i:Information|o:Obsidian"
     ShowCSharpTooltip("LEADER MENU", items)
     return
 }

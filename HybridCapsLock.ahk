@@ -1139,7 +1139,7 @@ ShowPowerOptionsCommandsMenu() {
         menuText .= "s - Sleep`n"
         menuText .= "h - Hibernate`n"
         menuText .= "r - Restart`n"
-        menuText .= "d - Shutdown`n"
+        menuText .= "S - Shutdown`n"
         menuText .= "l - Lock Screen`n"
         menuText .= "o - Sign Out`n"
         menuText .= "`n[\: Back] [Esc: Exit]"
@@ -1401,8 +1401,8 @@ ExecutePowerOptionsCommand(cmd) {
             ; Restart
             Run("shutdown.exe /r /t 0")
             ShowCommandExecuted("Power", "Restart")
-        case "d":
-            ; Shutdown
+        case "S":
+            ; Shutdown (Shift+s)
             Run("shutdown.exe /s /t 0")
             ShowCommandExecuted("Power", "Shutdown")
         case "l":
@@ -2499,6 +2499,33 @@ r:: {
 e:: {
     ; e = end of word in nvim (like w but to end)
     Send("^{Right}{Left}")
+}
+
+; ----- Open Line Operations (Vim-style) -----
+o:: {
+    global isNvimLayerActive, _tempEditMode
+    ; o = open line below cursor and enter insert mode (like vim)
+    Send("{End}{Enter}")
+    ; Temporarily disable nvim layer to allow normal typing
+    isNvimLayerActive := false
+    _tempEditMode := true
+    ShowNvimLayerStatus(false)
+    SetTempStatus("INSERT MODE (o)", 3000)
+    UpdateLayerStatus()
+    SetTimer(ReactivateNvimAfterInsert, -3000)
+}
+
++o:: {
+    global isNvimLayerActive, _tempEditMode
+    ; O (Shift+o) = open line above cursor and enter insert mode (like vim)
+    Send("{Home}{Enter}{Up}")
+    ; Temporarily disable nvim layer to allow normal typing
+    isNvimLayerActive := false
+    _tempEditMode := true
+    ShowNvimLayerStatus(false)
+    SetTempStatus("INSERT MODE (O)", 3000)
+    UpdateLayerStatus()
+    SetTimer(ReactivateNvimAfterInsert, -3000)
 }
 
 ; End of Nvim Layer context
