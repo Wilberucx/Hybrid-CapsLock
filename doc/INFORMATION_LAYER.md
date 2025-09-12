@@ -1,10 +1,10 @@
-# Capa de Information (Líder: CapsLock + Space, luego `i`)
+# Capa de Information (Líder: leader → `i`)
 
 La Capa de Information proporciona inserción rápida de información personal, datos comunes y snippets personalizados para evitar escribir repetidamente la misma información.
 
 ## 🎯 Cómo Acceder
 
-1. **Activa el Líder:** Mantén `CapsLock` + `Space`
+1. **Activa el Líder:** Presiona `leader`
 2. **Entra en Capa Information:** Presiona `i`
 3. **Selecciona información:** Presiona la tecla del dato que quieres insertar
 
@@ -32,7 +32,7 @@ La Capa de Information proporciona inserción rápida de información personal, 
 | `g` | **GitHub** | Perfil de GitHub |
 | `l` | **LinkedIn** | Perfil de LinkedIn |
 
-**Navegación:** `CapsLock + Space → i → [tecla de información]`
+**Navegación:** `leader → i → [tecla de información]`
 
 ## ⚙️ Configuración Personalizada
 

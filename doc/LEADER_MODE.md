@@ -1,10 +1,10 @@
-# Modo Líder (CapsLock + Space)
+# Modo Líder
 
 El Modo Líder es un sistema de menús contextuales que organiza funciones avanzadas en sub-capas especializadas. Proporciona acceso rápido a herramientas de gestión de ventanas, lanzamiento de programas y utilidades de timestamp.
 
 ## 🎯 Activación
 
-**Combinación:** `CapsLock + Space`
+**Combinación:** `leader`
 
 Al activar el modo líder, aparece un menú visual que muestra las opciones disponibles.
 
@@ -91,7 +91,7 @@ Capa persistente especializada para trabajo con hojas de cálculo y aplicaciones
 
 ### Flujo de Navegación
 ```
-CapsLock + Space → Menú Principal
+leader → Menú Principal
                 ↓
         Seleccionar sub-capa (w/p/t)
                 ↓
@@ -122,14 +122,20 @@ Algunas funciones (como el cambio de ventanas) mantienen el modo activo para ope
 
 1. **Editar el Input principal:**
    ```autohotkey
-   Input, _leaderKey, L1 T7, {Escape} ; Añadir nueva tecla aquí
+   ih := InputHook("L1 T7", "{Escape}") ; Añadir nueva tecla aquí
+ih.Start()
+ih.Wait()
+_leaderKey := ih.Input
    ```
 
 2. **Añadir nuevo bloque condicional:**
    ```autohotkey
    if (_leaderKey = "nueva_tecla") {
        ShowNuevoMenu()
-       Input, _nuevaAccion, L1 T7, {Escape}{Backspace}
+       ih := InputHook("L1 T7", "{Escape}{Backspace}")
+ih.Start()
+ih.Wait()
+_nuevaAccion := ih.Input
        ; Lógica de la nueva sub-capa
    }
    ```

@@ -1,10 +1,10 @@
-# Capa de Ventanas (Líder: CapsLock + Space, luego `w`)
+# Capa de Ventanas (Líder: leader → `w`)
 
 Esta capa proporciona herramientas avanzadas para la gestión de ventanas, división de pantalla y herramientas de zoom.
 
 ## 🎯 Cómo Acceder
 
-1. **Activa el Líder:** Mantén `CapsLock` + `Space`
+1. **Activa el Líder:** Presiona `leader`
 2. **Entra en Capa Windows:** Presiona `w`
 3. **Ejecuta una acción:** Presiona una de las teclas del mapa
 

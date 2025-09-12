@@ -1,10 +1,10 @@
-# Capa de Programas (Líder: CapsLock + Space, luego `p`)
+# Capa de Programas (Líder: leader → `p`)
 
 Esta capa proporciona un lanzador rápido de aplicaciones comunes, con búsqueda automática de ejecutables via Windows Registry para mayor compatibilidad.
 
 ## 🎯 Cómo Acceder
 
-1. **Activa el Líder:** Mantén `CapsLock` + `Space`
+1. **Activa el Líder:** Presiona `leader`
 2. **Entra en Capa Programas:** Presiona `p`
 3. **Lanza una aplicación:** Presiona una de las teclas del mapa
 
@@ -74,7 +74,10 @@ where nombre_ejecutable
 
 1. **Editar el Input:**
    ```autohotkey
-   Input, _appKey, L1 T7, {Escape}{Backspace}, e,s,t,v,n,o,b,z,m,w,l,r,q,p,nueva_tecla
+   ih := InputHook("L1 T7", "{Escape}{Backspace}")
+ih.Start()
+ih.Wait()
+_appKey := ih.Input
    ```
 
 2. **Añadir Case al Switch:**
@@ -85,7 +88,7 @@ where nombre_ejecutable
 3. **Crear función de lanzamiento:**
    ```autohotkey
    LaunchNuevaApp() {
-       Run, nueva_aplicacion.exe
+       Run("nueva_aplicacion.exe")
    }
    ```
 
@@ -102,7 +105,7 @@ Busca la función correspondiente (ej: `LaunchTerminal()`) y modifica el comando
 
 ```autohotkey
 LaunchTerminal() {
-    Run, tu_terminal_preferido.exe
+    Run("tu_terminal_preferido.exe")
 }
 ```
 
@@ -110,8 +113,8 @@ LaunchTerminal() {
 
 ### 🚀 Flujo Rápido
 ```
-CapsLock + Space → p → t (Terminal en 3 teclas)
-CapsLock + Space → p → v (VS Code en 3 teclas)
+leader → p → t (Terminal en 3 teclas)
+leader → p → v (VS Code en 3 teclas)
 ```
 
 ### 🎯 Aplicaciones Frecuentes

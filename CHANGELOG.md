@@ -74,8 +74,8 @@
   - Old: Hardcoded program list requiring code changes
   - New: Fully configurable via `programs.ini` with dynamic loading
 - **Timestamps Layer workflow**
-  - Old: `CapsLock + Space → t → d/h/s` (3 fixed formats)
-  - New: `CapsLock + Space → t → d/t/h → number/default` (unlimited formats)
+  - Old: `leader → t → d/h/s` (3 fixed formats)
+  - New: `leader → t → d/t/h → number/default` (unlimited formats)
 - **Mouse functions**
   - Old: `CapsLock + b/n` for mouse clicks
   - New: `CapsLock + ;/'` for better ergonomics

@@ -58,7 +58,7 @@ HybridCapsLock/
 
 Usar la función existente:
 ```autohotkey
-Run, tooltip_csharp\TooltipApp.exe, , Hide
+Run("tooltip_csharp\\TooltipApp.exe", , "Hide")
 ```
 
 ## 📋 **CHECKLIST DE DESPLIEGUE**

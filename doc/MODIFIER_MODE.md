@@ -97,7 +97,7 @@ El Modo Modificador convierte `CapsLock` en una tecla modificadora similar a `Ct
 
 | Atajo | Acción | Descripción |
 |-------|--------|-------------|
-| `CapsLock + Space` | **[Modo Líder](LEADER_MODE.md)** | Acceso a menús contextuales |
+| `leader` | **[Modo Líder](LEADER_MODE.md)** | Acceso a menús contextuales |
 | `CapsLock + 5` | **Copiar ruta/URL** | Copia la ruta del explorador o URL del navegador |
 | `CapsLock + Backspace` | **Atrás universal** | `Alt+←` - Navegar hacia atrás |
 | `CapsLock + \` | **Email rápido** | Escribe tu email configurado |

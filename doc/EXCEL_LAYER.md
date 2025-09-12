@@ -1,10 +1,10 @@
-# Capa Excel/Accounting (Leader + n)
+# Capa Excel/Accounting (leader → n)
 
 La Capa Excel es una capa persistente especializada para trabajo con hojas de cálculo y aplicaciones contables. Combina un numpad completo con navegación optimizada y atajos específicos de Excel para máxima productividad.
 
 ## 🎯 Activación
 
-**Combinación:** `CapsLock + Space` → `n`
+**Combinación:** `leader` → `n`
 
 Al activar la capa Excel, aparece una notificación visual confirmando que está activa. La capa permanece activa hasta que se desactive manualmente (`Shift+n`).
 
@@ -144,7 +144,7 @@ Excelente para cualquier trabajo que involucre entrada intensiva de datos, repor
 ### Activación
 
 ```
-CapsLock + Space → Menú Principal
+leader → Menú Principal
        ↓
    Presionar 'n'
        ↓

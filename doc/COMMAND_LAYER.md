@@ -1,10 +1,10 @@
-# Capa de Comandos (Líder: CapsLock + Space, luego `c`)
+# Capa de Comandos (Líder: leader → `c`)
 
 Esta capa proporciona un **command palette jerárquico** que permite ejecutar scripts, comandos de terminal, comandos de PowerShell y aplicaciones directamente desde el teclado, organizados en categorías para una navegación más intuitiva.
 
 ## 🎯 Cómo Acceder
 
-1. **Activa el Líder:** Mantén `CapsLock` + `Space`
+1. **Activa el Líder:** Presiona `leader`
 2. **Entra en Capa Comandos:** Presiona `c`
 3. **Selecciona categoría:** Presiona una tecla de categoría (s, n, g, m, f, w, v, o, a)
 4. **Ejecuta comando:** Presiona la tecla del comando específico
@@ -184,17 +184,17 @@ En `HybridCapsLock.ahk`, localiza la función correspondiente y agrega el nuevo 
 ExecuteSystemCommand(cmd) {
     Switch cmd {
         Case "s":
-            Run, cmd.exe /k systeminfo
+            Run("cmd.exe /k systeminfo")
         Case "t":
             Run, taskmgr.exe
         Case "v":
             Run, services.msc
         Case "e":
-            Run, eventvwr.msc
+            Run("eventvwr.msc")
         Case "d":
             Run, devmgmt.msc
         Case "c":
-            Run, cleanmgr.exe
+            Run("cleanmgr.exe")
         Case "x":  ; Tu nuevo comando
             Run, notepad.exe
     }
@@ -212,7 +212,10 @@ Agrega la nueva tecla al Input de la categoría:
 Input, _sysCmd, L1 T10, {Escape}{Backspace}, s,t,v,e,d,c
 
 # Cambiar a:
-Input, _sysCmd, L1 T10, {Escape}{Backspace}, s,t,v,e,d,c,x
+ih := InputHook("L1 T10", "{Escape}{Backspace}")
+ih.Start()
+ih.Wait()
+_sysCmd := ih.Input
 ```
 
 ## 🆕 Agregar Nueva Categoría
@@ -248,7 +251,7 @@ ShowMiCategoriaCommandsMenu() {
     MenuText .= "`n"
     
     Loop, 10 {
-        IniRead, lineContent, %CommandsIni%, MenuDisplay, micategoria_line%A_Index%
+        lineContent := IniRead(CommandsIni, "MenuDisplay", "micategoria_line" . A_Index, "")
         if (lineContent != "ERROR" && lineContent != "") {
             MenuText .= lineContent . "`n"
         }
@@ -256,7 +259,7 @@ ShowMiCategoriaCommandsMenu() {
     
     MenuText .= "`n"
     MenuText .= "[Backspace: Back] [Esc: Exit]"
-    ToolTip, %MenuText%, %ToolTipX%, %ToolTipY%, 2
+    ToolTip(MenuText, ToolTipX, ToolTipY)
     return
 }
 ```
@@ -267,11 +270,11 @@ ShowMiCategoriaCommandsMenu() {
 ExecuteMiCategoriaCommand(cmd) {
     Switch cmd {
         Case "a":
-            Run, cmd.exe /k echo "Mi Primer Comando"
+            Run("cmd.exe /k echo \"Mi Primer Comando\"")
         Case "b":
             Run, notepad.exe
         Case "c":
-            Run, calc.exe
+            Run("calc.exe")
     }
     ShowCommandExecuted("MiCategoria", cmd)
     return
@@ -287,12 +290,18 @@ En la función principal de comandos, agrega el nuevo caso:
 Input, _cmdCategory, L1 T10, {Escape}{Backspace}, s,n,g,m,f,w,v,o,a
 
 # Cambiar a:
-Input, _cmdCategory, L1 T10, {Escape}{Backspace}, s,n,g,m,f,w,v,o,a,x
+ih := InputHook("L1 T10", "{Escape}{Backspace}")
+ih.Start()
+ih.Wait()
+_cmdCategory := ih.Input
 
 # Agregar al Switch:
 Case "x": ; Mi Nueva Categoría
     ShowMiCategoriaCommandsMenu()
-    Input, _miCmd, L1 T10, {Escape}{Backspace}, a,b,c
+    ih := InputHook("L1 T10", "{Escape}{Backspace}")
+ih.Start()
+ih.Wait()
+_miCmd := ih.Input
     
     if (ErrorLevel = "Timeout" || ErrorLevel = "EndKey:Escape") {
         _exitLeader := true
@@ -308,12 +317,12 @@ Case "x": ; Mi Nueva Categoría
 
 ### Comandos CMD
 ```autohotkey
-Run, cmd.exe /k ipconfig /all
+Run("cmd.exe /k ipconfig /all")
 ```
 
 ### Comandos PowerShell
 ```autohotkey
-Run, powershell.exe -Command "Get-Process | Sort-Object CPU"
+Run("powershell.exe -Command \"Get-Process | Sort-Object CPU\"")
 ```
 
 ### Ejecutables Directos
@@ -324,8 +333,8 @@ Run, notepad.exe
 
 ### Scripts
 ```autohotkey
-Run, C:\Scripts\mi_script.bat
-Run, powershell.exe -File "C:\Scripts\mi_script.ps1"
+Run("C:\\Scripts\\mi_script.bat")
+Run("powershell.exe -File \"C:\\Scripts\\mi_script.ps1\"")
 ```
 
 ### Archivos MSC (Consolas de Windows)
@@ -361,9 +370,9 @@ feedback_duration=1500   ; Duración del feedback (ms)
 
 ### 🚀 Flujo Rápido
 ```
-CapsLock + Space → c → s → t (Task Manager en 4 teclas)
-CapsLock + Space → c → g → s (Git Status en 4 teclas)
-CapsLock + Space → c → f → t (Temp folder en 4 teclas)
+leader → c → s → t (Task Manager en 4 teclas)
+leader → c → g → s (Git Status en 4 teclas)
+leader → c → f → t (Temp folder en 4 teclas)
 ```
 
 ### 🎯 Comandos Frecuentes

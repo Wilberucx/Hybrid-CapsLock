@@ -1,1 +1,1 @@
-{"tooltip_type": "leader","title": "MOUSE","items": [{"key": "status", "description": "RIGHT CLICK"}],"navigation": ["Esc: Close"],"timeout_ms": 2000,"show": true}
+{"show": false}

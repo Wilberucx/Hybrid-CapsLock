@@ -10,7 +10,7 @@ Un aviso visual aparecerá indicando el estado:
 - `NVIM LAYER ON` - Capa activada
 - `NVIM LAYER OFF` - Capa desactivada
 
-> **Nota:** La capa se desactiva automáticamente al activar el Modo Líder (`CapsLock + Space`)
+> **Nota:** La capa se desactiva automáticamente al activar el Modo Líder (`leader`)
 
 ## 🎮 Modo Visual
 
@@ -148,7 +148,7 @@ Si hay texto seleccionado (Modo Visual activo), presionar `d` elimina inmediatam
 
 ## ⏰ Timestamps
 
-> **Nota:** La funcionalidad de timestamps fue movida al Modo Líder. Usa `CapsLock + Space → t` para acceder a las opciones de timestamp.
+> **Nota:** La funcionalidad de timestamps fue movida al Modo Líder. Usa `leader → t` para acceder a las opciones de timestamp.
 
 ## 🔧 Función Especial
 

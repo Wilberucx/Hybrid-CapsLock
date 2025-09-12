@@ -1,10 +1,10 @@
-# Capa Timestamp (Líder: CapsLock + Space, luego `t`)
+# Capa Timestamp (Líder: leader → `t`)
 
 Esta capa proporciona un sistema avanzado de 3 niveles para insertar fechas, horas y timestamps con formatos completamente configurables.
 
 ## 🎯 Cómo Acceder
 
-1. **Activa el Líder:** Mantén `CapsLock` + `Space`
+1. **Activa el Líder:** Presiona `leader`
 2. **Entra en Capa Timestamp:** Presiona `t`
 3. **Selecciona tipo:** `d` (fecha), `t` (hora), `h` (fecha+hora)
 4. **Selecciona formato:** Número específico o letra para default
@@ -14,8 +14,8 @@ Esta capa proporciona un sistema avanzado de 3 niveles para insertar fechas, hor
 | Tecla | Acción | Ejemplo de Salida |
 |-------|--------|-------------------|
 | `d` | **Fecha** | `2024-01-15` |
-| `h` | **Hora** | `14:30:25` |
-| `s` | **DateTime** | `2024-01-15 14:30:25` |
+| `t` | **Hora** | `14:30:25` |
+| `h` | **DateTime** | `2024-01-15 14:30:25` |
 
 > **Nota:** Los formatos exactos dependen de la configuración actual (ver sección de formatos)
 
@@ -131,7 +131,10 @@ console.log("Timestamp:", "20240115143025");
 
 1. **Añadir tecla al Input:**
    ```autohotkey
-   Input, _tsKey, L1 T7, {Escape}{Backspace}, d,h,s,D,H,S,nueva_tecla
+   ih := InputHook("L1 T7", "{Escape}{Backspace}")
+ih.Start()
+ih.Wait()
+_tsKey := ih.Input
    ```
 
 2. **Añadir Case al Switch:**

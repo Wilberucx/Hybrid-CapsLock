@@ -4,13 +4,15 @@ Este script transforma la tecla `CapsLock` en una potente herramienta de product
 
 ## ✨ Conceptos Clave
 
+> Nota de terminología: En esta documentación usamos el término "leader" para referirnos a la combinación `CapsLock + Space`. Para simplificar, en el resto de los documentos verás `leader → ...` en lugar de repetir la combinación.
+
 ### 🔧 Modo Modificador (Mantener Pulsado)
 Si **mantienes presionada `CapsLock`** y pulsas otra tecla, `CapsLock` actúa como una tecla modificadora (similar a `Ctrl`). Ideal para atajos rápidos y ergonómicos.
 
 ### 📝 Modo "Capa Nvim" (Toque Rápido)
 Si **presionas y sueltas `CapsLock` rápidamente**, activas/desactivas la **Capa Nvim**. Un aviso visual te indicará el estado actual. Cuando está activa, muchas teclas adquieren funciones de navegación y edición estilo Vim.
 
-### 🎯 Modo Líder (CapsLock + Space)
+### 🎯 Modo Líder (leader)
 Accede a un menú contextual con sub-capas organizadas:
 - **`w`** - Gestión de ventanas y herramientas de zoom
 - **`p`** - Lanzador rápido de programas
@@ -78,6 +80,8 @@ Accede a un menú contextual con sub-capas organizadas:
 - **[Integración de Tooltips](tooltip_csharp/README.md)** - Sistema de tooltips C# + WPF para mejor experiencia visual
 
 ## ⚙️ Instalación y Uso
+
+Requisitos: AutoHotkey v2.x
 
 ### 📋 Versiones Disponibles
 - **`HybridCapsLock.ahk`** - **Versión principal (AutoHotkey v2)** - ⭐ **RECOMENDADA**
