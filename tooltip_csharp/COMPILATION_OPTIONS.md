@@ -1,4 +1,8 @@
-# 🔧 OPCIONES DE COMPILACIÓN PARA TOOLTIP APP
+# 🔧 Opciones de compilación (estado real)
+
+## Estado actual
+- Ruta activa: .NET 6 (net6.0-windows) con System.Text.Json (sin dependencias externas).
+- Las variantes (.NET Framework/Original/Simple) se han archivado y no forman parte del flujo actual.
 
 ## 📋 **PROBLEMA ACTUAL**
 

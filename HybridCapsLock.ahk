@@ -1,7 +1,7 @@
 ;===============================================================================
-; SCRIPT: Hybrid CapsLock Productivity (Vim Style) - AutoHotkey v2
+; SCRIPT: Hybrid CapsLock Productivity (Vim Style) - Requires AutoHotkey v2
 ; AUTHOR: Wilber Canto (Vibe Codding)
-; VERSION: 2.0 (AutoHotkey v2)
+; VERSION: 6.3 (Product version) - Requires AutoHotkey v2
 ;===============================================================================
 ;
 ; _DOC: This script transforms the CapsLock key into a powerful productivity
@@ -69,9 +69,9 @@ if (tooltipConfig.enabled) {
     StartTooltipApp()
     StartStatusApp()  ; Iniciar aplicación de estado por separado
     Sleep(500)  ; Give time for apps to start
-    ShowCenteredToolTipCS("HybridCapsLock v2.0 loaded`n" . A_ScriptFullPath, 1500)
+    ShowCenteredToolTipCS("HybridCapsLock v6.3 loaded`n" . A_ScriptFullPath, 1500)
 } else {
-    ShowCenteredToolTip("HybridCapsLock v2.0 loaded`n" . A_ScriptFullPath)
+    ShowCenteredToolTip("HybridCapsLock v6.3 loaded`n" . A_ScriptFullPath)
     SetTimer(RemoveToolTip, -1500)
 }
 SetCapsLockState("AlwaysOff")

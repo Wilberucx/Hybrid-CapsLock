@@ -185,14 +185,6 @@ El script genera automáticamente `layer_status.json` que se sincroniza con el w
 
 ## 🚧 Características en Desarrollo
 
-### 🚧 Capa Obsidian (No Funcional)
-- **Estado**: En depuración - No funcional
-- **Archivos**: `obsidian_integration_simple.ahk`, `obsidian_manager.py`, `config/obsidian.ini`
-- **Objetivo**: Integración completa con Obsidian mediante hotkeys exportados
-- **Problema actual**: Los comandos no se ejecutan correctamente a pesar de las correcciones de sintaxis
-- **Funcionalidad esperada**: `<leader>+o` → tecla → comando de Obsidian
-- **Estado de configuración**: Deshabilitado por defecto (`enable_obsidian_layer=false`)
-
 ### 🔧 Sistema de Elevación de Privilegios (En Progreso)
 - **Estado**: Implementación parcial disponible
 - **Archivos**: Archivos de servicios elevados (eliminados por no ser necesarios)
@@ -224,6 +216,5 @@ nvim_shift_touchpad_scroll=false    ; Scroll con Shift en capa Nvim
 ## ⚠️ Estado de Desarrollo
 
 ### Funcionalidades en Desarrollo:
-- **🚧 Capa Obsidian**: La integración con Obsidian está siendo depurada y no es funcional actualmente. Los comandos no se ejecutan correctamente a pesar de las correcciones realizadas.
 
 **¿Necesitas ayuda?** Consulta la documentación detallada en la carpeta `doc/` o revisa los comentarios en el código fuente.

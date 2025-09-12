@@ -23,7 +23,6 @@ Esta capa proporciona un lanzador rápido de aplicaciones comunes, con búsqueda
 | `t` | **Terminal** | `wt.exe` | Windows Terminal |
 | `v` | **Visual Studio/Code** | `devenv.exe` / `code.exe` | IDE/Editor de código |
 | `n` | **Notepad** | `notepad.exe` | Bloc de notas |
-| `o` | **Obsidian** | `obsidian.exe` | Aplicación de notas |
 | `b` | **Navegador** | (Predeterminado) | Navegador web por defecto |
 | `z` | **Zen Browser** | `zen.exe` | Navegador Zen |
 | `m` | **Thunderbird** | `thunderbird.exe` | Cliente de correo |
@@ -60,14 +59,12 @@ where nombre_ejecutable
 **Ejemplos:**
 - `where wt` - Windows Terminal
 - `where code` - Visual Studio Code
-- `where obsidian` - Obsidian
 
 ### 📋 Comportamiento Específico
 
 | Aplicación | Búsqueda Primaria | Alternativa | Notas |
 |------------|-------------------|-------------|--------|
 | **Visual Studio/Code** | `devenv.exe` | `code.exe` | Prioriza Visual Studio |
-| **Obsidian** | `obsidian.exe` | Protocolo `obsidian://` | Usa protocolo si no encuentra exe |
 | **Navegador** | Navegador predeterminado | - | Usa configuración del sistema |
 | **Terminal** | `wt.exe` | - | Windows Terminal moderno |
 
@@ -119,7 +116,7 @@ CapsLock + Space → p → v (VS Code en 3 teclas)
 
 ### 🎯 Aplicaciones Frecuentes
 - **Desarrollo:** `t` (Terminal), `v` (VS Code), `l` (WSL)
-- **Productividad:** `o` (Obsidian), `n` (Notepad), `e` (Explorador)
+- **Productividad:** `n` (Notepad), `e` (Explorador)
 - **Comunicación:** `m` (Thunderbird), `r` (Beeper), `b` (Navegador)
 
 ### ⚡ Memoria Muscular

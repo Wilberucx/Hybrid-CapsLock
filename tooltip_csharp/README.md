@@ -74,6 +74,22 @@ dotnet run
 
 La aplicación lee comandos desde `tooltip_commands.json` para mostrar/ocultar tooltips dinámicamente.
 
+Ejemplo de integración en HybridCapsLock.ahk (v2):
+```autohotkey
+; Al inicio del script principal
+#Include tooltip_csharp_integration.ahk
+
+; Al arrancar
+StartTooltipApp()
+StartStatusApp() ; inicia los 4 PS1 de estado (nvim/visual/yank/excel)
+
+; Mostrar un menú con C#
+ShowLeaderModeMenuCS()
+
+; Ocultar tooltip manualmente (si es necesario)
+HideCSharpTooltip()
+```
+
 Ejemplo de integración en HybridCapsLock.ahk:
 ```autohotkey
 ShowCSharpTooltip(title, items, navigation := "", timeout := 7000) {

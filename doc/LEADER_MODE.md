@@ -39,7 +39,7 @@ Lanzador rápido de aplicaciones comunes.
 
 **Aplicaciones disponibles:**
 - Explorador, Terminal, Visual Studio/Code
-- Navegadores, Obsidian, Notepad
+- Navegadores, Notepad
 - Bitwarden, Configuración de Windows
 - Y más...
 

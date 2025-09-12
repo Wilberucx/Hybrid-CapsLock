@@ -71,7 +71,7 @@ Run, tooltip_csharp\TooltipApp.exe, , Hide
 
 ### **Para el Usuario Final:**
 - [ ] Copiar TooltipApp.exe al directorio deseado
-- [ ] Incluir autohotkey_integration.ahk en HybridCapsLock
+- [ ] Incluir tooltip_csharp_integration.ahk en HybridCapsLock
 - [ ] Agregar llamada StartTooltipApp() al inicio
 - [ ] Probar tooltips
 
