@@ -5,11 +5,13 @@ Esta carpeta contiene toda la documentación detallada de HybridCapsLock.
 ## 🎯 Funcionalidades Principales
 
 ### Modos de Operación
+
 - **[Modo Modificador](MODIFIER_MODE.md)** - Todos los atajos con CapsLock mantenido
 - **[Capa Nvim](NVIM_LAYER.md)** - Navegación y edición estilo Vim
 - **[Modo Líder](LEADER_MODE.md)** - Menús contextuales y sub-capas
 
 ### Capas Especializadas
+
 - **[Capa Windows](WINDOWS_LAYER.md)** - Gestión de ventanas y zoom
 - **[Capa Programas](PROGRAM_LAYER.md)** - Lanzador de aplicaciones
 - **[Capa Timestamp](TIMESTAMP_LAYER.md)** - Herramientas de fecha/hora
@@ -18,15 +20,16 @@ Esta carpeta contiene toda la documentación detallada de HybridCapsLock.
 ## ⚙️ Instalación y Configuración
 
 ### Instalación Avanzada
-- **[Instalación como Servicio](SERVICE_INSTALLATION.md)** - Servicio de Windows para compatibilidad completa con aplicaciones elevadas
+
+- Instalación como servicio: próximamente (documento en preparación)
 
 ## 🔗 Enlaces Rápidos
 
 - [README Principal](../README.md) - Documentación principal del proyecto
 - [Changelog](../CHANGELOG.md) - Historial de cambios y versiones
-- [Configuración de Programas](../programs.ini) - Configurar aplicaciones del lanzador
-- [Configuración General](../general.ini) - Configuraciones generales
-- [Configuración de Timestamps](../timestamps.ini) - Configurar herramientas de fecha/hora
+- [Configuración de Programas](../config/programs.ini) - Configurar aplicaciones del lanzador
+- [Configuración General](../config/configuration.ini) - Configuraciones generales
+- [Configuración de Timestamps](../config/timestamps.ini) - Configurar herramientas de fecha/hora
 
 ## 🚀 Inicio Rápido
 
@@ -35,6 +38,3 @@ Esta carpeta contiene toda la documentación detallada de HybridCapsLock.
 3. **Personalización**: Editar archivos `.ini` según necesidades
 4. **Documentación específica**: Consultar archivos individuales para cada funcionalidad
 
----
-
-**💡 Tip**: Para una experiencia completa, se recomienda la instalación como servicio que permite compatibilidad total con aplicaciones elevadas.
