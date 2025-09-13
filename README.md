@@ -1,5 +1,7 @@
 # Hybrid CapsLock - Sistema de Productividad Avanzado para AutoHotkey
 
+![HybridCapsLock logo](img/Logo%20HybridCapsLock.png)
+
 Este script transforma la tecla `CapsLock` en una potente herramienta de productividad con un comportamiento híbrido, inspirado en la eficiencia de editores como Vim. Con más de 2300 líneas de código y un sistema de configuración modular de 5 archivos .ini, ofrece un entorno de trabajo completamente personalizable.
 
 ## ✨ Conceptos Clave

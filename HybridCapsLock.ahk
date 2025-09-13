@@ -95,9 +95,6 @@ global InfoIni := A_ScriptDir . "\config\information.ini"
 global CommandsIni := A_ScriptDir . "\config\commands.ini"
 global ObsidianIni := A_ScriptDir . "\config\obsidian.ini"
 
-; Zebar integration removed (status file no longer used)
-; global LayerStatusFile removed
-
 ;-------------------------------------------------------------------------------
 ; SECTION 3: HELPER FUNCTIONS (v2 - Enhanced with C# Tooltips)
 ;-------------------------------------------------------------------------------
@@ -306,7 +303,6 @@ ReactivateNvimAfterInsert() {
         isNvimLayerActive := true
         _tempEditMode := false
         ShowNvimLayerStatus(true)
-        UpdateLayerStatus()
         SetTimer(RemoveToolTip, -1000)
     }
 }
@@ -317,7 +313,6 @@ ReactivateNvimAfterReplace() {
         isNvimLayerActive := true
         _tempEditMode := false
         ShowNvimLayerStatus(true)
-        UpdateLayerStatus()
         SetTimer(RemoveToolTip, -1000)
     }
 }
@@ -381,7 +376,6 @@ r::Send("^r")           ; Fill right
     excelLayerActive := false
     ShowExcelLayerStatus(false)
     SetTempStatus("EXCEL LAYER OFF", 2000)
-    UpdateLayerStatus()
     SetTimer(RemoveToolTip, -2000)
 }
 
@@ -1590,12 +1584,6 @@ ShowLeaderModeMenu() {
     }
 }
 
-; Enhanced UpdateLayerStatus function
-UpdateLayerStatus() {
-    ; Zebar integration removed; no-op
-    return
-}
-
 ;-------------------------------------------------------------------------------
 ; SECTION 4: MODIFIER MODE HOTKEYS (v2 - Phase 2)
 ;-------------------------------------------------------------------------------
@@ -1903,7 +1891,6 @@ CapsLock Up:: {
             VisualMode := false
         }
         
-        UpdateLayerStatus()
         SetTimer(RemoveToolTip, -1500)
     }
     
@@ -1924,7 +1911,6 @@ CapsLock & Space:: {
         isNvimLayerActive := false
         VisualMode := false
         ShowNvimLayerStatus(false)
-        UpdateLayerStatus()
         SetTimer(RemoveToolTip, -1200)
         Sleep(50)  ; Brief pause to ensure state change is registered
     }
@@ -2060,7 +2046,6 @@ CapsLock & Space:: {
                             ShowExcelLayerStatus(false)
                             SetTempStatus("EXCEL LAYER OFF", 2000)
                         }
-                        UpdateLayerStatus()
                         SetTimer(RemoveToolTip, -2000)
                         break  ; Exit after toggle
                     default:
@@ -2247,7 +2232,6 @@ f:: {
     isNvimLayerActive := false
     VisualMode := false
     ShowNvimLayerStatus(false)
-    UpdateLayerStatus()
     SetTimer(RemoveToolTip, -800)
     ; Small pause to exit #HotIf context
     Sleep(30)
@@ -2268,7 +2252,6 @@ v:: {
     } else {
         ShowVisualModeStatus(false)
     }
-    UpdateLayerStatus()
     SetTimer(RemoveToolTip, -1000)
 }
 
@@ -2369,7 +2352,6 @@ x::Send("{Delete}")
         isNvimLayerActive := true
         ShowNvimLayerStatus(true)
         SetTempStatus("NVIM LAYER ON", 1000)
-        UpdateLayerStatus()
         SetTimer(RemoveToolTip, -1000)
     }
 }
@@ -2452,7 +2434,6 @@ i:: {
     _tempEditMode := true
     ShowNvimLayerStatus(false)
     SetTempStatus("INSERT MODE", 3000)
-    UpdateLayerStatus()
     SetTimer(ReactivateNvimAfterInsert, -3000)
 }
 
@@ -2466,7 +2447,6 @@ r:: {
     _tempEditMode := true
     ShowNvimLayerStatus(false)
     SetTempStatus("REPLACE: Type character then press ESC", 3000)
-    UpdateLayerStatus()
     SetTimer(ReactivateNvimAfterReplace, -3000)
 }
 
@@ -2489,7 +2469,6 @@ o:: {
     _tempEditMode := true
     ShowNvimLayerStatus(false)
     SetTempStatus("INSERT MODE (o)", 3000)
-    UpdateLayerStatus()
     SetTimer(ReactivateNvimAfterInsert, -3000)
 }
 
@@ -2502,7 +2481,6 @@ o:: {
     _tempEditMode := true
     ShowNvimLayerStatus(false)
     SetTempStatus("INSERT MODE (O)", 3000)
-    UpdateLayerStatus()
     SetTimer(ReactivateNvimAfterInsert, -3000)
 }
 
