@@ -49,7 +49,7 @@
   - `CapsLock + '` - Right click (context menus)
   - Improved click duration control
 - **Advanced system integration**
-  - Zebar status integration with JSON export
+  
   - Application-specific behavior profiles
   - Memory management and performance optimization
   - Automatic configuration backup system
@@ -108,7 +108,6 @@ config/                     # Configuration files directory
   ├── commands.ini          # Commands Layer configuration
   └── information.ini       # Information Layer configuration
 data/                       # Runtime data files
-  ├── layer_status.json     # Zebar integration status
   └── menu_status.json      # Menu state tracking
 tooltip_csharp/             # C# tooltip application
   ├── TooltipApp.exe        # Compiled C# application
@@ -149,7 +148,6 @@ doc/                        # Comprehensive documentation
 - Sistema de servicios elevados removido - usar ejecución directa del script
 - Improve touchpad scroll gesture detection and reliability
 - Implement visual theme system for tooltips and notifications
-- Enhance Zebar integration with more status indicators
 - Develop robust automatic configuration backup system
 
 ---

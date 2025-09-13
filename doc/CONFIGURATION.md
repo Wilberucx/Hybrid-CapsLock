@@ -14,7 +14,6 @@ Contiene la configuración global y comportamientos generales del script.
 script_version=6.3
 auto_start_with_windows=true
 run_as_service=false
-enable_zebar_integration=true
 debug_mode=false
 ```
 

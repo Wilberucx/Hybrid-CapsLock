@@ -95,8 +95,8 @@ global InfoIni := A_ScriptDir . "\config\information.ini"
 global CommandsIni := A_ScriptDir . "\config\commands.ini"
 global ObsidianIni := A_ScriptDir . "\config\obsidian.ini"
 
-; Layer status file for Zebar integration
-global LayerStatusFile := A_ScriptDir . "\data\layer_status.json"
+; Zebar integration removed (status file no longer used)
+; global LayerStatusFile removed
 
 ;-------------------------------------------------------------------------------
 ; SECTION 3: HELPER FUNCTIONS (v2 - Enhanced with C# Tooltips)
@@ -1592,30 +1592,8 @@ ShowLeaderModeMenu() {
 
 ; Enhanced UpdateLayerStatus function
 UpdateLayerStatus() {
-    ; Update JSON file with current layer states for Zebar integration
-    currentTime := FormatTime(, "yyyy-MM-dd HH:mm:ss")
-    
-    ; Check if temporary status has expired
-    if (A_TickCount > tempStatusExpiry) {
-        global currentTempStatus := ""
-    }
-    
-    jsonContent := "{"
-    jsonContent .= '"nvim_layer": ' . (isNvimLayerActive ? "true" : "false") . ","
-    jsonContent .= '"excel_layer": ' . (excelLayerActive ? "true" : "false") . ","
-    jsonContent .= '"visual_mode": ' . (VisualMode ? "true" : "false") . ","
-    jsonContent .= '"leader_active": ' . (leaderActive ? "true" : "false") . ","
-    jsonContent .= '"temp_status": "' . currentTempStatus . '",'
-    jsonContent .= '"last_updated": "' . currentTime . '"'
-    jsonContent .= "}"
-    
-    ; Write to JSON file for Zebar integration
-    try {
-        FileDelete(LayerStatusFile)
-        FileAppend(jsonContent, LayerStatusFile)
-    } catch Error as err {
-        ; Silent fail - don't interrupt workflow if file can't be written
-    }
+    ; Zebar integration removed; no-op
+    return
 }
 
 ;-------------------------------------------------------------------------------

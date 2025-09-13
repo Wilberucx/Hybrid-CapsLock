@@ -142,21 +142,15 @@ Cada archivo `.ini` incluye secciones especializadas:
 - **Global:** `config/configuration.ini` para ajustes del sistema
 - **Aplicaciones:** Perfiles específicos para diferentes programas
 - **Tooltips:** Sistema C# integrado configurable desde `configuration.ini`
-- **Datos:** Archivos de estado en `data/` (JSON para Zebar)
 
-## 📊 Integración con Zebar
 
-HybridCapsLock incluye integración nativa con [Zebar](https://github.com/glzr-io/zebar) para mostrar indicadores visuales del estado de las capas en tiempo real.
 
-### 🎯 Indicadores Disponibles
 - **NVIM** 📝 - Capa Nvim activa
 - **EXCEL** 📊 - Capa Excel/Accounting activa  
 - **VIS** 👁️ - Modo Visual activo
 - **LEAD** 🎯 - Modo Líder activo (temporal)
 - **YANK** ✂️ - Modo Yank en espera (temporal)
 
-### ⚙️ Configuración Automática
-El script genera automáticamente `layer_status.json` que se sincroniza con el widget de Zebar para mostrar el estado actual de todas las capas sin interrumpir el flujo de trabajo.
 
 ## 📋 Versión Actual: 6.3
 
@@ -177,7 +171,6 @@ El script genera automáticamente `layer_status.json` que se sincroniza con el w
 
 ### Características Heredadas v6.1-6.2:
 - **📊 Capa Excel/Accounting**: Numpad completo + navegación WASD + atajos específicos
-- **📱 Integración con Zebar**: Indicadores visuales en tiempo real del estado de las capas
 - **👁️ Modo Visual**: Indicador visual para el modo de selección en capa Nvim
 - **🖱️ Scroll con Touchpad**: Funcionalidad trackball con `CapsLock + /`
 - **🔧 Feedback Visual Mejorado**: Notificaciones consistentes y limpias
@@ -212,7 +205,6 @@ nvim_shift_touchpad_scroll=false    ; Scroll con Shift en capa Nvim
 - **Estabilización del servicio elevado**: Resolver problemas de sincronización
 - **Mejora del scroll con touchpad**: Refinamiento de la detección de gestos
 - **Temas visuales**: Sistema de temas para tooltips y notificaciones
-- **Integración mejorada con Zebar**: Más indicadores y personalización
 - **Backup automático**: Sistema robusto de respaldo de configuraciones
 
 ---
