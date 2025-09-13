@@ -95,6 +95,15 @@ global InfoIni := A_ScriptDir . "\config\information.ini"
 global CommandsIni := A_ScriptDir . "\config\commands.ini"
 global ObsidianIni := A_ScriptDir . "\config\obsidian.ini"
 
+; Layer enable flags with safe defaults
+global nvimLayerEnabled := true
+global excelLayerEnabled := true
+global modifierLayerEnabled := true
+global leaderLayerEnabled := true
+
+; Load flags from configuration
+LoadLayerFlags()
+
 ;-------------------------------------------------------------------------------
 ; SECTION 3: HELPER FUNCTIONS (v2 - Enhanced with C# Tooltips)
 ;-------------------------------------------------------------------------------
@@ -123,6 +132,23 @@ CleanIniNumber(value) {
     if RegExMatch(value, "^[0-9]+(\.[0-9]+)?$")
         return value
     return ""
+}
+
+CleanIniBool(value, default := true) {
+    if (value = "" || value = "ERROR")
+        return default
+    if (InStr(value, ";"))
+        value := Trim(SubStr(value, 1, InStr(value, ";") - 1))
+    v := StrLower(Trim(value))
+    return (v = "true" || v = "1" || v = "yes" || v = "on")
+}
+
+LoadLayerFlags() {
+    global ConfigIni, nvimLayerEnabled, excelLayerEnabled, modifierLayerEnabled, leaderLayerEnabled
+    nvimLayerEnabled := CleanIniBool(IniRead(ConfigIni, "Layers", "nvim_layer_enabled", "true"))
+    excelLayerEnabled := CleanIniBool(IniRead(ConfigIni, "Layers", "excel_layer_enabled", "true"))
+    modifierLayerEnabled := CleanIniBool(IniRead(ConfigIni, "Layers", "modifier_layer_enabled", "true"))
+    leaderLayerEnabled := CleanIniBool(IniRead(ConfigIni, "Layers", "leader_layer_enabled", "true"))
 }
 
 GetEffectiveTimeout(layer) {
@@ -916,7 +942,7 @@ HandleCommandCategory(category) {
             ; System Commands
             Loop {
                 ShowSystemCommandsMenu()
-                categoryInput := InputHook("L1 T10")
+                categoryInput := InputHook("L1 T" . GetEffectiveTimeout("commands"))
                 categoryInput.Start()
                 categoryInput.Wait()
                 
@@ -937,7 +963,7 @@ HandleCommandCategory(category) {
             ; Network Commands
             Loop {
                 ShowNetworkCommandsMenu()
-                categoryInput := InputHook("L1 T10")
+                categoryInput := InputHook("L1 T" . GetEffectiveTimeout("commands"))
                 categoryInput.Start()
                 categoryInput.Wait()
                 
@@ -958,7 +984,7 @@ HandleCommandCategory(category) {
             ; Git Commands
             Loop {
                 ShowGitCommandsMenu()
-                categoryInput := InputHook("L1 T10")
+                categoryInput := InputHook("L1 T" . GetEffectiveTimeout("commands"))
                 categoryInput.Start()
                 categoryInput.Wait()
                 
@@ -979,7 +1005,7 @@ HandleCommandCategory(category) {
             ; Monitoring Commands
             Loop {
                 ShowMonitoringCommandsMenu()
-                categoryInput := InputHook("L1 T10")
+                categoryInput := InputHook("L1 T" . GetEffectiveTimeout("commands"))
                 categoryInput.Start()
                 categoryInput.Wait()
                 
@@ -997,7 +1023,7 @@ HandleCommandCategory(category) {
             ; Folder Commands
             Loop {
                 ShowFolderCommandsMenu()
-                categoryInput := InputHook("L1 T10")
+                categoryInput := InputHook("L1 T" . GetEffectiveTimeout("commands"))
                 categoryInput.Start()
                 categoryInput.Wait()
                 
@@ -1015,7 +1041,7 @@ HandleCommandCategory(category) {
             ; Windows Commands
             Loop {
                 ShowWindowsCommandsMenu()
-                categoryInput := InputHook("L1 T10")
+                categoryInput := InputHook("L1 T" . GetEffectiveTimeout("commands"))
                 categoryInput.Start()
                 categoryInput.Wait()
                 
@@ -1916,6 +1942,10 @@ CapsLock:: {
 }
 
 CapsLock Up:: {
+    global nvimLayerEnabled
+    if (!nvimLayerEnabled) {
+        return
+    }
     global capsActsNormal, capsLockWasHeld, capsLockUsedAsModifier, isNvimLayerActive, VisualMode
     
     ; If CapsLock is in normal mode, do nothing
@@ -1947,6 +1977,12 @@ CapsLock Up:: {
 
 ; Leader Mode: CapsLock + Space activates command palette
 CapsLock & Space:: {
+    global leaderLayerEnabled
+    if (!leaderLayerEnabled) {
+        ShowCenteredToolTip("LEADER DISABLED")
+        SetTimer(RemoveToolTip, -1200)
+        return
+    }
     global leaderActive, isNvimLayerActive, VisualMode, capsLockUsedAsModifier
     
     ; Mark that CapsLock was used as a modifier
@@ -2084,6 +2120,15 @@ CapsLock & Space:: {
                     case "n":
                         ; Excel layer toggle (direct action)
                         global excelLayerActive
+                        if (!excelLayerEnabled) {
+                            ; Do not allow activation when disabled
+                            excelLayerActive := false
+                            ShowCenteredToolTip("EXCEL LAYER DISABLED")
+                            SetTimer(RemoveToolTip, -1200)
+                            break  ; Exit without toggling
+                        }
+                        
+                        ; Toggle when enabled
                         excelLayerActive := !excelLayerActive
                         if (excelLayerActive) {
                             ShowExcelLayerStatus(true)

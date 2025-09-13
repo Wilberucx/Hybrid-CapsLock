@@ -126,7 +126,7 @@ Nota: Los comentarios `[Wilber: ...]` en este documento son anotaciones internas
 Correcciones recientes (aplicadas):
 - StartPersistentBlindSwitch: se reemplazó el uso de `currentMenu` (no definido en ese contexto) por la capa `"windows"`.
 - Se corrigió la asignación del InputHook: ahora `ih := InputHook(...)` antes de `ih.Start()`/`ih.Wait()`.
-- Progreso: líder y timestamps usan timeouts jerárquicos; pendiente commands.
+- Progreso: líder, timestamps y commands usan timeouts jerárquicos.
 - Sanitización aplicada: ahora los timeouts leídos desde `.ini` toleran comentarios inline (`; ...`) y espacios, evitando errores de conversión numérica.
 - Definir función `GetEffectiveTimeout(layer)` con jerarquía:
   1) `*.ini` de la capa → `[Settings] → timeout_seconds`
@@ -135,6 +135,27 @@ Correcciones recientes (aplicadas):
 - Aplicar en menús nativos (InputHook) y sincronizar con menús C# (usar mismo valor efectivo).
 
 ### Iteración 2 — Flags de habilitación de capas (Fase 2)
+
+Progreso aplicado:
+- Lectura de flags desde configuration.ini → [Layers]: nvim_layer_enabled, excel_layer_enabled, modifier_layer_enabled, leader_layer_enabled.
+- Nuevo loader `LoadLayerFlags()` y helper `CleanIniBool()`.
+- Gating:
+  - Leader: si `leader_layer_enabled=false`, el hotkey `CapsLock & Space` muestra "LEADER DISABLED" y no abre menú.
+  - Nvim: si `nvim_layer_enabled=false`, el tap de CapsLock no activa la capa Nvim.
+  - Modifier: todos los hotkeys de modo modificador quedan bajo `#HotIf (modifierLayerEnabled)`.
+  - Excel: bloqueo al intentar activar/desactivar la capa si `excel_layer_enabled=false` con mensaje "EXCEL LAYER DISABLED".
+
+Pendiente:
+- (Opcional) enable_layer_persistence: decidir alcance y si se persiste estado entre sesiones.
+- (Opcional) Refrescar flags en caliente (comando para recargar configuración sin reiniciar script).
+
+Plan de prueba (para mañana):
+- [ ] leader_layer_enabled=false bloquea `CapsLock & Space` mostrando "LEADER DISABLED".
+- [ ] nvim_layer_enabled=false hace que el tap de CapsLock no active la capa Nvim.
+- [ ] modifier_layer_enabled=false desactiva los hotkeys del modo modificador (verificar alcance de #HotIf).
+- [ ] excel_layer_enabled=false muestra "EXCEL LAYER DISABLED" al intentar activar o desactivar Excel Layer.
+- [ ] Validar que los cambios de timeouts por capa funcionan y respetan la jerarquía (timestamps/commands/leader).
+
 - Leer `[Layers]` (`*_layer_enabled`) en el arranque y condicionar el registro/activación de hotkeys/menús.
 - (Opcional) Persistencia con `enable_layer_persistence` si decidimos implementarla.
 
