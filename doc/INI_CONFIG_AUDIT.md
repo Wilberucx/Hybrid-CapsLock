@@ -122,6 +122,12 @@ Te dejo los comentarios en línea con [Wilber: ...] para que los revises y me di
 Nota: Los comentarios `[Wilber: ...]` en este documento son anotaciones internas pensadas para nuestra coordinación. Esta sección agrupa los primeros pasos accionables basados en esos comentarios.
 
 ### Iteración 1 — Timeouts jerárquicos (Fase 1)
+
+Correcciones recientes (aplicadas):
+- StartPersistentBlindSwitch: se reemplazó el uso de `currentMenu` (no definido en ese contexto) por la capa `"windows"`.
+- Se corrigió la asignación del InputHook: ahora `ih := InputHook(...)` antes de `ih.Start()`/`ih.Wait()`.
+- Progreso: líder y timestamps usan timeouts jerárquicos; pendiente commands.
+- Sanitización aplicada: ahora los timeouts leídos desde `.ini` toleran comentarios inline (`; ...`) y espacios, evitando errores de conversión numérica.
 - Definir función `GetEffectiveTimeout(layer)` con jerarquía:
   1) `*.ini` de la capa → `[Settings] → timeout_seconds`
   2) `configuration.ini` → `[Behavior]` → `leader_timeout_seconds`/`global_timeout_seconds`

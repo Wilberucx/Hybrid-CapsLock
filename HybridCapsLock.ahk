@@ -113,6 +113,52 @@ RemoveToolTip() {
 
 
 ; Configuration reading function
+
+CleanIniNumber(value) {
+    if (value = "" || value = "ERROR")
+        return ""
+    if (InStr(value, ";"))
+        value := Trim(SubStr(value, 1, InStr(value, ";") - 1))
+    value := Trim(value)
+    if RegExMatch(value, "^[0-9]+(\.[0-9]+)?$")
+        return value
+    return ""
+}
+
+GetEffectiveTimeout(layer) {
+    global ConfigIni, ProgramsIni, InfoIni, TimestampsIni, CommandsIni
+    default := 10
+    layerLower := StrLower(layer)
+    timeoutStr := ""
+    if (InStr(layerLower, "timestamps")) {
+        timeoutStr := CleanIniNumber(IniRead(TimestampsIni, "Settings", "timeout_seconds", ""))
+    } else if (InStr(layerLower, "commands")) {
+        timeoutStr := CleanIniNumber(IniRead(CommandsIni, "Settings", "timeout_seconds", ""))
+    } else if (InStr(layerLower, "programs")) {
+        timeoutStr := CleanIniNumber(IniRead(ProgramsIni, "Settings", "timeout_seconds", ""))
+    } else if (InStr(layerLower, "information")) {
+        timeoutStr := CleanIniNumber(IniRead(InfoIni, "Settings", "timeout_seconds", ""))
+    } else if (layerLower = "leader" or layerLower = "main" or layerLower = "windows") {
+        leaderStr := CleanIniNumber(IniRead(ConfigIni, "Behavior", "leader_timeout_seconds", ""))
+        if (leaderStr != "" && leaderStr != "ERROR")
+            return Integer(leaderStr)
+        globalStr := CleanIniNumber(IniRead(ConfigIni, "Behavior", "global_timeout_seconds", ""))
+        if (globalStr != "" && globalStr != "ERROR")
+            return Integer(globalStr)
+        return default
+    }
+    if (timeoutStr != "" && timeoutStr != "ERROR")
+        return Integer(timeoutStr)
+    leaderStr := CleanIniNumber(IniRead(ConfigIni, "Behavior", "leader_timeout_seconds", ""))
+    if (leaderStr != "" && leaderStr != "ERROR")
+        return Integer(leaderStr)
+    globalStr := CleanIniNumber(IniRead(ConfigIni, "Behavior", "global_timeout_seconds", ""))
+    if (globalStr != "" && globalStr != "ERROR")
+        return Integer(globalStr)
+    return default
+}
+
+; Configuration reading function
 ReadConfigValue(section, key, defaultValue := "") {
     if (section = "Hybrid" && key = "tap_timeout") {
         return "200"
@@ -541,7 +587,7 @@ StartPersistentBlindSwitch() {
     ; Persistent loop for blind switching
     Loop {
         ; Simple InputHook without complex options
-        ih := InputHook("L1 T10")
+        ih := InputHook("L1 T" . GetEffectiveTimeout("windows"))
         ih.Start()
         ih.Wait()
         
@@ -591,7 +637,7 @@ HandleTimestampMode(mode) {
             ; Date formats submenu
             Loop {
                 ShowDateFormatsMenu()
-                dateInput := InputHook("L1 T10")
+                dateInput := InputHook("L1 T" . GetEffectiveTimeout("timestamps_date"))
                 dateInput.Start()
                 dateInput.Wait()
                 
@@ -611,7 +657,7 @@ HandleTimestampMode(mode) {
             ; Time formats submenu
             Loop {
                 ShowTimeFormatsMenu()
-                timeInput := InputHook("L1 T10")
+                timeInput := InputHook("L1 T" . GetEffectiveTimeout("timestamps_time"))
                 timeInput.Start()
                 timeInput.Wait()
                 
@@ -631,7 +677,7 @@ HandleTimestampMode(mode) {
             ; DateTime formats submenu
             Loop {
                 ShowDateTimeFormatsMenu()
-                datetimeInput := InputHook("L1 T10")
+                datetimeInput := InputHook("L1 T" . GetEffectiveTimeout("timestamps_datetime"))
                 datetimeInput.Start()
                 datetimeInput.Wait()
                 
@@ -1978,7 +2024,7 @@ CapsLock & Space:: {
                 }
         }
         
-        userInput := InputHook("L1 T10")
+        userInput := InputHook("L1 T" . GetEffectiveTimeout("leader"))
         userInput.KeyOpt("{Backspace}", "+")  ; Enable Backspace detection
         userInput.KeyOpt("{Escape}", "+")     ; Enable Escape detection
         userInput.Start()

@@ -149,9 +149,12 @@ HideCSharpTooltip() {
 }
 
 ; Función específica para tooltips de OPCIONES/MENÚS (duración larga)
-ShowCSharpOptionsMenu(title, items, navigation := "") {
+ShowCSharpOptionsMenu(title, items, navigation := "", timeout := 0) {
+    if (timeout = 0) {
+        timeout := tooltipConfig.optionsTimeout
+    }
     global tooltipConfig
-    ShowCSharpTooltip(title, items, navigation, tooltipConfig.optionsTimeout)
+    ShowCSharpTooltip(title, items, navigation, timeout)
 }
 
 ; Función específica para tooltips de ESTADO/NOTIFICACIONES (duración corta)
