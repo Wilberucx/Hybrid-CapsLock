@@ -58,16 +58,11 @@ global nvimLayerEnabled := true
 global excelLayerEnabled := true
 global modifierLayerEnabled := true
 global leaderLayerEnabled := true
+; Persistence master flag (overwritten by LoadLayerFlags)
+global enableLayerPersistence := true
 
 ; Include C# tooltip integration after global variables
 #Include tooltip_csharp_integration.ahk
-
-; _DOC: Run as admin to prevent permission issues.
-; Uncomment the following lines if admin privileges are required:
-;if (!A_IsAdmin) {
-;    Run("*RunAs `"" . A_ScriptFullPath . "`"")
-;    ExitApp()
-;}
 
 ; _DOC: Permanently disable the native CapsLock function.
 ; Startup banner to confirm correct script loaded
@@ -109,10 +104,56 @@ global leaderLayerEnabled := true
 
 ; Load flags from configuration
 LoadLayerFlags()
+; Load persisted layer state (after flags so gating applies)
+LoadLayerState()
 
 ;-------------------------------------------------------------------------------
 ; SECTION 3: HELPER FUNCTIONS (v2 - Enhanced with C# Tooltips)
 ;-------------------------------------------------------------------------------
+
+; =========================
+; Layer state persistence
+; =========================
+GetLayerStateFile() {
+    return A_ScriptDir . "\data\layer_state.ini"
+}
+
+EnsureLayerStateDir() {
+    dir := A_ScriptDir . "\data"
+    if (!DirExist(dir)) {
+        DirCreate(dir)
+    }
+}
+
+SaveLayerState() {
+    global enableLayerPersistence, isNvimLayerActive, excelLayerActive, capsActsNormal
+    if (!enableLayerPersistence)
+        return
+    EnsureLayerStateDir()
+    stateFile := GetLayerStateFile()
+    IniWrite(isNvimLayerActive ? "true" : "false", stateFile, "LayerState", "isNvimLayerActive")
+    IniWrite(excelLayerActive ? "true" : "false", stateFile, "LayerState", "excelLayerActive")
+    IniWrite(capsActsNormal ? "true" : "false", stateFile, "LayerState", "capsActsNormal")
+}
+
+LoadLayerState() {
+    global enableLayerPersistence, nvimLayerEnabled, excelLayerEnabled
+    global isNvimLayerActive, excelLayerActive, capsActsNormal
+    if (!enableLayerPersistence)
+        return
+    stateFile := GetLayerStateFile()
+    if (!FileExist(stateFile))
+        return
+    ; Read values with defaults to current in-memory states
+    nvimState := IniRead(stateFile, "LayerState", "isNvimLayerActive", isNvimLayerActive ? "true" : "false")
+    excelState := IniRead(stateFile, "LayerState", "excelLayerActive", excelLayerActive ? "true" : "false")
+    capsState := IniRead(stateFile, "LayerState", "capsActsNormal", capsActsNormal ? "true" : "false")
+    
+    ; Apply with gating clamps
+    isNvimLayerActive := (nvimLayerEnabled && (StrLower(nvimState) = "true"))
+    excelLayerActive := (excelLayerEnabled && (StrLower(excelState) = "true"))
+    capsActsNormal := (StrLower(capsState) = "true")
+}
 
 ; Basic tooltip function for startup
 ShowCenteredToolTip(Text) {
@@ -150,11 +191,12 @@ CleanIniBool(value, default := true) {
 }
 
 LoadLayerFlags() {
-    global ConfigIni, nvimLayerEnabled, excelLayerEnabled, modifierLayerEnabled, leaderLayerEnabled
+    global ConfigIni, nvimLayerEnabled, excelLayerEnabled, modifierLayerEnabled, leaderLayerEnabled, enableLayerPersistence
     nvimLayerEnabled := CleanIniBool(IniRead(ConfigIni, "Layers", "nvim_layer_enabled", "true"))
     excelLayerEnabled := CleanIniBool(IniRead(ConfigIni, "Layers", "excel_layer_enabled", "true"))
     modifierLayerEnabled := CleanIniBool(IniRead(ConfigIni, "Layers", "modifier_layer_enabled", "true"))
     leaderLayerEnabled := CleanIniBool(IniRead(ConfigIni, "Layers", "leader_layer_enabled", "true"))
+    enableLayerPersistence := CleanIniBool(IniRead(ConfigIni, "Layers", "enable_layer_persistence", "true"))
 }
 
 GetEffectiveTimeout(layer) {
@@ -1667,6 +1709,7 @@ ShowLeaderModeMenu() {
 ;-------------------------------------------------------------------------------
 
 ; ----- Window Functions -----
+#HotIf (modifierLayerEnabled)
 CapsLock & 1::WinMinimize("A")
 CapsLock & `::Send("#m")  ; Minimize all windows
 CapsLock & q::Send("!{F4}")  ; Close window (Alt+F4)
@@ -1895,10 +1938,13 @@ CapsLock & 5:: {
     }
 }
 
+#HotIf
+
 ; ----- CapsLock Toggle (F10) -----
 CapsLock & F10:: {
     global capsActsNormal
     capsActsNormal := !capsActsNormal
+    SaveLayerState()
     if (capsActsNormal) {
         SetCapsLockState("Off")
         ShowCapsLockStatus(true)
@@ -1909,6 +1955,7 @@ CapsLock & F10:: {
     SetTimer(RemoveToolTip, -1200)
 }
 
+#HotIf (modifierLayerEnabled)
 ; ----- Process Termination (F12) -----
 CapsLock & F12:: {
     activePid := WinGetPID("A")
@@ -1967,10 +2014,12 @@ CapsLock Up:: {
         if (isNvimLayerActive) {
             ShowNvimLayerStatus(true)
             SetTempStatus("NVIM LAYER ON", 1500)
+            SaveLayerState()
         } else {
             ShowNvimLayerStatus(false)
             SetTempStatus("NVIM LAYER OFF", 1500)
             VisualMode := false
+            SaveLayerState()
         }
         
         SetTimer(RemoveToolTip, -1500)
@@ -1982,6 +2031,7 @@ CapsLock Up:: {
 }
 
 ; Leader Mode: CapsLock + Space activates command palette
+#HotIf
 CapsLock & Space:: {
     global leaderLayerEnabled
     if (!leaderLayerEnabled) {
@@ -2153,9 +2203,11 @@ CapsLock & Space:: {
                         if (excelLayerActive) {
                             ShowExcelLayerStatus(true)
                             SetTempStatus("EXCEL LAYER ON", 2000)
+                            SaveLayerState()
                         } else {
                             ShowExcelLayerStatus(false)
                             SetTempStatus("EXCEL LAYER OFF", 2000)
+                            SaveLayerState()
                         }
                         SetTimer(RemoveToolTip, -2000)
                         break  ; Exit after toggle
@@ -2890,4 +2942,6 @@ CleanupTooltips(*) {
         HideCSharpTooltip()
         StopTooltipApp()
     }
+    ; Persist layer state on exit
+    SaveLayerState()
 }
