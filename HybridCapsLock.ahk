@@ -1615,7 +1615,7 @@ ExecuteHybridManagementCommand(cmd) {
             ShowCenteredToolTip("HybridCapsLock v2`nAutoHotkey " . A_AhkVersion . "`nScript: " . A_ScriptName)
             SetTimer(RemoveToolTip, -3000)
             return
-        case "R":
+        case "r":
             ; Reload Config (hot reload flags and tooltips config)
             LoadLayerFlags()
             ReloadTooltipConfig()

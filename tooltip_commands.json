@@ -1,1 +1,1 @@
-{"show": false}
+{"tooltip_type": "leader","title": "HYBRID","items": [{"key": "status", "description": "CONFIG RELOADED"}],"navigation": ["Esc: Close"],"timeout_ms": 2000,"show": true}
