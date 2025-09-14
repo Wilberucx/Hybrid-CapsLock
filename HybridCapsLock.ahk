@@ -53,6 +53,12 @@ global capsActsNormal := false
 global currentTempStatus := ""
 global tempStatusExpiry := 0
 
+; Early initialization of layer enable flags to avoid unassigned variable errors on early hotkey usage
+global nvimLayerEnabled := true
+global excelLayerEnabled := true
+global modifierLayerEnabled := true
+global leaderLayerEnabled := true
+
 ; Include C# tooltip integration after global variables
 #Include tooltip_csharp_integration.ahk
 
@@ -1979,8 +1985,12 @@ CapsLock Up:: {
 CapsLock & Space:: {
     global leaderLayerEnabled
     if (!leaderLayerEnabled) {
+        if (tooltipConfig.enabled) {
+        ShowCSharpStatusNotification("LEADER", "LEADER DISABLED")
+    } else {
         ShowCenteredToolTip("LEADER DISABLED")
         SetTimer(RemoveToolTip, -1200)
+    }
         return
     }
     global leaderActive, isNvimLayerActive, VisualMode, capsLockUsedAsModifier
@@ -2119,12 +2129,22 @@ CapsLock & Space:: {
                         currentMenu := "commands"
                     case "n":
                         ; Excel layer toggle (direct action)
-                        global excelLayerActive
+                        global excelLayerActive, tooltipConfig
+                        
+                        ; Hide the leader tooltip if configured to auto-hide
+                        if (tooltipConfig.enabled && tooltipConfig.autoHide) {
+                            HideCSharpTooltip()
+                        }
+                        
                         if (!excelLayerEnabled) {
                             ; Do not allow activation when disabled
                             excelLayerActive := false
-                            ShowCenteredToolTip("EXCEL LAYER DISABLED")
-                            SetTimer(RemoveToolTip, -1200)
+                            if (tooltipConfig.enabled) {
+                                ShowCSharpStatusNotification("EXCEL", "EXCEL LAYER DISABLED")
+                            } else {
+                                ShowCenteredToolTip("EXCEL LAYER DISABLED")
+                                SetTimer(RemoveToolTip, -1200)
+                            }
                             break  ; Exit without toggling
                         }
                         
