@@ -1289,11 +1289,12 @@ ShowHybridManagementMenu() {
         ToolTipX := A_ScreenWidth // 2 - 120
         ToolTipY := A_ScreenHeight // 2 - 80
         menuText := "HYBRID MANAGEMENT`n`n"
-        menuText .= "r - Reload Script`n"
+        menuText .= "R - Reload Script`n"
         menuText .= "e - Exit Script`n"
         menuText .= "c - Open Config Folder`n"
         menuText .= "l - View Log File`n"
         menuText .= "v - Show Version Info`n"
+        menuText .= "R - Reload Config`n"
         menuText .= "`n[\: Back] [Esc: Exit]"
         ToolTip(menuText, ToolTipX, ToolTipY, 2)
     }
@@ -1580,7 +1581,7 @@ ExecuteHybridManagementCommand(cmd) {
     }
     
     switch cmd {
-        case "r":
+        case "R":
             ; Reload Script
             ShowCenteredToolTip("RELOADING SCRIPT...")
             SetTimer(RemoveToolTip, -1000)
@@ -1613,6 +1614,17 @@ ExecuteHybridManagementCommand(cmd) {
             ; Show Version Info
             ShowCenteredToolTip("HybridCapsLock v2`nAutoHotkey " . A_AhkVersion . "`nScript: " . A_ScriptName)
             SetTimer(RemoveToolTip, -3000)
+            return
+        case "R":
+            ; Reload Config (hot reload flags and tooltips config)
+            LoadLayerFlags()
+            ReloadTooltipConfig()
+            if (tooltipConfig.enabled) {
+                ShowCSharpStatusNotification("HYBRID", "CONFIG RELOADED")
+            } else {
+                ShowCenteredToolTip("CONFIG RELOADED")
+                SetTimer(RemoveToolTip, -1200)
+            }
             return
         default:
             ShowCenteredToolTip("Unknown hybrid command: " . cmd)

@@ -637,7 +637,7 @@ ShowADBCommandsMenuCS() {
 
 ; Submenú Hybrid Management (leader → c → h)
 ShowHybridManagementMenuCS() {
-    items := "r:Reload Script|e:Exit Script|c:Open Config Folder|l:View Log File|v:Show Version Info"
+    items := "R:Reload Script|e:Exit Script|c:Open Config Folder|l:View Log File|v:Show Version Info|r:Reload Config"
     ShowCSharpOptionsMenu("HYBRID MANAGEMENT", items, "\\: Back|ESC: Exit")
 }
 
