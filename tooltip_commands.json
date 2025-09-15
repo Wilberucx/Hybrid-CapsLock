@@ -1,1 +1,1 @@
-{"tooltip_type": "leader","title": "HYBRID","items": [{"key": "status", "description": "CONFIG RELOADED"}],"navigation": ["Esc: Close"],"timeout_ms": 2000,"show": true}
+{"tooltip_type": "leader","title": "CLIPBOARD","items": [{"key": "status", "description": "COPIED"}],"navigation": ["Esc: Close"],"timeout_ms": 2000,"show": true}

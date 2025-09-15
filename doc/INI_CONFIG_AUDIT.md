@@ -35,16 +35,17 @@ Nota de terminología: En esta documentación usamos el término "leader" para r
   - `tooltip_fade_animation`
   - `tooltip_click_through`
 
+- En uso real (a través de `HybridCapsLock.ahk` → sección `[Layers]`):
+  - `nvim_layer_enabled`, `excel_layer_enabled`, `modifier_layer_enabled`, `leader_layer_enabled`
+  - `enable_layer_persistence` (nuevo: activa/desactiva persistencia de estado entre sesiones)
+
+- En uso real (a través de `HybridCapsLock.ahk` → sección `[Behavior]`):
+  - `global_timeout_seconds`, `leader_timeout_seconds`
+
 - No usados actualmente (documentados pero sin efecto en el código):
-  - `[General]`, `[UI]`, `[Behavior]`, `[Performance]`, `[Security]`, `[Layers]`, `[Integration]`, `[Advanced]`, `[CustomHotkeys]`, `[ApplicationProfiles]`, `[Troubleshooting]`.
-  - Ejemplos concretos:
-    - `[Behavior]`: `caps_lock_acts_normal`, `global_timeout_seconds`, `leader_timeout_seconds`
-      - Los menús usan `InputHook("L1 T10")` (10s) hardcodeado; no leen estos timeouts. [Wilber: Debemos implementar esta funcionalidad para próximas versiones con tal de añadir granularidad y control de la herramienta.]
-    - `[Layers]`: `nvim_layer_enabled`, `excel_layer_enabled`, `modifier_layer_enabled`, `leader_layer_enabled`, `enable_layer_persistence`
-      - No hay lecturas de estas flags; los estados de capa se controlan en runtime. [Wilber: Vamos a implementar esta funcionalidad en próximas versiones.]
-    - `[Integration]`: `zebar_status_file`, `enable_json_status`, `status_update_interval`, `external_commands_enabled`
-      - El estado JSON se escribe siempre en `data/layer_status.json` fijo; no se usan estas claves. [Wilber: Vamos a eliminar esta integración ya que está obsoleta por la integración de C# con tooltips modernos]
-    - `[Advanced]`: `nvim_shift_touchpad_scroll` aparece en `ReadConfigValue`, pero esa función no se utiliza para aplicar comportamiento. [Wilber: Vamos a mantener esta pero en espera para desarrollarla mejor.]
+  - `[General]`, `[UI]`, `[Performance]`, `[Security]`, `[Advanced]`, `[CustomHotkeys]`, `[ApplicationProfiles]`, `[Troubleshooting]`.
+  - Ejemplos concretos (mantienen el diagnóstico original):
+    - `[Advanced]`: `nvim_shift_touchpad_scroll` aparece en `ReadConfigValue`, pero no define comportamiento hoy.
 
 ### 2) `config/programs.ini`
 
@@ -53,9 +54,9 @@ Nota de terminología: En esta documentación usamos el término "leader" para r
   - `[ProgramMapping]`: `key_<letra>=ProgramName`.
   - `[MenuDisplay]`: `line1..lineN` para construir el menú.
 
-- No usados:
-  - `[Settings]`: `timeout_seconds`, `show_confirmation`, `auto_launch`, `search_in_path`, `show_launch_feedback`, `feedback_duration`.
-    - Los flujos de UI/tiempos/feedback están hardcodeados; no se consultan estas flags. [Wilber: Vamos a implementar esta funcionalidad en próximas versiones.]
+- Iteración 3 (acotado):
+  - `[Settings]` efectivo: `auto_launch` (por defecto `true`), `show_confirmation` (por defecto `false`).
+  - Descartados: `timeout_seconds`, `search_in_path`, `show_launch_feedback`, `feedback_duration`.
 
 ### 3) `config/information.ini`
 
@@ -64,9 +65,9 @@ Nota de terminología: En esta documentación usamos el término "leader" para r
   - `[InfoMapping]`: `key_<letra>=InfoName`.
   - `[MenuDisplay]`: `info_line1..N`.
 
-- No usados:
-  - `[Settings]`: `timeout_seconds`, `show_confirmation`, `auto_paste`. [Wilber: Vamos a implementar esta funcionalidad en próximas versiones.]
-    - El timeout de menú es fijo; la inserción es inmediata; el feedback se muestra siempre.
+- Iteración 3 (acotado):
+  - `[Settings]` efectivo: `show_confirmation` (por defecto `false`).
+  - Descartados: `timeout_seconds`, `auto_paste`, `feedback_duration`.
 
 ### 4) `config/timestamps.ini`
 
@@ -74,111 +75,107 @@ Nota de terminología: En esta documentación usamos el término "leader" para r
   - `[DateFormats]`, `[TimeFormats]`, `[DateTimeFormats]`: `default` y `format_X`.
   - `[MenuDisplay]`: `date_lineX`, `time_lineX`, `datetime_lineX`.
 
-- No usados:
-  - `[Settings]`: `timeout_seconds`, `show_confirmation`, `auto_insert`, `preview_format`, `remember_last_format`, `feedback_duration`. [Wilber: Vamos a implementar esta funcionalidad en próximas versiones.]
-    - El timeout de menú es fijo; la inserción es inmediata; el feedback se muestra siempre; no hay preview ni persistencia de formato.
-      [Wilber: He visto varias veces la variable `show_confirmation`; este es un poco complicado de implementar, pero vamos a ver cómo lo hacemos.]
+- Iteración 3 (acotado):
+  - `[Settings]` efectivo: `show_confirmation` (por defecto `false`).
+  - Descartados: `timeout_seconds`, `auto_insert`, `preview_format`, `remember_last_format`, `feedback_duration`.
 
 ### 5) `config/commands.ini`
 
 - En uso:
   - `[MenuDisplay]`: `main_lineX`, `system_lineX`, `network_lineX`, `git_lineX`, `monitoring_lineX`, `folder_lineX`, `windows_lineX`, `vaultflow_lineX` (para mostrar texto de menú cuando están presentes).
 
-- No usados: [Wilber: Debemos trabajar en esta funcionalidad para próximas versiones.]
-  - `[CustomCommands]`, `[CustomCategories]`: no existe lógica para ejecutar comandos dinámicos definidos aquí.
+- Pendiente (Iteración 4):
+  - `[CustomCommands]`, `[CustomCategories]`: aún no hay ejecución dinámica.
   - `[Settings]`: `show_output`, `close_on_success`, `timeout_seconds`, `enable_custom_commands`.
   - `[CategorySettings]`: `*_timeout`, `show_execution_feedback`, `feedback_duration`, `auto_close_terminals`.
-  - `power_lineX` (en `[MenuDisplay]`): el submenú de Power Options está hardcodeado en el código y no lee estas líneas.
-
-- Desajuste de teclas (si se habilitara lectura configurable):
-  - En el código, Shutdown usa `"S"` (Shift+s). En `commands.ini` aparece como `u - Shutdown`. Hoy no impacta porque se ignora el ini para ese submenú, pero conviene alinear si se hace dinámico.
-    [Wilber: Vamos a mantener este hardcodeado por ahora, pero alineemos esto para cuando empecemos a trabajar en esta funcionalidad.]
+  - `power_lineX` (en `[MenuDisplay]`): el submenú de Power Options sigue hardcodeado.
 
 ### 6) `config/obsidian.ini`
 
-- Estado: marcado como "EN DESARROLLO - NO FUNCIONAL" y no utilizado por el script actual. [Wilber: Vamos a mantener este archivo en espera hasta que decidamos el alcance de la integración con Obsidian.]
+- Estado: marcado como "EN DESARROLLO - NO FUNCIONAL".
 
 ---
 
 ## Hallazgos transversales
 
-- Timeouts: la documentación sugiere jerarquía (global, leader, por capa), pero:
-  - Menús nativos usan `InputHook("L1 T10")` (10s) fijo.
-  - Los menús C# sí respetan `Tooltips.options_menu_timeout` (global), pero no `timeout_seconds` por capa.
-    [Wilber: Vamos a implementar que tanto el tooltip como los `InputHook` usen estos timeouts jerárquicos por igual para que no haya una desincronización, pero dejémoslo así para trabajar a futuro.]
-- Flags por capa (`auto_paste`, `auto_launch`, `show_confirmation`, `feedback_duration`, `remember_last_format`, etc.) no están conectadas a la lógica.
-- Habilitar/deshabilitar capas desde `[Layers]` no tiene efecto; los hotkeys/estados se activan siempre.
-- Integración Zebar: eliminada del proyecto (código no-op y documentación actualizada).
-- Menús configurables vs ejecución: los textos se pueden cargar desde `.ini`, pero la ejecución de comandos está fijada por `switch` (no usa `[CustomCommands]`).
+- Timeouts jerárquicos: implementados para menús nativos (InputHook) y sincronizados con menús C# a través de la misma jerarquía (`GetEffectiveTimeout`).
+- Flags por capa: `*_layer_enabled` conectadas y activas (leader/nvim/excel/modifier). Modifier se encapsula bajo `#HotIf (modifierLayerEnabled)` y se excluyen (`Leader` y `CapsLock+F10`).
+- Persistencia de capas: implementada (opt-in por `enable_layer_persistence`). Estados persistidos: `isNvimLayerActive`, `excelLayerActive`, `capsActsNormal` en `data/layer_state.ini` con "clamps" por flags de `[Layers]`.
+- Recarga en caliente: disponible desde Leader → Commands → Hybrid Management (`r` = Reload Config, `R` = Reload Script).
+- Integración Zebar: ya eliminada.
+- Menús configurables vs ejecución: textos se cargan desde `.ini`, ejecución de comandos sigue por `switch` (dinamización en Iteración 4).
+- Confirmaciones en Commands: jerarquía implementada (global > categoría > comando > default de capa; per-categoría domina). Se añadió soporte per-command sensible a mayúscula/minúscula mediante alias `key_ascii_<ord>` para evitar colisiones case-insensitive en INI (ej.: HybridManagement R vs r).
 
 ## Comentarios
 
-Te dejo los comentarios en línea con [Wilber: ...] para que los revises y me digas si estás de acuerdo con los planes propuestos o si quieres ajustar algo.
+Los comentarios `[Wilber: ...]` del documento original se conservan como referencia histórica; los planes actualizados se reflejan en las iteraciones siguientes.
 
 ---
 
 ## Sección de trabajo interno (Rovo Dev ↔ Wilber)
 
-Nota: Los comentarios `[Wilber: ...]` en este documento son anotaciones internas pensadas para nuestra coordinación. Esta sección agrupa los primeros pasos accionables basados en esos comentarios.
-
 ### Iteración 1 — Timeouts jerárquicos (Fase 1)
 
-Correcciones recientes (aplicadas):
-- StartPersistentBlindSwitch: se reemplazó el uso de `currentMenu` (no definido en ese contexto) por la capa `"windows"`.
-- Se corrigió la asignación del InputHook: ahora `ih := InputHook(...)` antes de `ih.Start()`/`ih.Wait()`.
-- Progreso: líder, timestamps y commands usan timeouts jerárquicos.
-- Sanitización aplicada: ahora los timeouts leídos desde `.ini` toleran comentarios inline (`; ...`) y espacios, evitando errores de conversión numérica.
-- Definir función `GetEffectiveTimeout(layer)` con jerarquía:
-  1) `*.ini` de la capa → `[Settings] → timeout_seconds`
-  2) `configuration.ini` → `[Behavior]` → `leader_timeout_seconds`/`global_timeout_seconds`
-  3) Default (10s)
-- Aplicar en menús nativos (InputHook) y sincronizar con menús C# (usar mismo valor efectivo).
+Estado: Completado (ver versión anterior del documento).
 
 ### Iteración 2 — Flags de habilitación de capas (Fase 2)
 
-Progreso aplicado:
-- Lectura de flags desde configuration.ini → [Layers]: nvim_layer_enabled, excel_layer_enabled, modifier_layer_enabled, leader_layer_enabled.
-- Nuevo loader `LoadLayerFlags()` y helper `CleanIniBool()`.
-- Gating:
-  - Leader: si `leader_layer_enabled=false`, el hotkey `CapsLock & Space` muestra "LEADER DISABLED" y no abre menú.
-  - Nvim: si `nvim_layer_enabled=false`, el tap de CapsLock no activa la capa Nvim.
-  - Modifier: todos los hotkeys de modo modificador quedan bajo `#HotIf (modifierLayerEnabled)`.
-  - Excel: bloqueo al intentar activar/desactivar la capa si `excel_layer_enabled=false` con mensaje "EXCEL LAYER DISABLED".
+Estado: Completado (gating, tooltips C#, persistencia, recarga en caliente).
 
-Pendiente:
-- (Opcional) enable_layer_persistence: decidir alcance y si se persiste estado entre sesiones.
-- (Opcional) Refrescar flags en caliente (comando para recargar configuración sin reiniciar script).
+### Iteración 3 — Settings por capa (Fase 3, acotado)
 
-Plan de prueba (para mañana):
-- [ ] leader_layer_enabled=false bloquea `CapsLock & Space` mostrando "LEADER DISABLED".
-- [ ] nvim_layer_enabled=false hace que el tap de CapsLock no active la capa Nvim.
-- [ ] modifier_layer_enabled=false desactiva los hotkeys del modo modificador (verificar alcance de #HotIf).
-- [ ] excel_layer_enabled=false muestra "EXCEL LAYER DISABLED" al intentar activar o desactivar Excel Layer.
-- [ ] Validar que los cambios de timeouts por capa funcionan y respetan la jerarquía (timestamps/commands/leader).
+Decisión de alcance (acordada):
+- Implementar únicamente:
+  - Programs: `auto_launch` (por defecto `true`) y `show_confirmation` (por defecto `false`).
+  - Information: `show_confirmation` (por defecto `false`).
+  - Timestamps: `show_confirmation` (por defecto `false`).
+- El resto de claves propuestas inicialmente se descartan.
 
-- Leer `[Layers]` (`*_layer_enabled`) en el arranque y condicionar el registro/activación de hotkeys/menús.
-- (Opcional) Persistencia con `enable_layer_persistence` si decidimos implementarla.
+Lógica efectiva propuesta:
+- Regla general de confirmación: si `show_confirmation=true` → solicitar confirmación (y/n) antes de ejecutar/pegar/insertar.
+- Si `show_confirmation=false` → acción inmediata.
+- Nota sobre `auto_launch` (Programs):
+  - Cuando `show_confirmation=false` y `auto_launch=true` (por defecto) → lanzamiento inmediato (comportamiento actual).
+  - Si `show_confirmation=true`, la confirmación prevalece (se pregunta igual).
 
-### Iteración 3 — Settings por capa (Fase 3)
-- Programs: `auto_launch`, `show_confirmation`, `show_launch_feedback`, `feedback_duration`, `search_in_path`.
-- Information: `auto_paste`, `show_confirmation`, `feedback_duration`.
-- Timestamps: `auto_insert`, `preview_format`, `remember_last_format`, `feedback_duration`.
+Criterios de aceptación (CA):
+- CA1: Cambios en `show_confirmation` alteran el flujo (pide confirmación vs inmediato) tras `r` (Reload Config) sin reiniciar.
+- CA2: En Programs, con `show_confirmation=false`, `auto_launch=true` ejecuta inmediatamente al seleccionar un programa.
+- CA3: Mensajería clara: “Confirm <acción>? (y/n)” con tooltips C# o nativo, y cancelación con n/Esc.
+
+Plan de pruebas:
+- Programs: alternar `show_confirmation` (true/false) y validar confirmación/ejecución inmediata; verificar que con `show_confirmation=true` nunca se lanza sin confirmar.
+- Information: alternar `show_confirmation`; confirmar que no pega si se cancela.
+- Timestamps: alternar `show_confirmation`; confirmar que no inserta si se cancela.
 
 ### Iteración 4 — Commands dinámicos (Fase 4)
-- Soportar `[CustomCommands]` (`ps:`/`cmd:`/`ahk:`) y `[CustomCategories]` para construir menús y ejecutar.
-- Definir estrategia para Power Options: o leer `power_lineX` o mantener hardcode y documentar.
-- Alinear teclas (p. ej., `Shutdown` `S` vs `u`).
+Estado: En progreso → Confirmaciones jerárquicas implementadas y cableadas. Resta dinamizar ejecución de CustomCommands (ejecución por switch aún presente) y `power_lineX`.
+
+- Jerarquía `show_confirmation` (Commands):
+  1) Global: `[configuration.ini] [Behavior] show_confirmation_global`
+  2) Por categoría: `[commands.ini] [CategorySettings] <Friendly>_show_confirmation` (si true, fuerza confirmación y no mira per-command)
+  3) Por comando: `[commands.ini] [Confirmations.<Friendly>]` clave por tecla
+  4) Default de capa: `[commands.ini] [Settings] show_confirmation`
+  5) Fallback: `power=true`, otros `false`
+
+- Compatibilidad mayúscula/minúscula en per-command:
+  - Añadido soporte de alias `key_ascii_<ord>` para distinguir teclas con mayúsculas/minúsculas evitando colisiones case-insensitive en INI.
+  - Orden de búsqueda per-command: `key_ascii_<ord>` → `key_<char>` → clave raw.
+
+- Power Options:
+  - Estructura de `CategorySettings` y plantilla per-command documentadas. Por defecto, el control recomendado es por categoría.
+  - `power_lineX` aún hardcodeado en UI nativa; pendiente decidir si se leerá de INI o se documenta como fijo.
 
 ### Iteración 5 — Integración Zebar (Fase 5)
-- Completado: Integración eliminada. `UpdateLayerStatus()` ahora es no-op, variables asociadas removidas y documentación limpiada.
+- Completado.
 
 ### Iteración 6 — Obsidian (Fase 6)
-- Definir alcance mínimo viable o mantener en espera hasta decisión.
+- Pendiente de definir.
 
 ### Checklist de acción
-- [ ] F1: Reemplazar timeouts hardcodeados por jerárquicos y sincronizados con C#.
-- [ ] F2: Aplicar `*_layer_enabled` y revisar persistencia.
-- [ ] F3: Conectar settings por capa (Programs/Information/Timestamps).
-- [ ] F4: Habilitar `CustomCommands`/`CustomCategories` y revisar `power_lineX`.
-- [x] F5: Integración Zebar eliminada (no-op en código y docs actualizadas).
-- [ ] F6: Decidir estrategia para `obsidian.ini`.
+- [x] F1: Timeouts jerárquicos.
+- [x] F2: Flags por capa + Persistencia + Recarga en caliente.
+- [ ] F3: Settings por capa (Programs/Information/Timestamps) — alcance acotado a `auto_launch` y `show_confirmation`.
+- [x] F4: Commands dinámicos — jerarquía de confirmación implementada (global > categoría > comando > default de capa). Per-category domina sobre per-command.
+- [x] F5: Zebar eliminado.
+- [ ] F6: Obsidian.

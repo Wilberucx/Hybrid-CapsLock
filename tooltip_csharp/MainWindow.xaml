@@ -22,7 +22,7 @@
         <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
             <!-- Title -->
             <TextBlock Name="TitleText"
-                       Text="TEST TOOLTIP"
+                       Text="WELCOME"
                        FontFamily="Consolas"
                        FontSize="14"
                        FontWeight="Bold"

@@ -62,6 +62,15 @@ global leaderLayerEnabled := true
 global enableLayerPersistence := true
 
 ; Include C# tooltip integration after global variables
+; Ensure INI paths are initialized before including tooltip integration (which may read configs)
+; Early config path initialization to avoid unassigned global errors during startup
+global ConfigIni := A_ScriptDir . "\config\configuration.ini"
+global ProgramsIni := A_ScriptDir . "\config\programs.ini"
+global TimestampsIni := A_ScriptDir . "\config\timestamps.ini"
+global InfoIni := A_ScriptDir . "\config\information.ini"
+global CommandsIni := A_ScriptDir . "\config\commands.ini"
+global ObsidianIni := A_ScriptDir . "\config\obsidian.ini"
+
 #Include tooltip_csharp_integration.ahk
 
 ; _DOC: Permanently disable the native CapsLock function.
@@ -110,6 +119,40 @@ LoadLayerState()
 ;-------------------------------------------------------------------------------
 ; SECTION 3: HELPER FUNCTIONS (v2 - Enhanced with C# Tooltips)
 ;-------------------------------------------------------------------------------
+
+; Simple confirmation helper (y/n with timeout based on layer)
+ConfirmYN(prompt, timeoutLayer := "leader") {
+    global tooltipConfig
+    ; Show confirmation UI
+    if (tooltipConfig.enabled) {
+        ShowCSharpOptionsMenu(prompt, "y:Yes|n:No", "Esc: Cancel")
+    } else {
+        ShowCenteredToolTip(prompt . "`n[y: Yes] [n/Esc: No]")
+    }
+    ; Wait for single key input
+    ih := InputHook("L1 T" . GetEffectiveTimeout(timeoutLayer))
+    ih.KeyOpt("{Escape}", "+")
+    ih.Start()
+    ih.Wait()
+    result := false
+    if (ih.EndReason = "EndKey" && ih.EndKey = "Escape") {
+        result := false
+    } else if (ih.EndReason = "Timeout") {
+        result := false
+    } else {
+        key := ih.Input
+        if (key = "y" || key = "Y")
+            result := true
+    }
+    ih.Stop()
+    ; Hide tooltip if C#
+    if (tooltipConfig.enabled) {
+        HideCSharpTooltip()
+    } else {
+        SetTimer(RemoveToolTip, -200)
+    }
+    return result
+}
 
 ; =========================
 ; Layer state persistence
@@ -190,6 +233,31 @@ CleanIniBool(value, default := true) {
     return (v = "true" || v = "1" || v = "yes" || v = "on")
 }
 
+; --- Confirmation lists helpers (case-sensitive parsing of comma/space separated values) ---
+ParseKeyList(s) {
+    if (s = "" || s = "ERROR")
+        return []
+    ; Strip inline comment starting with ';'
+    if InStr(s, ";")
+        s := Trim(SubStr(s, 1, InStr(s, ";") - 1))
+    arr := []
+    for part in StrSplit(s, [",", " ", "`t", "`n", "`r"]) {
+        token := Trim(part)
+        if (token != "")
+            arr.Push(token)
+    }
+    return arr
+}
+
+KeyInList(key, listStr) {
+    for token in ParseKeyList(listStr) {
+        ; Use case-sensitive comparison to distinguish 'R' vs 'r', 'S' vs 's'
+        if (token == key)
+            return true
+    }
+    return false
+}
+
 LoadLayerFlags() {
     global ConfigIni, nvimLayerEnabled, excelLayerEnabled, modifierLayerEnabled, leaderLayerEnabled, enableLayerPersistence
     nvimLayerEnabled := CleanIniBool(IniRead(ConfigIni, "Layers", "nvim_layer_enabled", "true"))
@@ -233,6 +301,120 @@ GetEffectiveTimeout(layer) {
 }
 
 ; Configuration reading function
+
+ShouldConfirmAction(layer) {
+    global ConfigIni, ProgramsIni, InfoIni, TimestampsIni, CommandsIni
+    ; Global override: if true, confirmation is enforced for all layers
+    globalFlag := CleanIniBool(IniRead(ConfigIni, "Behavior", "show_confirmation_global", "false"), false)
+    if (globalFlag)
+        return true
+    ; Per-layer flags
+    if (layer = "programs") {
+        return CleanIniBool(IniRead(ProgramsIni, "Settings", "show_confirmation", "false"), false)
+    }
+    if (layer = "information") {
+        return CleanIniBool(IniRead(InfoIni, "Settings", "show_confirmation", "false"), false)
+    }
+    if (layer = "timestamps") {
+        return CleanIniBool(IniRead(TimestampsIni, "Settings", "show_confirmation", "false"), false)
+    }
+    if (layer = "power") {
+        ; More conservative default for power operations
+        return CleanIniBool(IniRead(CommandsIni, "Settings", "show_confirmation", "true"), true)
+    }
+    return false
+}
+
+; Commands layer: per-command/per-category confirmation
+GetFriendlyCategoryName(cat) {
+    switch cat {
+        case "system": return "System"
+        case "network": return "Network"
+        case "git": return "Git"
+        case "monitoring": return "Monitoring"
+        case "folder": return "Folder"
+        case "windows": return "Windows"
+        case "power": return "PowerOptions"
+        case "adb": return "ADBTools"
+        case "hybrid": return "HybridManagement"
+        case "vaultflow": return "VaultFlow"
+        default: return cat
+    }
+}
+
+ShouldConfirmCommand(categoryInternal, key) {
+    global ConfigIni, CommandsIni
+    ; 0) Global override
+    if (CleanIniBool(IniRead(ConfigIni, "Behavior", "show_confirmation_global", "false"), false))
+        return true
+    friendly := GetFriendlyCategoryName(categoryInternal)
+    ; 1) Per-category first: [CategorySettings] <Friendly>_show_confirmation (overrides per-command)
+    catKey := friendly . "_show_confirmation"
+    catVal := IniRead(CommandsIni, "CategorySettings", catKey, "")
+    if (catVal != "" && catVal != "ERROR") {
+        if (CleanIniBool(catVal, false))
+            return true  ; category=true enforces confirmation and overrides per-command
+        ; category=false -> check per-command below
+    } else {
+        ; fallback to internal name if friendly not found
+        catKey2 := categoryInternal . "_show_confirmation"
+        catVal2 := IniRead(CommandsIni, "CategorySettings", catKey2, "")
+        if (catVal2 != "" && catVal2 != "ERROR") {
+            if (CleanIniBool(catVal2, false))
+                return true
+            ; false -> continue to per-command
+        }
+    }
+    ; 2) Per-command via lists first: [Confirmations.<Friendly>] confirm_keys / no_confirm_keys
+    sec := "Confirmations." . friendly
+    confKeys := IniRead(CommandsIni, sec, "confirm_keys", "")
+    noConfKeys := IniRead(CommandsIni, sec, "no_confirm_keys", "")
+    if (confKeys != "" && KeyInList(key, confKeys))
+        return true
+    if (noConfKeys != "" && KeyInList(key, noConfKeys))
+        return false
+    ; Fallback to internal section for lists
+    sec2 := "Confirmations." . categoryInternal
+    if (confKeys = "")
+        confKeys := IniRead(CommandsIni, sec2, "confirm_keys", "")
+    if (noConfKeys = "")
+        noConfKeys := IniRead(CommandsIni, sec2, "no_confirm_keys", "")
+    if (confKeys != "" && KeyInList(key, confKeys))
+        return true
+    if (noConfKeys != "" && KeyInList(key, noConfKeys))
+        return false
+
+    ; 3) Per-command (legacy): prefer ASCII-aware alias (key_ascii_<ord>), then legacy alias (key_<char>), then raw key
+    sec := "Confirmations." . friendly
+    aliasAscii := "key_ascii_" . Ord(key)
+    val := IniRead(CommandsIni, sec, aliasAscii, "")
+    if (val != "" && val != "ERROR")
+        return CleanIniBool(val, false)
+    aliasKey := "key_" . key
+    val := IniRead(CommandsIni, sec, aliasKey, "")
+    if (val != "" && val != "ERROR")
+        return CleanIniBool(val, false)
+    val := IniRead(CommandsIni, sec, key, "")
+    if (val != "" && val != "ERROR")
+        return CleanIniBool(val, false)
+    sec2 := "Confirmations." . categoryInternal
+    val2 := IniRead(CommandsIni, sec2, aliasAscii, "")
+    if (val2 != "" && val2 != "ERROR")
+        return CleanIniBool(val2, false)
+    val2 := IniRead(CommandsIni, sec2, aliasKey, "")
+    if (val2 != "" && val2 != "ERROR")
+        return CleanIniBool(val2, false)
+    val2 := IniRead(CommandsIni, sec2, key, "")
+    if (val2 != "" && val2 != "ERROR")
+        return CleanIniBool(val2, false)
+    ; 3) Layer default: [Settings] show_confirmation
+    layerVal := IniRead(CommandsIni, "Settings", "show_confirmation", "")
+    if (layerVal != "" && layerVal != "ERROR")
+        return CleanIniBool(layerVal, false)
+    ; 4) Defaults: Power true, others false
+    return (categoryInternal = "power")
+}
+
 ReadConfigValue(section, key, defaultValue := "") {
     if (section = "Hybrid" && key = "tap_timeout") {
         return "200"
@@ -2229,7 +2411,11 @@ CapsLock & Space:: {
                 }
             
             case "programs":
-                ; Programs menu - launch program and exit
+                ; Programs menu - launch program (with optional confirmation)
+                if (ShouldConfirmAction("programs")) {
+                    if (!ConfirmYN("Launch program?", "programs"))
+                        break
+                }
                 LaunchProgramFromKey(_key)
                 break
             
@@ -2239,7 +2425,11 @@ CapsLock & Space:: {
                 break
             
             case "information":
-                ; Information menu - insert info and exit
+                ; Information menu - insert info (with optional confirmation)
+                if (ShouldConfirmAction("information")) {
+                    if (!ConfirmYN("Insert information?", "information"))
+                        break
+                }
                 InsertInformationFromKey(_key)
                 break
             
@@ -2305,24 +2495,64 @@ CapsLock & Space:: {
                     ; Execute command based on category
                     switch category {
                         case "system":
+                            if (ShouldConfirmCommand("system", _key)) {
+                                if (!ConfirmYN("Execute System command?", "commands"))
+                                    break
+                            }
                             ExecuteSystemCommand(_key)
                         case "network":
+                            if (ShouldConfirmCommand("network", _key)) {
+                                if (!ConfirmYN("Execute Network command?", "commands"))
+                                    break
+                            }
                             ExecuteNetworkCommand(_key)
                         case "git":
+                            if (ShouldConfirmCommand("git", _key)) {
+                                if (!ConfirmYN("Execute Git command?", "commands"))
+                                    break
+                            }
                             ExecuteGitCommand(_key)
                         case "monitoring":
+                            if (ShouldConfirmCommand("monitoring", _key)) {
+                                if (!ConfirmYN("Execute Monitoring command?", "commands"))
+                                    break
+                            }
                             ExecuteMonitoringCommand(_key)
                         case "folder":
+                            if (ShouldConfirmCommand("folder", _key)) {
+                                if (!ConfirmYN("Execute Folder command?", "commands"))
+                                    break
+                            }
                             ExecuteFolderCommand(_key)
                         case "windows":
+                            if (ShouldConfirmCommand("windows", _key)) {
+                                if (!ConfirmYN("Execute Windows command?", "commands"))
+                                    break
+                            }
                             ExecuteWindowsCommand(_key)
                         case "power":
+                            if (ShouldConfirmCommand("power", _key)) {
+                                if (!ConfirmYN("Execute PowerOptions command?", "commands"))
+                                    break
+                            }
                             ExecutePowerOptionsCommand(_key)
                         case "adb":
+                            if (ShouldConfirmCommand("adb", _key)) {
+                                if (!ConfirmYN("Execute ADBTools command?", "commands"))
+                                    break
+                            }
                             ExecuteADBCommand(_key)
                         case "hybrid":
+                            if (ShouldConfirmCommand("hybrid", _key)) {
+                                if (!ConfirmYN("Execute HybridManagement command?", "commands"))
+                                    break
+                            }
                             ExecuteHybridManagementCommand(_key)
                         case "vaultflow":
+                            if (ShouldConfirmCommand("vaultflow", _key)) {
+                                if (!ConfirmYN("Execute VaultFlow command?", "commands"))
+                                    break
+                            }
                             ExecuteVaultFlowCommand(_key)
                     }
                     break  ; Exit after executing command
