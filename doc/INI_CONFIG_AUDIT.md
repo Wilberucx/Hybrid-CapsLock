@@ -175,7 +175,7 @@ Estado: En progreso → Confirmaciones jerárquicas implementadas y cableadas. R
 ### Checklist de acción
 - [x] F1: Timeouts jerárquicos.
 - [x] F2: Flags por capa + Persistencia + Recarga en caliente.
-- [ ] F3: Settings por capa (Programs/Information/Timestamps) — alcance acotado a `auto_launch` y `show_confirmation`.
+- [x] F3: Settings por capa (Programs/Information/Timestamps) — alcance acotado a `auto_launch` y `show_confirmation`.
 - [x] F4: Commands dinámicos — jerarquía de confirmación implementada (global > categoría > comando > default de capa). Per-category domina sobre per-command.
 - [x] F5: Zebar eliminado.
 - [ ] F6: Obsidian.

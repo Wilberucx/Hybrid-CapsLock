@@ -1,5 +1,10 @@
 # Capa de Comandos (Líder: leader → `c`)
 
+> Referencia rápida
+> - Configuración: config/commands.ini
+> - Confirmaciones: ver “Confirmaciones — Modelo de Configuración” en doc/CONFIGURATION.md y “Precedencia de Confirmación (Commands)” en este documento
+> - Tooltips (C#): sección [Tooltips] en config/configuration.ini (CONFIGURATION.md)
+
 Esta capa proporciona un **command palette jerárquico** que permite ejecutar scripts, comandos de terminal, comandos de PowerShell y aplicaciones directamente desde el teclado, organizados en categorías para una navegación más intuitiva.
 
 ## 🎯 Cómo Acceder
@@ -341,6 +346,39 @@ Run("powershell.exe -File \"C:\\Scripts\\mi_script.ps1\"")
 ```autohotkey
 Run, services.msc
 Run, devmgmt.msc
+```
+
+## ⚙️ Configuración y Confirmaciones
+
+### Precedencia de Confirmación (Commands)
+
+Orden (mayor a menor):
+1) Global: `configuration.ini` → `[Behavior]` → `show_confirmation_global`
+2) Categoría: `commands.ini` → `[CategorySettings]` `<Friendly>_show_confirmation`
+   - `true`: fuerza confirmación para toda la categoría (omite per-command)
+   - `false`: delega a per-command
+3) Per-command (listas): `commands.ini` → `[Confirmations.<Friendly>]`
+   - `confirm_keys`: teclas que DEBEN confirmar (case-sensitive)
+   - `no_confirm_keys`: teclas que NO deben confirmar
+   - Compatibilidad extendida: alias `key_ascii_<ord>` → `key_<char>` → clave raw
+4) Default de capa: `commands.ini` → `[Settings]` → `show_confirmation`
+5) Fallback: `power=true`, otros `false`
+
+Ejemplos:
+```ini
+[Behavior]
+show_confirmation_global=false
+
+[CategorySettings]
+PowerOptions_show_confirmation=true
+
+[Confirmations.HybridManagement]
+confirm_keys=R
+
+[Settings]
+show_confirmation=true
+[Confirmations.PowerOptions]
+no_confirm_keys=s h
 ```
 
 ## ⚙️ Configuración Avanzada

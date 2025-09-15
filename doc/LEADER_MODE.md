@@ -1,5 +1,9 @@
 # Modo Líder
 
+> Referencia rápida
+> - Configuración general: ver doc/CONFIGURATION.md (secciones [Behavior], [Layers], [Tooltips])
+> - Configuración por capa: PROGRAM_LAYER.md / TIMESTAMP_LAYER.md / COMMAND_LAYER.md / INFORMATION_LAYER.md / EXCEL_LAYER.md / WINDOWS_LAYER.md
+
 El Modo Líder es un sistema de menús contextuales que organiza funciones avanzadas en sub-capas especializadas. Proporciona acceso rápido a herramientas de gestión de ventanas, lanzamiento de programas y utilidades de timestamp.
 
 ## 🎯 Activación

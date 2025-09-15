@@ -1,1 +1,1 @@
-{"tooltip_type": "leader","title": "CLIPBOARD","items": [{"key": "status", "description": "COPIED"}],"navigation": ["Esc: Close"],"timeout_ms": 2000,"show": true}
+{"tooltip_type": "leader","title": "CAPSLOCK","items": [{"key": "status", "description": "HYBRID MODE"}],"navigation": ["Esc: Close"],"timeout_ms": 2000,"show": true}

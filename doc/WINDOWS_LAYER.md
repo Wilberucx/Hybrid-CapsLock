@@ -1,5 +1,9 @@
 # Capa de Ventanas (Líder: leader → `w`)
 
+> Referencia rápida
+> - Confirmaciones: no aplica (acciones inmediatas)
+> - Tooltips (C#): sección [Tooltips] en config/configuration.ini (CONFIGURATION.md)
+
 Esta capa proporciona herramientas avanzadas para la gestión de ventanas, división de pantalla y herramientas de zoom.
 
 ## 🎯 Cómo Acceder

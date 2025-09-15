@@ -429,6 +429,82 @@ ReadConfigValue(section, key, defaultValue := "") {
 }
 
 ; Status notification functions (Enhanced with C# tooltips)
+; Programs layer: per-command confirmation via lists
+ShouldConfirmPrograms(key) {
+    global ConfigIni, ProgramsIni
+    ; Global override
+    if (CleanIniBool(IniRead(ConfigIni, "Behavior", "show_confirmation_global", "false"), false))
+        return true
+    ; Per-command lists in programs.ini
+    confKeys := IniRead(ProgramsIni, "Confirmations.Programs", "confirm_keys", "")
+    noConfKeys := IniRead(ProgramsIni, "Confirmations.Programs", "no_confirm_keys", "")
+    if (confKeys != "" && KeyInList(key, confKeys))
+        return true
+    if (noConfKeys != "" && KeyInList(key, noConfKeys))
+        return false
+    ; Layer default
+    layerVal := IniRead(ProgramsIni, "Settings", "show_confirmation", "")
+    if (layerVal != "" && layerVal != "ERROR")
+        return CleanIniBool(layerVal, false)
+    return false
+}
+
+; Information layer: per-command confirmation via lists
+ShouldConfirmInformation(key) {
+    global ConfigIni, InfoIni
+    ; Global override
+    if (CleanIniBool(IniRead(ConfigIni, "Behavior", "show_confirmation_global", "false"), false))
+        return true
+    confKeys := IniRead(InfoIni, "Confirmations.Information", "confirm_keys", "")
+    noConfKeys := IniRead(InfoIni, "Confirmations.Information", "no_confirm_keys", "")
+    if (confKeys != "" && KeyInList(key, confKeys))
+        return true
+    if (noConfKeys != "" && KeyInList(key, noConfKeys))
+        return false
+    layerVal := IniRead(InfoIni, "Settings", "show_confirmation", "")
+    if (layerVal != "" && layerVal != "ERROR")
+        return CleanIniBool(layerVal, false)
+    return false
+}
+
+; Timestamps layer: per-category and per-command confirmation via lists
+ShouldConfirmTimestamp(mode, key) {
+    global ConfigIni, TimestampsIni
+    ; 0) Global override
+    if (CleanIniBool(IniRead(ConfigIni, "Behavior", "show_confirmation_global", "false"), false))
+        return true
+    ; Normalize mode to Friendly names
+    friendly := ""
+    switch mode {
+        case "date": friendly := "Date"
+        case "time": friendly := "Time"
+        case "datetime": friendly := "DateTime"
+        default: friendly := mode
+    }
+    ; 1) Per-category: [CategorySettings] <Friendly>_show_confirmation
+    catKey := friendly . "_show_confirmation"
+    catVal := IniRead(TimestampsIni, "CategorySettings", catKey, "")
+    if (catVal != "" && catVal != "ERROR") {
+        if (CleanIniBool(catVal, false))
+            return true
+        ; false -> continue to per-command
+    }
+    ; 2) Per-command lists: [Confirmations.<Friendly>] confirm_keys / no_confirm_keys
+    sec := "Confirmations." . friendly
+    confKeys := IniRead(TimestampsIni, sec, "confirm_keys", "")
+    noConfKeys := IniRead(TimestampsIni, sec, "no_confirm_keys", "")
+    if (confKeys != "" && KeyInList(key, confKeys))
+        return true
+    if (noConfKeys != "" && KeyInList(key, noConfKeys))
+        return false
+    ; 3) Layer default
+    layerVal := IniRead(TimestampsIni, "Settings", "show_confirmation", "")
+    if (layerVal != "" && layerVal != "ERROR")
+        return CleanIniBool(layerVal, false)
+    ; 4) Fallback
+    return false
+}
+
 ShowCopyNotification() {
     if (tooltipConfig.enabled) {
         ShowCopyNotificationCS()
@@ -906,6 +982,12 @@ HandleTimestampMode(mode) {
                     break  ; Back to timestamp menu
                 }
                 
+                if (ShouldConfirmTimestamp("date", dateInput.Input)) {
+                    if (!ConfirmYN("Insert date?", "timestamps")) {
+                        dateInput.Stop()
+                        return
+                    }
+                }
                 WriteTimestampFromKey("date", dateInput.Input)
                 return  ; Exit after inserting timestamp
             }
@@ -926,6 +1008,12 @@ HandleTimestampMode(mode) {
                     break  ; Back to timestamp menu
                 }
                 
+                if (ShouldConfirmTimestamp("time", timeInput.Input)) {
+                    if (!ConfirmYN("Insert time?", "timestamps")) {
+                        timeInput.Stop()
+                        return
+                    }
+                }
                 WriteTimestampFromKey("time", timeInput.Input)
                 return  ; Exit after inserting timestamp
             }
@@ -946,6 +1034,12 @@ HandleTimestampMode(mode) {
                     break  ; Back to timestamp menu
                 }
                 
+                if (ShouldConfirmTimestamp("datetime", datetimeInput.Input)) {
+                    if (!ConfirmYN("Insert date/time?", "timestamps")) {
+                        datetimeInput.Stop()
+                        return
+                    }
+                }
                 WriteTimestampFromKey("datetime", datetimeInput.Input)
                 return  ; Exit after inserting timestamp
             }
@@ -2411,8 +2505,8 @@ CapsLock & Space:: {
                 }
             
             case "programs":
-                ; Programs menu - launch program (with optional confirmation)
-                if (ShouldConfirmAction("programs")) {
+                ; Programs menu - launch program (with per-command confirmation lists)
+                if (ShouldConfirmPrograms(_key)) {
                     if (!ConfirmYN("Launch program?", "programs"))
                         break
                 }
@@ -2425,8 +2519,8 @@ CapsLock & Space:: {
                 break
             
             case "information":
-                ; Information menu - insert info (with optional confirmation)
-                if (ShouldConfirmAction("information")) {
+                ; Information menu - insert info (with per-command confirmation lists)
+                if (ShouldConfirmInformation(_key)) {
                     if (!ConfirmYN("Insert information?", "information"))
                         break
                 }
@@ -2558,6 +2652,10 @@ CapsLock & Space:: {
                     break  ; Exit after executing command
                 } else if (InStr(currentMenu, "timestamps_")) {
                     mode := StrReplace(currentMenu, "timestamps_", "")
+                    if (ShouldConfirmTimestamp(mode, _key)) {
+                        if (!ConfirmYN("Insert timestamp?", "timestamps"))
+                            break
+                    }
                     WriteTimestampFromKey(mode, _key)
                     break  ; Exit after inserting timestamp
                 }

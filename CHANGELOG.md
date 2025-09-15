@@ -9,6 +9,9 @@
 - **Programs layer centralized** - All program settings moved to dedicated configuration file
 
 ### ✨ **Added**
+- Documentation: Updated CONFIGURATION.md with consolidated confirmation precedence (global, per-category, per-command, per-layer) and examples.
+- Documentation: Added confirmation precedence sections to COMMAND_LAYER.md and TIMESTAMP_LAYER.md for consistency.
+
 - **Sistema de Tooltips Mejorado (C# + WPF)** - Reemplazo completo de tooltips nativos de AutoHotkey
   - Tooltips estilo Nvim con diseño profesional y colores personalizados
   - Aplicación C# independiente (`TooltipApp.exe`) con comunicación JSON
