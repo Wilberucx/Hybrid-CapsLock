@@ -2132,7 +2132,7 @@ CapsLock & Tab:: {
 }
 
 ; ----- Click Functions -----
-CapsLock & `;:: {
+CapsLock & vkBA:: {
     global rightClickHeld, capsLockUsedAsModifier
     ; Mark that CapsLock was used as a modifier
     capsLockUsedAsModifier := true
