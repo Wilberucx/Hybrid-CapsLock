@@ -342,6 +342,34 @@ GetFriendlyCategoryName(cat) {
     }
 }
 
+NormalizeCategoryToken(name) {
+    n := StrLower(Trim(name))
+    n := RegExReplace(n, "[\s_]+", "")
+    switch n {
+        case "system": return "system"
+        case "network": return "network"
+        case "git": return "git"
+        case "monitoring": return "monitoring"
+        case "folder": return "folder"
+        case "windows": return "windows"
+        case "power", "poweroptions": return "power"
+        case "adb", "adbtools": return "adb"
+        case "hybrid", "hybridmanagement": return "hybrid"
+        case "vaultflow": return "vaultflow"
+        default: return ""
+    }
+}
+
+GetInternalCategoryFromIniKey(key) {
+    global CommandsIni
+    key := StrLower(key)
+    iniVal := IniRead(CommandsIni, "Categories", key, "")
+    if (iniVal != "" && iniVal != "ERROR") {
+        return NormalizeCategoryToken(iniVal)
+    }
+    return ""
+}
+
 ShouldConfirmCommand(categoryInternal, key) {
     global ConfigIni, CommandsIni
     ; 0) Global override

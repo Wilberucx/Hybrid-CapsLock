@@ -122,6 +122,21 @@ Requisitos: AutoHotkey v2.x
 
 ## 🔧 Configuración
 
+Mini referencia (para empezar en 2 minutos)
+- Ejecuta HybridCapsLock.ahk
+- Abre config/configuration.ini y ajusta:
+  - [Behavior]: global_timeout_seconds, leader_timeout_seconds, show_confirmation_global
+  - [Layers]: habilita/deshabilita nvim/excel/modifier/leader
+  - [Tooltips]: enable_csharp_tooltips, options_menu_timeout, status_notification_timeout
+- Configura por capa:
+  - Programs: config/programs.ini (ProgramMapping, MenuDisplay). Ver doc/PROGRAM_LAYER.md
+  - Information: config/information.ini (PersonalInfo, InfoMapping, MenuDisplay). Ver doc/INFORMATION_LAYER.md
+  - Timestamps: config/timestamps.ini (Date/Time/DateTime formats, MenuDisplay). Ver doc/TIMESTAMP_LAYER.md
+  - Commands: config/commands.ini (MenuDisplay, Settings, CategorySettings, Confirmations). Ver doc/COMMAND_LAYER.md
+- Confirmaciones: ver doc/CONFIGURATION.md → "Confirmaciones — Modelo de Configuración"
+- Recarga cambios: leader → c → h → R
+
+
 ### 📁 Sistema de Configuración Modular (Carpeta `config/`)
 
 - **`config/configuration.ini`** - Configuración principal con 75+ opciones

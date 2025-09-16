@@ -77,6 +77,34 @@ ReloadTooltipConfig() {
 
 ; ===================================================================
 ; FUNCIONES PRINCIPALES DE TOOLTIP C#
+
+; Helper: Build items string from commands.ini [MenuDisplay] using a key prefix
+BuildCommandItemsFromIni(prefix, maxLines := 20) {
+    global CommandsIni
+    items := ""
+    Loop maxLines {
+        lineContent := IniRead(CommandsIni, "MenuDisplay", prefix . A_Index, "")
+        if (lineContent != "" && lineContent != "ERROR") {
+            cleanLine := RegExReplace(lineContent, "\s{2,}", "|||")
+            parts := StrSplit(cleanLine, "|||")
+            for _, part in parts {
+                part := Trim(part)
+                if (part != "" && InStr(part, " - ")) {
+                    dashPos := InStr(part, " - ")
+                    key := Trim(SubStr(part, 1, dashPos - 1))
+                    desc := Trim(SubStr(part, dashPos + 3))
+                    if (StrLen(key) = 1 && RegExMatch(key, "^[A-Za-z0-9]$")) {
+                        if (items != "")
+                            items .= "|"
+                        items .= key . ":" . desc
+                    }
+                }
+            }
+        }
+    }
+    return items
+}
+
 ; ===================================================================
 
 ; Función principal para mostrar tooltip C# (con timeout personalizado)
@@ -313,7 +341,10 @@ ShowInformationMenuCS() {
 
 ; Reemplazar ShowCommandsMenu() original
 ShowCommandsMenuCS() {
-    items := "s:System Commands|n:Network Commands|g:Git Commands|m:Monitoring Commands|f:Folder Commands|w:Windows Commands|o:Power Options|a:ADB Tools|v:VaultFlow|h:Hybrid Management"
+    items := BuildCommandItemsFromIni("main_line")
+    if (items = "") {
+        items := "s:System Commands|n:Network Commands|g:Git Commands|m:Monitoring Commands|f:Folder Commands|w:Windows Commands|o:Power Options|a:ADB Tools|v:VaultFlow|h:Hybrid Management"
+    }
     ShowCSharpOptionsMenu("COMMAND PALETTE", items, "\\: Back|ESC: Exit")
 }
 
@@ -589,37 +620,55 @@ ShowDeleteMenuCS() {
 
 ; Submenú System Commands (leader → c → s)
 ShowSystemCommandsMenuCS() {
-    items := "s:System Info|t:Task Manager|v:Services|e:Event Viewer|d:Device Manager|c:Disk Cleanup"
+    items := BuildCommandItemsFromIni("system_line")
+    if (items = "") {
+        items := "s:System Info|t:Task Manager|v:Services|e:Event Viewer|d:Device Manager|c:Disk Cleanup"
+    }
     ShowCSharpOptionsMenu("SYSTEM COMMANDS", items, "\\: Back|ESC: Exit")
 }
 
 ; Submenú Network Commands (leader → c → n)
 ShowNetworkCommandsMenuCS() {
-    items := "i:IP Config|p:Ping Google|n:Netstat"
+    items := BuildCommandItemsFromIni("network_line")
+    if (items = "") {
+        items := "i:IP Config|p:Ping Google|n:Netstat"
+    }
     ShowCSharpOptionsMenu("NETWORK COMMANDS", items, "\\: Back|ESC: Exit")
 }
 
 ; Submenú Git Commands (leader → c → g)
 ShowGitCommandsMenuCS() {
-    items := "s:Status|l:Log|b:Branches|d:Diff|a:Add All|p:Pull"
+    items := BuildCommandItemsFromIni("git_line")
+    if (items = "") {
+        items := "s:Status|l:Log|b:Branches|d:Diff|a:Add All|p:Pull"
+    }
     ShowCSharpOptionsMenu("GIT COMMANDS", items, "\\: Back|ESC: Exit")
 }
 
 ; Submenú Monitoring Commands (leader → c → m)
 ShowMonitoringCommandsMenuCS() {
-    items := "p:Processes|s:Services|d:Disk Usage|m:Memory|c:CPU Usage"
+    items := BuildCommandItemsFromIni("monitoring_line")
+    if (items = "") {
+        items := "p:Processes|s:Services|d:Disk Usage|m:Memory|c:CPU Usage"
+    }
     ShowCSharpOptionsMenu("MONITORING COMMANDS", items, "\\: Back|ESC: Exit")
 }
 
 ; Submenú Folder Commands (leader → c → f)
 ShowFolderCommandsMenuCS() {
-    items := "t:Temp|a:AppData|p:Program Files|u:User Profile|d:Desktop|s:System32"
+    items := BuildCommandItemsFromIni("folder_line")
+    if (items = "") {
+        items := "t:Temp|a:AppData|p:Program Files|u:User Profile|d:Desktop|s:System32"
+    }
     ShowCSharpOptionsMenu("FOLDER ACCESS", items, "\\: Back|ESC: Exit")
 }
 
 ; Submenú Windows Commands (leader → c → w)
 ShowWindowsCommandsMenuCS() {
-    items := "h:Toggle Hidden Files|r:Registry Editor|e:Environment Variables"
+    items := BuildCommandItemsFromIni("windows_line")
+    if (items = "") {
+        items := "h:Toggle Hidden Files|r:Registry Editor|e:Environment Variables"
+    }
     ShowCSharpOptionsMenu("WINDOWS COMMANDS", items, "\\: Back|ESC: Exit")
 }
 
@@ -643,7 +692,10 @@ ShowHybridManagementMenuCS() {
 
 ; Submenú VaultFlow Commands (leader → c → v)
 ShowVaultFlowCommandsMenuCS() {
-    items := "v:Run VaultFlow|s:VaultFlow Status|l:List Vaults|h:VaultFlow Help"
+    items := BuildCommandItemsFromIni("vaultflow_line")
+    if (items = "") {
+        items := "v:Run VaultFlow|s:VaultFlow Status|l:List Vaults|h:VaultFlow Help"
+    }
     ShowCSharpOptionsMenu("VAULTFLOW COMMANDS", items, "\\: Back|ESC: Exit")
 }
 
