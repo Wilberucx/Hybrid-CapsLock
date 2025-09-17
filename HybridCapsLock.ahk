@@ -409,7 +409,17 @@ ShouldConfirmCommand(categoryInternal, key) {
             ; false -> continue to per-command
         }
     }
-    ; 2) Per-command via lists first: [Confirmations.<Friendly>] confirm_keys / no_confirm_keys
+    ; 2) Per-command via lists first: prefer [Confirmations.<catKey>] then [Confirmations.<Friendly>] confirm_keys / no_confirm_keys
+    catSym := GetCategoryKeySymbol(categoryInternal)
+    if (catSym != "") {
+        secKey := "Confirmations." . catSym
+        confKeys := IniRead(CommandsIni, secKey, "confirm_keys", "")
+        noConfKeys := IniRead(CommandsIni, secKey, "no_confirm_keys", "")
+        if (confKeys != "" && KeyInList(key, confKeys))
+            return true
+        if (noConfKeys != "" && KeyInList(key, noConfKeys))
+            return false
+    }
     sec := "Confirmations." . friendly
     confKeys := IniRead(CommandsIni, sec, "confirm_keys", "")
     noConfKeys := IniRead(CommandsIni, sec, "no_confirm_keys", "")
