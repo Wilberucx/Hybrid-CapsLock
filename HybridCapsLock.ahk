@@ -392,6 +392,17 @@ ShouldConfirmCommand(categoryInternal, key) {
     if (CleanIniBool(IniRead(ConfigIni, "Behavior", "show_confirmation_global", "false"), false))
         return true
     friendly := GetFriendlyCategoryName(categoryInternal)
+    ; 0.5) Per-category (new schema): [<catKey>_category] <key>_show_confirmation
+    catSym := GetCategoryKeySymbol(categoryInternal)
+    if (catSym != "") {
+        secCat := catSym . "_category"
+        newCatFlag := IniRead(CommandsIni, secCat, catSym . "_show_confirmation", "")
+        if (newCatFlag != "" && newCatFlag != "ERROR") {
+            if (CleanIniBool(newCatFlag, false))
+                return true
+            ; If explicitly false, continue to other checks
+        }
+    }
     ; 1) Per-category first: [CategorySettings] <Friendly>_show_confirmation (overrides per-command)
     catKey := friendly . "_show_confirmation"
     catVal := IniRead(CommandsIni, "CategorySettings", catKey, "")
@@ -409,7 +420,28 @@ ShouldConfirmCommand(categoryInternal, key) {
             ; false -> continue to per-command
         }
     }
-    ; 2) Per-command via lists first: prefer [Confirmations.<catKey>] then [Confirmations.<Friendly>] confirm_keys / no_confirm_keys
+    ; 2) Per-command via lists first: prefer [<catKey>_category] lists (new), then [Confirmations.<catKey>], then [Confirmations.<Friendly>] confirm_keys / no_confirm_keys
+    ; New schema lists in [<catKey>_category]
+    if (catSym != "") {
+        secCat := catSym . "_category"
+        confKeys := IniRead(CommandsIni, secCat, "confirm_keys", "")
+        noConfKeys := IniRead(CommandsIni, secCat, "no_confirm_keys", "")
+        if (confKeys != "" && KeyInList(key, confKeys))
+            return true
+        if (noConfKeys != "" && KeyInList(key, noConfKeys))
+            return false
+    }
+    ; Key-based confirmations
+    if (catSym != "") {
+        secKey := "Confirmations." . catSym
+        confKeys := IniRead(CommandsIni, secKey, "confirm_keys", "")
+        noConfKeys := IniRead(CommandsIni, secKey, "no_confirm_keys", "")
+        if (confKeys != "" && KeyInList(key, confKeys))
+            return true
+        if (noConfKeys != "" && KeyInList(key, noConfKeys))
+            return false
+    }
+    ; Friendly-based confirmations
     catSym := GetCategoryKeySymbol(categoryInternal)
     if (catSym != "") {
         secKey := "Confirmations." . catSym
@@ -1280,7 +1312,7 @@ BuildCommandsMainMenuText() {
     text := ""
     order := IniRead(CommandsIni, "Categories", "order", "")
     if (order != "" && order != "ERROR") {
-        keys := StrSplit(order, " ")
+        keys := StrSplit(order, [",", " ", "`t"])
         for _, k in keys {
             k := Trim(k)
             if (k = "")
