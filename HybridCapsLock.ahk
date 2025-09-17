@@ -370,6 +370,22 @@ GetInternalCategoryFromIniKey(key) {
     return ""
 }
 
+GetCategoryKeySymbol(categoryInternal) {
+    switch categoryInternal {
+        case "system": return "s"
+        case "network": return "n"
+        case "git": return "g"
+        case "monitoring": return "m"
+        case "folder": return "f"
+        case "windows": return "w"
+        case "power": return "o"
+        case "adb": return "a"
+        case "hybrid": return "h"
+        case "vaultflow": return "v"
+        default: return ""
+    }
+}
+
 ShouldConfirmCommand(categoryInternal, key) {
     global ConfigIni, CommandsIni
     ; 0) Global override
