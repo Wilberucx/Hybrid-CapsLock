@@ -389,7 +389,7 @@ ShowInformationMenuCS() {
 ShowCommandsMenuCS() {
     items := BuildCommandsMainItemsFromCategories()
     if (items = "") {
-        items := BuildCommandItemsFromIni("main_line")
+        BuildCommandsMainItemsFromCategories()
         if (items = "")
             items := "s:System Commands|n:Network Commands|g:Git Commands|m:Monitoring Commands|f:Folder Commands|w:Windows Commands|o:Power Options|a:ADB Tools|v:VaultFlow|h:Hybrid Management"
     }
@@ -670,7 +670,7 @@ ShowDeleteMenuCS() {
 ShowSystemCommandsMenuCS() {
     items := BuildCommandItemsFromCategoryKey("s")
     if (items = "") {
-        items := BuildCommandItemsFromIni("system_line")
+        BuildCommandItemsFromCategoryKey("s")
         if (items = "")
             items := "s:System Info|t:Task Manager|v:Services|e:Event Viewer|d:Device Manager|c:Disk Cleanup"
     }
@@ -679,45 +679,55 @@ ShowSystemCommandsMenuCS() {
 
 ; Submenú Network Commands (leader → c → n)
 ShowNetworkCommandsMenuCS() {
-    items := BuildCommandItemsFromIni("network_line")
+    items := BuildCommandItemsFromCategoryKey("n")
     if (items = "") {
-        items := "i:IP Config|p:Ping Google|n:Netstat"
+        BuildCommandItemsFromCategoryKey("n")
+        if (items = "")
+            items := "i:IP Config|p:Ping Google|n:Netstat"
     }
     ShowCSharpOptionsMenu("NETWORK COMMANDS", items, "\\: Back|ESC: Exit")
 }
 
 ; Submenú Git Commands (leader → c → g)
 ShowGitCommandsMenuCS() {
-    items := BuildCommandItemsFromIni("git_line")
+    items := BuildCommandItemsFromCategoryKey("g")
     if (items = "") {
-        items := "s:Status|l:Log|b:Branches|d:Diff|a:Add All|p:Pull"
+        BuildCommandItemsFromCategoryKey("g")
+        if (items = "")
+            items := "s:Status|l:Log|b:Branches|d:Diff|a:Add All|p:Pull"
     }
     ShowCSharpOptionsMenu("GIT COMMANDS", items, "\\: Back|ESC: Exit")
 }
 
 ; Submenú Monitoring Commands (leader → c → m)
 ShowMonitoringCommandsMenuCS() {
-    items := BuildCommandItemsFromIni("monitoring_line")
+    items := BuildCommandItemsFromCategoryKey("m")
     if (items = "") {
-        items := "p:Processes|s:Services|d:Disk Usage|m:Memory|c:CPU Usage"
+        BuildCommandItemsFromCategoryKey("m")
+        if (items = "")
+            items := "p:Processes|s:Services|d:Disk Usage|m:Memory|c:CPU Usage"
     }
     ShowCSharpOptionsMenu("MONITORING COMMANDS", items, "\\: Back|ESC: Exit")
 }
 
 ; Submenú Folder Commands (leader → c → f)
 ShowFolderCommandsMenuCS() {
-    items := BuildCommandItemsFromIni("folder_line")
+    items := BuildCommandItemsFromCategoryKey("f")
     if (items = "") {
-        items := "t:Temp|a:AppData|p:Program Files|u:User Profile|d:Desktop|s:System32"
+        BuildCommandItemsFromCategoryKey("f")
+        if (items = "")
+            items := "t:Temp|a:AppData|p:Program Files|u:User Profile|d:Desktop|s:System32"
     }
     ShowCSharpOptionsMenu("FOLDER ACCESS", items, "\\: Back|ESC: Exit")
 }
 
 ; Submenú Windows Commands (leader → c → w)
 ShowWindowsCommandsMenuCS() {
-    items := BuildCommandItemsFromIni("windows_line")
+    items := BuildCommandItemsFromCategoryKey("w")
     if (items = "") {
-        items := "h:Toggle Hidden Files|r:Registry Editor|e:Environment Variables"
+        BuildCommandItemsFromCategoryKey("w")
+        if (items = "")
+            items := "h:Toggle Hidden Files|r:Registry Editor|e:Environment Variables"
     }
     ShowCSharpOptionsMenu("WINDOWS COMMANDS", items, "\\: Back|ESC: Exit")
 }
@@ -730,21 +740,29 @@ ShowPowerOptionsCommandsMenuCS() {
 
 ; Submenú ADB Tools (leader → c → a)
 ShowADBCommandsMenuCS() {
-    items := "d:List Devices|i:Install APK|u:Uninstall Package|l:Logcat|s:Shell|r:Reboot Device|c:Clear App Data"
+    items := BuildCommandItemsFromCategoryKey("a")
+    if (items = "") {
+        items := "d:List Devices|i:Install APK|u:Uninstall Package|l:Logcat|s:Shell|r:Reboot Device|c:Clear App Data"
+    }
     ShowCSharpOptionsMenu("ADB TOOLS", items, "\\: Back|ESC: Exit")
 }
 
 ; Submenú Hybrid Management (leader → c → h)
 ShowHybridManagementMenuCS() {
-    items := "R:Reload Script|e:Exit Script|c:Open Config Folder|l:View Log File|v:Show Version Info|r:Reload Config"
+    items := BuildCommandItemsFromCategoryKey("h")
+    if (items = "") {
+        items := "R:Reload Script|e:Exit Script|c:Open Config Folder|l:View Log File|v:Show Version Info|r:Reload Config"
+    }
     ShowCSharpOptionsMenu("HYBRID MANAGEMENT", items, "\\: Back|ESC: Exit")
 }
 
 ; Submenú VaultFlow Commands (leader → c → v)
 ShowVaultFlowCommandsMenuCS() {
-    items := BuildCommandItemsFromIni("vaultflow_line")
+    items := BuildCommandItemsFromCategoryKey("v")
     if (items = "") {
-        items := "v:Run VaultFlow|s:VaultFlow Status|l:List Vaults|h:VaultFlow Help"
+        BuildCommandItemsFromCategoryKey("v")
+        if (items = "")
+            items := "v:Run VaultFlow|s:VaultFlow Status|l:List Vaults|h:VaultFlow Help"
     }
     ShowCSharpOptionsMenu("VAULTFLOW COMMANDS", items, "\\: Back|ESC: Exit")
 }
