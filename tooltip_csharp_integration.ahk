@@ -387,9 +387,11 @@ ShowInformationMenuCS() {
 
 ; Reemplazar ShowCommandsMenu() original
 ShowCommandsMenuCS() {
-    items := BuildCommandItemsFromIni("main_line")
+    items := BuildCommandsMainItemsFromCategories()
     if (items = "") {
-        items := "s:System Commands|n:Network Commands|g:Git Commands|m:Monitoring Commands|f:Folder Commands|w:Windows Commands|o:Power Options|a:ADB Tools|v:VaultFlow|h:Hybrid Management"
+        items := BuildCommandItemsFromIni("main_line")
+        if (items = "")
+            items := "s:System Commands|n:Network Commands|g:Git Commands|m:Monitoring Commands|f:Folder Commands|w:Windows Commands|o:Power Options|a:ADB Tools|v:VaultFlow|h:Hybrid Management"
     }
     ShowCSharpOptionsMenu("COMMAND PALETTE", items, "\\: Back|ESC: Exit")
 }
@@ -666,9 +668,11 @@ ShowDeleteMenuCS() {
 
 ; Submenú System Commands (leader → c → s)
 ShowSystemCommandsMenuCS() {
-    items := BuildCommandItemsFromIni("system_line")
+    items := BuildCommandItemsFromCategoryKey("s")
     if (items = "") {
-        items := "s:System Info|t:Task Manager|v:Services|e:Event Viewer|d:Device Manager|c:Disk Cleanup"
+        items := BuildCommandItemsFromIni("system_line")
+        if (items = "")
+            items := "s:System Info|t:Task Manager|v:Services|e:Event Viewer|d:Device Manager|c:Disk Cleanup"
     }
     ShowCSharpOptionsMenu("SYSTEM COMMANDS", items, "\\: Back|ESC: Exit")
 }
