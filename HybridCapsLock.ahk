@@ -1274,6 +1274,27 @@ WriteTimestampFromKey(mode, keyPressed) {
 ; Commands layer implementation - accessed via Leader mode (CapsLock + Space → c)
 
 ; Main commands menu
+; Helper to build Commands main menu from new schema ([Categories] / [<key>_category])
+BuildCommandsMainMenuText() {
+    global CommandsIni
+    text := ""
+    order := IniRead(CommandsIni, "Categories", "order", "")
+    if (order != "" && order != "ERROR") {
+        keys := StrSplit(order, " ")
+        for _, k in keys {
+            k := Trim(k)
+            if (k = "")
+                continue
+            name := IniRead(CommandsIni, k . "_category", "title", "")
+            if (name = "" || name = "ERROR")
+                name := IniRead(CommandsIni, "Categories", k, "")
+            if (name != "" && name != "ERROR")
+                text .= k . " - " . name . "`n"
+        }
+    }
+    return text
+}
+
 ShowCommandsMenu() {
     if (tooltipConfig.enabled) {
         ShowCommandsMenuCS()
