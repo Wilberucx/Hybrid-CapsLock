@@ -1306,12 +1306,18 @@ ShowCommandsMenu() {
         menuText := "COMMAND PALETTE`n`n"
         
         ; Try to read from commands.ini, fallback to hardcoded menu
-        hasConfigMenu := false
-        Loop 20 {
-            lineContent := IniRead(CommandsIni, "MenuDisplay", "main_line" . A_Index, "")
-            if (lineContent != "" && lineContent != "ERROR") {
-                menuText .= lineContent . "`n"
-                hasConfigMenu := true
+        configText := BuildCommandsMainMenuText()
+        if (configText != "") {
+            menuText .= configText
+            hasConfigMenu := true
+        } else {
+            hasConfigMenu := false
+            Loop 20 {
+                lineContent := IniRead(CommandsIni, "MenuDisplay", "main_line" . A_Index, "")
+                if (lineContent != "" && lineContent != "ERROR") {
+                    menuText .= lineContent . "`n"
+                    hasConfigMenu := true
+                }
             }
         }
         
