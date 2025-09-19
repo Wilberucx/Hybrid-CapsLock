@@ -304,45 +304,48 @@ ShowLeaderModeMenuCS() {
 
 ; Reemplazar ShowProgramMenu() original  
 ShowProgramMenuCS() {
+    items := GenerateProgramItemsForCS()
+    ShowCSharpOptionsMenu("PROGRAM LAUNCHER", items, "\\: Back|ESC: Exit")
+}
+
+; Generate program items for C# tooltips from ProgramMapping order
+GenerateProgramItemsForCS() {
+    global ProgramsIni
     items := ""
     
-    ; Leer configuración dinámica desde programs.ini
-    Loop 10 {
-        lineContent := IniRead(ProgramsIni, "MenuDisplay", "line" . A_Index, "")
-        if (lineContent != "" && lineContent != "ERROR") {
-            ; Método simple: dividir por múltiples espacios y procesar cada parte
-            ; Primero, reemplazar múltiples espacios con un delimitador único
-            cleanLine := RegExReplace(lineContent, "\s{3,}", "|||")
-            
-            ; Dividir por el delimitador
-            parts := StrSplit(cleanLine, "|||")
-            
-            ; Procesar cada parte
-            for index, part in parts {
-                part := Trim(part)
-                if (part != "" && InStr(part, " - ")) {
-                    ; Extraer key y descripción
-                    dashPos := InStr(part, " - ")
-                    key := Trim(SubStr(part, 1, dashPos - 1))
-                    desc := Trim(SubStr(part, dashPos + 3))
-                    
-                    ; Validar que la key sea una sola letra
-                    if (StrLen(key) = 1 && RegExMatch(key, "^[a-z]$")) {
-                        if (items != "")
-                            items .= "|"
-                        items .= key . ":" . desc
-                    }
-                }
-            }
-        }
+    ; Read order from ProgramMapping
+    orderStr := IniRead(ProgramsIni, "ProgramMapping", "order", "")
+    if (orderStr = "" || orderStr = "ERROR") {
+        ; Fallback order
+        orderStr := "e i t v n o b z m w l r q p k f"
     }
     
-    ; Fallback si no hay configuración
+    ; Split order into individual keys
+    keys := StrSplit(orderStr, " ")
+    
+    ; Process keys and build items string
+    Loop keys.Length {
+        key := Trim(keys[A_Index])
+        if (key = "")
+            continue
+            
+        ; Get program name for this key
+        programName := IniRead(ProgramsIni, "ProgramMapping", key, "")
+        if (programName = "" || programName = "ERROR")
+            continue
+            
+        ; Add to items string
+        if (items != "")
+            items .= "|"
+        items .= key . ":" . programName
+    }
+    
+    ; Fallback if no configuration found
     if (items == "") {
-        items := "e:Explorer|i:Settings|t:Terminal|v:VS Code|n:Notepad|o:Obsidian|b:Vivaldi|z:Zen Browser"
+        items := "e:Explorer|i:Settings|t:Terminal|v:VisualStudio|n:Notepad|o:Obsidian|b:Vivaldi|z:Zen"
     }
     
-    ShowCSharpOptionsMenu("PROGRAM LAUNCHER", items, "\\: Back|ESC: Exit")
+    return items
 }
 
 ; Reemplazar ShowWindowMenu() original

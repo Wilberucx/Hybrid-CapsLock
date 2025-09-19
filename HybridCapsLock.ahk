@@ -515,23 +515,42 @@ ReadConfigValue(section, key, defaultValue := "") {
 }
 
 ; Status notification functions (Enhanced with C# tooltips)
-; Programs layer: per-command confirmation via lists
+; Programs layer: per-command confirmation via lists (new simplified structure)
 ShouldConfirmPrograms(key) {
     global ConfigIni, ProgramsIni
-    ; Global override
+    
+    ; 0) Global override
     if (CleanIniBool(IniRead(ConfigIni, "Behavior", "show_confirmation_global", "false"), false))
         return true
-    ; Per-command lists in programs.ini
-    confKeys := IniRead(ProgramsIni, "Confirmations.Programs", "confirm_keys", "")
-    noConfKeys := IniRead(ProgramsIni, "Confirmations.Programs", "no_confirm_keys", "")
+    
+    ; 1) Per-command lists: [ProgramMapping] confirm_keys / no_confirm_keys
+    confKeys := IniRead(ProgramsIni, "ProgramMapping", "confirm_keys", "")
+    noConfKeys := IniRead(ProgramsIni, "ProgramMapping", "no_confirm_keys", "")
     if (confKeys != "" && KeyInList(key, confKeys))
         return true
     if (noConfKeys != "" && KeyInList(key, noConfKeys))
         return false
-    ; Layer default
+    
+    ; 2) Per-command individual: [ProgramMapping] key_ascii_<ord> / key_<char> / raw key
+    sec := "ProgramMapping"
+    aliasAscii := "key_ascii_" . Ord(key)
+    val := IniRead(ProgramsIni, sec, aliasAscii, "")
+    if (val != "" && val != "ERROR")
+        return CleanIniBool(val, false)
+    aliasKey := "key_" . key
+    val := IniRead(ProgramsIni, sec, aliasKey, "")
+    if (val != "" && val != "ERROR")
+        return CleanIniBool(val, false)
+    val := IniRead(ProgramsIni, sec, key, "")
+    if (val != "" && val != "ERROR")
+        return CleanIniBool(val, false)
+    
+    ; 3) Layer default: [Settings] show_confirmation
     layerVal := IniRead(ProgramsIni, "Settings", "show_confirmation", "")
     if (layerVal != "" && layerVal != "ERROR")
         return CleanIniBool(layerVal, false)
+    
+    ; 4) Fallback default
     return false
 }
 
@@ -2618,7 +2637,15 @@ CapsLock & Space:: {
                 }
             
             case "programs":
-                ; Programs menu - launch program (with per-command confirmation lists)
+                ; Programs menu - check auto_launch setting
+                autoLaunch := CleanIniBool(IniRead(ProgramsIni, "Settings", "auto_launch", "true"), true)
+                if (!autoLaunch) {
+                    ; Show program details instead of launching
+                    ShowProgramDetails(_key)
+                    break
+                }
+                
+                ; Auto-launch mode - launch program (with per-command confirmation lists)
                 if (ShouldConfirmPrograms(_key)) {
                     if (!ConfirmYN("Launch program?", "programs"))
                         break
@@ -3116,23 +3143,62 @@ ShowProgramMenu() {
     if (tooltipConfig.enabled) {
         ShowProgramMenuCS()
     } else {
-        ; Fallback to native tooltips
-        global ProgramsIni
+        ; Generate menu dynamically from ProgramMapping order
+        menuText := GenerateProgramMenuText()
         ToolTipX := A_ScreenWidth // 2 - 120
         ToolTipY := A_ScreenHeight // 2 - 150
-        menuText := "PROGRAM LAUNCHER`n`n"
-        
-        ; Read menu lines dynamically from programs.ini
-        Loop 10 {
-            lineContent := IniRead(ProgramsIni, "MenuDisplay", "line" . A_Index, "")
-            if (lineContent != "" && lineContent != "ERROR") {
-                menuText .= lineContent . "`n"
-            }
-        }
-        
-        menuText .= "`n[\: Back] [Esc: Exit]"
         ToolTip(menuText, ToolTipX, ToolTipY, 2)
     }
+}
+
+; Generate program menu text from ProgramMapping order and mappings
+GenerateProgramMenuText() {
+    global ProgramsIni
+    
+    menuText := "PROGRAM LAUNCHER`n`n"
+    
+    ; Read order from ProgramMapping
+    orderStr := IniRead(ProgramsIni, "ProgramMapping", "order", "")
+    if (orderStr = "" || orderStr = "ERROR") {
+        ; Fallback: read all key_* mappings and create basic order
+        orderStr := "e v n t o b z m w l r q p k f"  ; default order
+    }
+    
+    ; Split order into individual keys
+    keys := StrSplit(orderStr, " ")
+    currentLine := ""
+    
+    ; Process keys in pairs for two-column layout
+    Loop keys.Length {
+        key := Trim(keys[A_Index])
+        if (key = "")
+            continue
+            
+        ; Get program name for this key
+        programName := IniRead(ProgramsIni, "ProgramMapping", key, "")
+        if (programName = "" || programName = "ERROR")
+            continue
+            
+        ; Create display entry
+        entry := key . " - " . programName
+        
+        ; Add to current line (two columns)
+        if (currentLine = "") {
+            currentLine := entry
+        } else {
+            ; Complete the line with second column
+            menuText .= Format("{:-15s} {}", currentLine, entry) . "`n"
+            currentLine := ""
+        }
+    }
+    
+    ; Add remaining single entry if exists
+    if (currentLine != "") {
+        menuText .= currentLine . "`n"
+    }
+    
+    menuText .= "`n[\: Back] [Esc: Exit]"
+    return menuText
 }
 
 ; Main application launcher function
@@ -3338,18 +3404,12 @@ LaunchQuickShare() {
     }
 }
 
-; Dynamic program launcher that reads mapping from programs.ini
-LaunchProgramFromKey(keyPressed) {
+; Show program details when auto_launch is false
+ShowProgramDetails(keyPressed) {
     global ProgramsIni, tooltipConfig
     
-    ; Hide tooltip immediately if auto_hide_on_action is enabled
-    if (tooltipConfig.enabled && tooltipConfig.autoHide) {
-        HideCSharpTooltip()
-    }
-    
     ; Read the program name mapped to this key
-    keyName := "key_" . keyPressed
-    programName := IniRead(ProgramsIni, "ProgramMapping", keyName, "")
+    programName := IniRead(ProgramsIni, "ProgramMapping", keyPressed, "")
     
     ; If no mapping found, show error
     if (programName = "" || programName = "ERROR") {
@@ -3364,6 +3424,92 @@ LaunchProgramFromKey(keyPressed) {
         ShowCenteredToolTip(programName . " not found in [Programs].`nAdd path to programs.ini")
         SetTimer(RemoveToolTip, -3500)
         return
+    }
+    
+    ; Show program details instead of launching
+    detailsText := "PROGRAM: " . programName . "`n"
+    detailsText .= "PATH: " . executablePath . "`n`n"
+    detailsText .= "Press ENTER to launch"
+    detailsText .= "`nPress ESC to cancel"
+    
+    if (tooltipConfig.enabled) {
+        ShowCSharpTooltip(detailsText, "Program Details", "info")
+    } else {
+        ShowCenteredToolTip(detailsText)
+    }
+    
+    ; Wait for user input
+    userInput := InputHook("L1 T" . GetEffectiveTimeout("programs"))
+    userInput.KeyOpt("{Enter}", "+")
+    userInput.KeyOpt("{Escape}", "+")
+    userInput.Start()
+    userInput.Wait()
+    
+    if (userInput.EndReason = "KeyDown") {
+        if (userInput.EndKey = "Enter") {
+            ; User confirmed, check for confirmation and launch
+            if (ShouldConfirmPrograms(keyPressed)) {
+                if (!ConfirmYN("Launch " . programName . "?", "programs")) {
+                    userInput.Stop()
+                    return
+                }
+            }
+            
+            ; Hide tooltip before launching
+            if (tooltipConfig.enabled && tooltipConfig.autoHide) {
+                HideCSharpTooltip()
+            }
+            
+            ; Handle special cases
+            if (programName = "QuickShare") {
+                LaunchQuickShare()
+            } else {
+                LaunchApp(programName, executablePath)
+            }
+        }
+    }
+    userInput.Stop()
+    
+    ; Hide tooltip
+    if (tooltipConfig.enabled) {
+        HideCSharpTooltip()
+    } else {
+        ToolTip()
+    }
+}
+
+; Dynamic program launcher that reads mapping from programs.ini
+LaunchProgramFromKey(keyPressed) {
+    global ProgramsIni, tooltipConfig
+    
+    ; Hide tooltip immediately if auto_hide_on_action is enabled
+    if (tooltipConfig.enabled && tooltipConfig.autoHide) {
+        HideCSharpTooltip()
+    }
+    
+    ; Read the program name mapped to this key
+    programName := IniRead(ProgramsIni, "ProgramMapping", keyPressed, "")
+    
+    ; If no mapping found, show error
+    if (programName = "" || programName = "ERROR") {
+        ShowCenteredToolTip("Key '" . keyPressed . "' not mapped.`nAdd to programs.ini`n[ProgramMapping]")
+        SetTimer(RemoveToolTip, -3500)
+        return
+    }
+    
+    ; Read the executable path for this program
+    executablePath := IniRead(ProgramsIni, "Programs", programName, "")
+    if (executablePath = "" || executablePath = "ERROR") {
+        ShowCenteredToolTip(programName . " not found in [Programs].`nAdd path to programs.ini")
+        SetTimer(RemoveToolTip, -3500)
+        return
+    }
+    
+    ; Check if confirmation is required for this key
+    if (ShouldConfirmPrograms(keyPressed)) {
+        if (!ConfirmYN("Launch " . programName . "?", "programs")) {
+            return  ; User cancelled, don't launch
+        }
     }
     
     ; Handle special cases (like QuickShare) that need custom logic
