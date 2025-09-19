@@ -3404,6 +3404,7 @@ LaunchQuickShare() {
     }
 }
 
+
 ; Show program details when auto_launch is false
 ShowProgramDetails(keyPressed) {
     global ProgramsIni, tooltipConfig
