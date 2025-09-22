@@ -342,7 +342,7 @@ GenerateProgramItemsForCS() {
     
     ; Fallback if no configuration found
     if (items == "") {
-        items := "e:Explorer|i:Settings|t:Terminal|v:VisualStudio|n:Notepad|o:Obsidian|b:Vivaldi|z:Zen"
+        items := "e:Explorer|i:Settings|t:Terminal|v:VisualStudio|n:Notepad|b:Vivaldi|z:Zen"
     }
     
     return items
@@ -362,30 +362,48 @@ ShowTimeMenuCS() {
 
 ; Reemplazar ShowInformationMenu() original
 ShowInformationMenuCS() {
+    items := GenerateInformationItemsForCS()
+    ShowCSharpOptionsMenu("INFORMATION MANAGER", items, "\\: Back|ESC: Exit")
+}
+
+; Generate information items for C# tooltips from InfoMapping order
+GenerateInformationItemsForCS() {
+    global InfoIni
     items := ""
     
-    ; Leer configuración dinámica desde information.ini
-    Loop 10 {
-        lineContent := IniRead(InfoIni, "MenuDisplay", "info_line" . A_Index, "")
-        if (lineContent != "" && lineContent != "ERROR") {
-            ; Extraer key y description del formato "key - description"
-            if (InStr(lineContent, " - ")) {
-                parts := StrSplit(lineContent, " - ")
-                key := parts[1]
-                desc := parts[2]
-                if (items != "")
-                    items .= "|"
-                items .= key . ":" . desc
-            }
-        }
+    ; Read order from InfoMapping
+    orderStr := IniRead(InfoIni, "InfoMapping", "order", "")
+    if (orderStr = "" || orderStr = "ERROR") {
+        ; Fallback order
+        orderStr := "e n p a c w g l r"
     }
     
-    ; Fallback si no hay configuración
+    ; Split order into individual keys
+    keys := StrSplit(orderStr, " ")
+    
+    ; Process keys and build items string
+    Loop keys.Length {
+        key := Trim(keys[A_Index])
+        if (key = "")
+            continue
+            
+        ; Get information name for this key
+        infoName := IniRead(InfoIni, "InfoMapping", key, "")
+        if (infoName = "" || infoName = "ERROR")
+            continue
+            
+        ; Add to items string
+        if (items != "")
+            items .= "|"
+        items .= key . ":" . infoName
+    }
+    
+    ; Fallback if no configuration found
     if (items == "") {
-        items := "n:Name|e:Email|p:Phone|a:Address|c:Company|w:Website"
+        items := "e:Email|n:Name|p:Phone|a:Address|c:Company|w:Website|g:GitHub|l:LinkedIn"
     }
     
-    ShowCSharpOptionsMenu("INFORMATION MANAGER", items, "\\: Back|ESC: Exit")
+    return items
 }
 
 ; Reemplazar ShowCommandsMenu() original

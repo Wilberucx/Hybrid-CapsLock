@@ -54,11 +54,11 @@ Contiene la configuración global del sistema y banderas de capas. Hoy, las secc
   - `configuration.ini` → `[Behavior]` → `show_confirmation_global=true` fuerza confirmación en todas las capas.
 - Programs
   - `[Settings]` → `show_confirmation` (por defecto `false`).
-  - Listas por tecla en `[Confirmations.Programs]` → `confirm_keys` / `no_confirm_keys`.
+  - Listas por tecla en `[ProgramMapping]` → `confirm_keys` / `no_confirm_keys`.
   - Si `show_confirmation=false` y `auto_launch=true` → lanzamiento inmediato (sin confirmar).
 - Information
   - `[Settings]` → `show_confirmation` (por defecto `false`).
-  - Listas por tecla en `[Confirmations.Information]` → `confirm_keys` / `no_confirm_keys`.
+  - Listas por tecla en `[InfoMapping]` → `confirm_keys` / `no_confirm_keys`.
 - Timestamps
   - `[Settings]` → `show_confirmation` (por defecto `false`).
   - `[CategorySettings]` → `<Friendly>_show_confirmation` para forzar confirmación por categoría (`Date`, `Time`, `DateTime`).
@@ -78,7 +78,7 @@ timeout_seconds=7
 show_confirmation=false
 auto_launch=true
 
-[Confirmations.Programs]
+[ProgramMapping]
 ; confirm_keys: keys that MUST confirm (case-sensitive), e.g.: "d,z"
 confirm_keys=
 ; no_confirm_keys: keys that MUST NOT confirm (optional)
@@ -87,14 +87,14 @@ confirm_keys=
 
 Developers — Confirmation configuration (Programs)
 
-- Precedencia: Global → [Confirmations.Programs] lists → [Settings].show_confirmation → default false
+- Precedencia: Global → [ProgramMapping] lists → [Settings].show_confirmation → default false
 - Función: `ShouldConfirmPrograms(key)`
 - Ejemplo:
 
 ```ini
 [Settings]
 show_confirmation=false
-[Confirmations.Programs]
+[ProgramMapping]
 confirm_keys=d,z
 ```
 
@@ -157,7 +157,7 @@ Developers — Confirmation configuration (Commands)
 [Settings]
 timeout_seconds=10
 show_confirmation=true
-; auto_paste (documentado) hoy no altera el flujo en código.
+; auto_paste: si false, muestra detalles y requiere ENTER; si true, inserta directamente.
 
 [Confirmations.Information]
 ; confirm_keys: keys that MUST confirm (case-sensitive), e.g.: "e,p"
@@ -168,7 +168,7 @@ confirm_keys=
 
 Developers — Confirmation configuration (Information)
 
-- Precedencia: Global → [Confirmations.Information] lists → [Settings].show_confirmation → default false
+- Precedencia: Global → [InfoMapping] lists → [Settings].show_confirmation → default false
 - Función: `ShouldConfirmInformation(key)`
 
 ## Personalización Avanzada

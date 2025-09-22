@@ -25,6 +25,8 @@ Esta carpeta contiene toda la documentación detallada de HybridCapsLock.
 
 ## 🔗 Enlaces Rápidos
 
+- [Pruebas Manuales](MANUAL_TESTS.md) - Checklist de pruebas manuales
+
 - [README Principal](../README.md) - Documentación principal del proyecto
 - [Changelog](../CHANGELOG.md) - Historial de cambios y versiones
 - [Configuración de Programas](../config/programs.ini) - Configurar aplicaciones del lanzador

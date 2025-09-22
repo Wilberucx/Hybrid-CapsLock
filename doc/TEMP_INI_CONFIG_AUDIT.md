@@ -14,8 +14,7 @@ Nota de terminología: En esta documentación usamos el término "leader" para r
   - `config/information.ini`
   - `config/timestamps.ini`
   - `config/commands.ini`
-  - `config/obsidian.ini`
-- Código revisado (AutoHotkey v2):
+  - Código revisado (AutoHotkey v2):
   - `HybridCapsLock.ahk`
   - `tooltip_csharp_integration.ahk`
 - Criterio: detectar qué claves se leen y aplican realmente (p. ej., `IniRead(...)`) y qué claves permanecen sin uso efectivo.
@@ -66,8 +65,8 @@ Nota de terminología: En esta documentación usamos el término "leader" para r
   - `[MenuDisplay]`: `info_line1..N`.
 
 - Iteración 3 (acotado):
-  - `[Settings]` efectivo: `show_confirmation` (por defecto `false`).
-  - Descartados: `timeout_seconds`, `auto_paste`, `feedback_duration`.
+  - `[Settings]` efectivo: `show_confirmation` (por defecto `false`) y `auto_paste` (si `false`, muestra detalles y requiere ENTER; si `true`, inserta inmediatamente).
+  - Descartados: `timeout_seconds`, `feedback_duration`.
 
 ### 4) `config/timestamps.ini`
 
@@ -90,9 +89,9 @@ Nota de terminología: En esta documentación usamos el término "leader" para r
   - `[CategorySettings]`: `*_timeout`, `show_execution_feedback`, `feedback_duration`, `auto_close_terminals`.
   - `power_lineX` (en `[MenuDisplay]`): el submenú de Power Options sigue hardcodeado.
 
-### 6) `config/obsidian.ini`
+### 6) Capa Obsidian
 
-- Estado: marcado como "EN DESARROLLO - NO FUNCIONAL".
+- Estado: removida temporalmente del repositorio para reducir espacio. Se reintroducirá cuando se defina el alcance (Fase 6).
 
 ---
 
@@ -178,4 +177,4 @@ Estado: En progreso → Confirmaciones jerárquicas implementadas y cableadas. R
 - [x] F3: Settings por capa (Programs/Information/Timestamps) — alcance acotado a `auto_launch` y `show_confirmation`.
 - [x] F4: Commands dinámicos — jerarquía de confirmación implementada (global > categoría > comando > default de capa). Per-category domina sobre per-command.
 - [x] F5: Zebar eliminado.
-- [ ] F6: Obsidian.
+- [ ] F6: Obsidian (pendiente de diseño; archivo removido temporalmente).

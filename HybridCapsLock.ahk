@@ -69,7 +69,6 @@ global ProgramsIni := A_ScriptDir . "\config\programs.ini"
 global TimestampsIni := A_ScriptDir . "\config\timestamps.ini"
 global InfoIni := A_ScriptDir . "\config\information.ini"
 global CommandsIni := A_ScriptDir . "\config\commands.ini"
-global ObsidianIni := A_ScriptDir . "\config\obsidian.ini"
 
 #Include tooltip_csharp_integration.ahk
 
@@ -103,7 +102,6 @@ global ProgramsIni := A_ScriptDir . "\config\programs.ini"
 global TimestampsIni := A_ScriptDir . "\config\timestamps.ini"
 global InfoIni := A_ScriptDir . "\config\information.ini"
 global CommandsIni := A_ScriptDir . "\config\commands.ini"
-global ObsidianIni := A_ScriptDir . "\config\obsidian.ini"
 
 ; Layer enable flags with safe defaults
 global nvimLayerEnabled := true
@@ -554,21 +552,42 @@ ShouldConfirmPrograms(key) {
     return false
 }
 
-; Information layer: per-command confirmation via lists
+; Information layer: per-command confirmation via lists (new simplified structure)
 ShouldConfirmInformation(key) {
     global ConfigIni, InfoIni
-    ; Global override
+    
+    ; 0) Global override
     if (CleanIniBool(IniRead(ConfigIni, "Behavior", "show_confirmation_global", "false"), false))
         return true
-    confKeys := IniRead(InfoIni, "Confirmations.Information", "confirm_keys", "")
-    noConfKeys := IniRead(InfoIni, "Confirmations.Information", "no_confirm_keys", "")
+    
+    ; 1) Per-command lists: [InfoMapping] confirm_keys / no_confirm_keys
+    confKeys := IniRead(InfoIni, "InfoMapping", "confirm_keys", "")
+    noConfKeys := IniRead(InfoIni, "InfoMapping", "no_confirm_keys", "")
     if (confKeys != "" && KeyInList(key, confKeys))
         return true
     if (noConfKeys != "" && KeyInList(key, noConfKeys))
         return false
+    
+    ; 2) Per-command individual: [InfoMapping] key_ascii_<ord> / key_<char> / raw key
+    sec := "InfoMapping"
+    aliasAscii := "key_ascii_" . Ord(key)
+    val := IniRead(InfoIni, sec, aliasAscii, "")
+    if (val != "" && val != "ERROR")
+        return CleanIniBool(val, false)
+    aliasKey := "key_" . key
+    val := IniRead(InfoIni, sec, aliasKey, "")
+    if (val != "" && val != "ERROR")
+        return CleanIniBool(val, false)
+    val := IniRead(InfoIni, sec, key, "")
+    if (val != "" && val != "ERROR")
+        return CleanIniBool(val, false)
+    
+    ; 3) Layer default: [Settings] show_confirmation
     layerVal := IniRead(InfoIni, "Settings", "show_confirmation", "")
     if (layerVal != "" && layerVal != "ERROR")
         return CleanIniBool(layerVal, false)
+    
+    ; 4) Fallback default
     return false
 }
 
@@ -923,23 +942,62 @@ ShowInformationMenu() {
     if (tooltipConfig.enabled) {
         ShowInformationMenuCS()
     } else {
-        ; Fallback to native tooltips
-        global InfoIni
+        ; Generate menu dynamically from InfoMapping order
+        menuText := GenerateInformationMenuText()
         ToolTipX := A_ScreenWidth // 2 - 120
         ToolTipY := A_ScreenHeight // 2 - 100
-        menuText := "INFORMATION MANAGER`n`n"
-        
-        ; Read menu lines dynamically from information.ini
-        Loop 10 {
-            lineContent := IniRead(InfoIni, "MenuDisplay", "info_line" . A_Index, "")
-            if (lineContent != "" && lineContent != "ERROR") {
-                menuText .= lineContent . "`n"
-            }
-        }
-        
-        menuText .= "`n[\: Back] [Esc: Exit]"
         ToolTip(menuText, ToolTipX, ToolTipY, 2)
     }
+}
+
+; Generate information menu text from InfoMapping order and mappings
+GenerateInformationMenuText() {
+    global InfoIni
+    
+    menuText := "INFORMATION MANAGER`n`n"
+    
+    ; Read order from InfoMapping
+    orderStr := IniRead(InfoIni, "InfoMapping", "order", "")
+    if (orderStr = "" || orderStr = "ERROR") {
+        ; Fallback: default order
+        orderStr := "e n p a c w g l r"
+    }
+    
+    ; Split order into individual keys
+    keys := StrSplit(orderStr, " ")
+    currentLine := ""
+    
+    ; Process keys in pairs for two-column layout
+    Loop keys.Length {
+        key := Trim(keys[A_Index])
+        if (key = "")
+            continue
+            
+        ; Get information name for this key
+        infoName := IniRead(InfoIni, "InfoMapping", key, "")
+        if (infoName = "" || infoName = "ERROR")
+            continue
+            
+        ; Create display entry
+        entry := key . " - " . infoName
+        
+        ; Add to current line (two columns)
+        if (currentLine = "") {
+            currentLine := entry
+        } else {
+            ; Complete the line with second column
+            menuText .= Format("{:-15s} {}", currentLine, entry) . "`n"
+            currentLine := ""
+        }
+    }
+    
+    ; Add remaining single entry if exists
+    if (currentLine != "") {
+        menuText .= currentLine . "`n"
+    }
+    
+    menuText .= "`n[\: Back] [Esc: Exit]"
+    return menuText
 }
 
 ; Window action executor
@@ -1154,18 +1212,12 @@ HandleTimestampMode(mode) {
     }
 }
 
-; Information insertion from key
-InsertInformationFromKey(keyPressed) {
+; Show information details when auto_paste is false
+ShowInformationDetails(keyPressed) {
     global InfoIni, tooltipConfig
     
-    ; Hide tooltip immediately if auto_hide_on_action is enabled
-    if (tooltipConfig.enabled && tooltipConfig.autoHide) {
-        HideCSharpTooltip()
-    }
-    
     ; Read the information name mapped to this key
-    keyName := "key_" . keyPressed
-    infoName := IniRead(InfoIni, "InfoMapping", keyName, "")
+    infoName := IniRead(InfoIni, "InfoMapping", keyPressed, "")
     
     ; If no mapping found, show error
     if (infoName = "" || infoName = "ERROR") {
@@ -1180,6 +1232,89 @@ InsertInformationFromKey(keyPressed) {
         ShowCenteredToolTip(infoName . " not found in [PersonalInfo].`nAdd content to information.ini")
         SetTimer(RemoveToolTip, -3500)
         return
+    }
+    
+    ; Show information details instead of inserting
+    detailsText := "INFORMATION: " . infoName . "`n"
+    detailsText .= "CONTENT: " . infoContent . "`n`n"
+    detailsText .= "Press ENTER to insert"
+    detailsText .= "`nPress ESC to cancel"
+    
+    if (tooltipConfig.enabled) {
+        ShowCSharpTooltip(detailsText, "Information Details", "info")
+    } else {
+        ShowCenteredToolTip(detailsText)
+    }
+    
+    ; Wait for user input
+    userInput := InputHook("L1 T" . GetEffectiveTimeout("information"))
+    userInput.KeyOpt("{Enter}", "+")
+    userInput.KeyOpt("{Escape}", "+")
+    userInput.Start()
+    userInput.Wait()
+    
+    if (userInput.EndReason = "KeyDown") {
+        if (userInput.EndKey = "Enter") {
+            ; User confirmed, check for confirmation and insert
+            if (ShouldConfirmInformation(keyPressed)) {
+                if (!ConfirmYN("Insert " . infoName . "?", "information")) {
+                    userInput.Stop()
+                    return
+                }
+            }
+            
+            ; Hide tooltip before inserting
+            if (tooltipConfig.enabled && tooltipConfig.autoHide) {
+                HideCSharpTooltip()
+            }
+            
+            ; Insert the information content
+            SendText(infoContent)
+            ShowInformationInserted(infoName)
+        }
+    }
+    userInput.Stop()
+    
+    ; Hide tooltip
+    if (tooltipConfig.enabled) {
+        HideCSharpTooltip()
+    } else {
+        ToolTip()
+    }
+}
+
+; Information insertion from key
+InsertInformationFromKey(keyPressed) {
+    global InfoIni, tooltipConfig
+    
+    ; Hide tooltip immediately if auto_hide_on_action is enabled
+    if (tooltipConfig.enabled && tooltipConfig.autoHide) {
+        HideCSharpTooltip()
+    }
+    
+    ; Read the information name mapped to this key
+    infoName := IniRead(InfoIni, "InfoMapping", keyPressed, "")
+    
+    ; If no mapping found, show error
+    if (infoName = "" || infoName = "ERROR") {
+        ShowCenteredToolTip("Key '" . keyPressed . "' not mapped.`nAdd to information.ini`n[InfoMapping]")
+        SetTimer(RemoveToolTip, -3500)
+        return
+    }
+    
+    ; Read the information content for this key
+    infoContent := IniRead(InfoIni, "PersonalInfo", infoName, "")
+    if (infoContent = "" || infoContent = "ERROR") {
+        ShowCenteredToolTip(infoName . " not found in [PersonalInfo].`nAdd content to information.ini")
+        SetTimer(RemoveToolTip, -3500)
+        return
+    }
+    
+    ; Check if confirmation is required for this key
+    if (ShouldConfirmInformation(keyPressed)) {
+        if (!ConfirmYN("Insert " . infoName . "?", "information")) {
+            return  ; User cancelled, don't insert
+        }
     }
     
     ; Insert the information content
@@ -2664,6 +2799,15 @@ CapsLock & Space:: {
                     if (!ConfirmYN("Insert information?", "information"))
                         break
                 }
+                ; Information insertion - check auto_paste setting
+                autoPaste := CleanIniBool(IniRead(InfoIni, "Settings", "auto_paste", "true"), true)
+                if (!autoPaste) {
+                    ; Show information details instead of inserting
+                    ShowInformationDetails(_key)
+                    break
+                }
+                
+                ; Auto-paste mode - insert information
                 InsertInformationFromKey(_key)
                 break
             
@@ -3334,10 +3478,6 @@ LaunchTerminal() {
 
 LaunchVisualStudio() {
     LaunchApp("VisualStudio", "code.exe")
-}
-
-LaunchObsidian() {
-    LaunchApp("Obsidian", "obsidian.exe")
 }
 
 LaunchVivaldi() {
