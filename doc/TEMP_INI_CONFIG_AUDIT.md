@@ -85,9 +85,9 @@ Nota de terminología: En esta documentación usamos el término "leader" para r
   - `[Settings]`: `timeout_seconds` para la capa Commands (tiempo del menú).
 
 - Pendiente (Iteración 4):
-  - `[CustomCommands]`, `[CustomCategories]`: ejecución dinámica aún no cableada (la ejecución sigue por switch en código).
+  - `[CustomCommands]` + `[CommandFlag.<Nombre>]`: ejecución dinámica planificada (la ejecución sigue por switch en código cuando no se define `k_action`).
   - `[CategorySettings]`: `*_timeout`, `show_execution_feedback`, `feedback_duration`, `auto_close_terminals` (no funcional en su mayoría).
-  - Power Options: el submenú visual sigue hardcodeado (no se lee de INI).
+  - Power Options: el submenú visual lee de INI si existe `o_category`; si no existe, usa fallback hardcodeado.
 
 ### 6) Capa Obsidian
 

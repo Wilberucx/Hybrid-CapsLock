@@ -1877,6 +1877,218 @@ ShowVaultFlowCommandsMenu() {
 }
 
 ; Command execution functions
+; ---- Custom Commands: Resolver y Ejecutor ----
+DispatchCommand(categoryInternal, key) {
+    if (ResolveAndExecuteCustomAction(categoryInternal, key)) {
+        return
+    }
+    switch categoryInternal {
+        case "system": ExecuteSystemCommand(key)
+        case "network": ExecuteNetworkCommand(key)
+        case "git": ExecuteGitCommand(key)
+        case "monitoring": ExecuteMonitoringCommand(key)
+        case "folder": ExecuteFolderCommand(key)
+        case "windows": ExecuteWindowsCommand(key)
+        case "power": ExecutePowerOptionsCommand(key)
+        case "adb": ExecuteADBCommand(key)
+        case "vaultflow": ExecuteVaultFlowCommand(key)
+        case "hybrid": ExecuteHybridManagementCommand(key)
+        default: ShowCenteredToolTip("Unknown category: " . categoryInternal)
+    }
+}
+
+ResolveAndExecuteCustomAction(categoryInternal, key) {
+    global CommandsIni
+    catSym := GetCategoryKeySymbol(categoryInternal)
+    if (catSym = "")
+        return false
+    sec := catSym . "_category"
+    action := IniRead(CommandsIni, sec, key . "_action", "")
+    if (action = "" || action = "ERROR")
+        return false
+
+    ; Lookup label for better prompts
+    label := IniRead(CommandsIni, sec, key, key)
+
+    ; Confirmation per current hierarchy
+    if (ShouldConfirmCommand(categoryInternal, key)) {
+        if (!ConfirmYN("Execute " . label . "?", "commands"))
+            return true ; handled by cancel
+    }
+
+    ; Resolve action: @Name or inline type:payload
+    name := ""
+    cmdSpec := action
+    if (SubStr(action, 1, 1) = "@"){ 
+        name := SubStr(action, 2)
+        cmdSpec := IniRead(CommandsIni, "CustomCommands", name, "")
+        if (cmdSpec = "" || cmdSpec = "ERROR") {
+            ShowCenteredToolTip("Custom command '@" . name . "' not found")
+            SetTimer(RemoveToolTip, -2000)
+            return true
+        }
+    }
+
+    colonPos := InStr(cmdSpec, ":")
+    if (!colonPos) {
+        ShowCenteredToolTip("Invalid command spec: " . cmdSpec)
+        SetTimer(RemoveToolTip, -2000)
+        return true
+    }
+    cmdType := StrLower(Trim(SubStr(cmdSpec, 1, colonPos - 1)))
+    payload := Trim(SubStr(cmdSpec, colonPos + 1))
+
+    flags := (name != "") ? LoadCommandFlags(name) : {}
+    ; Expand placeholders
+    payload := ExpandPlaceholders(payload)
+    for k, v in flags {
+        flags[k] := ExpandPlaceholders(v)
+    }
+
+    ExecuteCustomCommand(cmdType, payload, flags)
+    return true
+}
+
+LoadCommandFlags(name) {
+    global CommandsIni
+    flags := {}
+    if (name = "")
+        return flags
+    sec := "CommandFlag." . name
+    if (IniRead(CommandsIni, sec, "__exists__", "") = "") {
+        ; No reliable section existence, read individual keys
+    }
+    keys := ["terminal","keep_open","admin","working_dir","env","timeout","wt_shell"]
+    for _, k in keys {
+        v := IniRead(CommandsIni, sec, k, "")
+        if (v != "" && v != "ERROR") {
+            flags[k] := Trim(v)
+        }
+    }
+    return flags
+}
+
+ExpandPlaceholders(text) {
+    if (text = "")
+        return text
+    ; Predefined placeholders
+    text := StrReplace(text, "{ScriptDir}", A_ScriptDir)
+    text := StrReplace(text, "{UserProfile}", EnvGet("USERPROFILE"))
+    text := StrReplace(text, "{Home}", EnvGet("USERPROFILE"))
+    text := StrReplace(text, "{Clipboard}", A_Clipboard)
+    ; CustomVars
+    global CommandsIni
+    ; Replace {Var} from [CustomVars]
+    while RegExMatch(text, "\{([A-Za-z0-9_]+)\}", &m) {
+        varName := m[1]
+        varVal := IniRead(CommandsIni, "CustomVars", varName, "")
+        if (varVal = "" || varVal = "ERROR")
+            break
+        text := StrReplace(text, "{" . varName . "}", varVal)
+    }
+    ; Expand %ENV% variables
+    while RegExMatch(text, "%([A-Za-z0-9_]+)%", &e) {
+        ev := e[1]
+        evv := EnvGet(ev)
+        text := StrReplace(text, "%" . ev . "%", (evv != "") ? evv : "")
+    }
+    return text
+}
+
+ParseEnvList(envStr) {
+    envMap := []
+    if (envStr = "")
+        return envMap
+    for pair in StrSplit(envStr, [";", "`n", "`r"]) {
+        pair := Trim(pair)
+        if (pair = "")
+            continue
+        eq := InStr(pair, "=")
+        if (!eq)
+            continue
+        k := Trim(SubStr(pair, 1, eq - 1))
+        v := Trim(SubStr(pair, eq + 1))
+        envMap.Push([k, v])
+    }
+    return envMap
+}
+
+ExecuteCustomCommand(cmdType, payload, flags) {
+    opts := ""
+    if (flags.HasOwnProp("working_dir"))
+        opts := flags["working_dir"]
+    runOpts := (flags.HasOwnProp("terminal") && StrLower(flags["terminal"]) = "hidden") ? "Hide" : ""
+    admin := (flags.HasOwnProp("admin") && (StrLower(flags["admin"]) = "true"))
+
+    try {
+        switch cmdType {
+            case "url":
+                Run(payload)
+            case "cmd":
+                envPrefix := ""
+                for _, kv in ParseEnvList(flags.HasOwnProp("env") ? flags["env"] : "") {
+                    envPrefix .= "set " . kv[1] . "=" . kv[2] . "&& "
+                }
+                keepOpen := (StrLower(flags.HasOwnProp("keep_open") ? flags["keep_open"] : "false") = "true")
+                args := (keepOpen ? "/k " : "/c ") . Chr(34) . envPrefix . payload . Chr(34)
+                exe := "cmd.exe " . args
+                if (admin)
+                    exe := "*RunAs " . exe
+                Run(exe, opts, runOpts)
+            case "ps":
+                envScript := ""
+                for _, kv in ParseEnvList(flags.HasOwnProp("env") ? flags["env"] : "") {
+                    envScript .= "$env:" . kv[1] . "='" . kv[2] . "';"
+                }
+                keepOpen := (StrLower(flags.HasOwnProp("keep_open") ? flags["keep_open"] : "false") = "true")
+                psCmd := envScript . payload
+                args := (keepOpen ? "-NoExit " : "") . "-NoProfile -ExecutionPolicy Bypass -Command " . Chr(34) . psCmd . Chr(34)
+                exe := "powershell.exe " . args
+                if (admin)
+                    exe := "*RunAs " . exe
+                Run(exe, opts, runOpts)
+            case "pwsh":
+                envScript := ""
+                for _, kv in ParseEnvList(flags.HasOwnProp("env") ? flags["env"] : "") {
+                    envScript .= "$env:" . kv[1] . "='" . kv[2] . "';"
+                }
+                keepOpen := (StrLower(flags.HasOwnProp("keep_open") ? flags["keep_open"] : "false") = "true")
+                psCmd := envScript . payload
+                args := (keepOpen ? "-NoExit " : "") . "-NoProfile -Command " . Chr(34) . psCmd . Chr(34)
+                exe := "pwsh.exe " . args
+                if (admin)
+                    exe := "*RunAs " . exe
+                Run(exe, opts, runOpts)
+            case "wsl":
+                exe := "wsl.exe " . payload
+                if (admin)
+                    exe := "*RunAs " . exe
+                Run(exe, opts, runOpts)
+            case "wt":
+                wtShell := StrLower(flags.HasOwnProp("wt_shell") ? flags["wt_shell"] : "cmd")
+                keepOpen := (StrLower(flags.HasOwnProp("keep_open") ? flags["keep_open"] : "true") = "true")
+                if (wtShell = "cmd") {
+                    inner := (keepOpen ? "/k " : "/c ") . Chr(34) . payload . Chr(34)
+                    exe := "wt new-tab cmd " . inner
+                } else if (wtShell = "ps") {
+                    inner := (keepOpen ? "-NoExit " : "") . "-NoProfile -ExecutionPolicy Bypass -Command " . Chr(34) . payload . Chr(34)
+                   exe := "wt new-tab powershell " . inner
+                } else {
+                    inner := (keepOpen ? "-NoExit " : "") . "-NoProfile -Command " . Chr(34) . payload . Chr(34)
+                    exe := "wt new-tab pwsh " . inner
+                }
+                if (admin)
+                    exe := "*RunAs " . exe
+                Run(exe, opts, runOpts)
+            default:
+                ShowCenteredToolTip("Unknown cmd type: " . cmdType)
+        }
+    } catch as err {
+        ShowCenteredToolTip("Command failed: " . err.Message)
+        SetTimer(RemoveToolTip, -2000)
+    }
+}
+
 ExecuteSystemCommand(cmd) {
     global tooltipConfig
     
@@ -2877,61 +3089,61 @@ CapsLock & Space:: {
                                 if (!ConfirmYN("Execute System command?", "commands"))
                                     break
                             }
-                            ExecuteSystemCommand(_key)
+                            DispatchCommand("system", _key)
                         case "network":
                             if (ShouldConfirmCommand("network", _key)) {
                                 if (!ConfirmYN("Execute Network command?", "commands"))
                                     break
                             }
-                            ExecuteNetworkCommand(_key)
+                            DispatchCommand("network", _key)
                         case "git":
                             if (ShouldConfirmCommand("git", _key)) {
                                 if (!ConfirmYN("Execute Git command?", "commands"))
                                     break
                             }
-                            ExecuteGitCommand(_key)
+                            DispatchCommand("git", _key)
                         case "monitoring":
                             if (ShouldConfirmCommand("monitoring", _key)) {
                                 if (!ConfirmYN("Execute Monitoring command?", "commands"))
                                     break
                             }
-                            ExecuteMonitoringCommand(_key)
+                            DispatchCommand("monitoring", _key)
                         case "folder":
                             if (ShouldConfirmCommand("folder", _key)) {
                                 if (!ConfirmYN("Execute Folder command?", "commands"))
                                     break
                             }
-                            ExecuteFolderCommand(_key)
+                            DispatchCommand("folder", _key)
                         case "windows":
                             if (ShouldConfirmCommand("windows", _key)) {
                                 if (!ConfirmYN("Execute Windows command?", "commands"))
                                     break
                             }
-                            ExecuteWindowsCommand(_key)
+                            DispatchCommand("windows", _key)
                         case "power":
                             if (ShouldConfirmCommand("power", _key)) {
                                 if (!ConfirmYN("Execute PowerOptions command?", "commands"))
                                     break
                             }
-                            ExecutePowerOptionsCommand(_key)
+                            DispatchCommand("power", _key)
                         case "adb":
                             if (ShouldConfirmCommand("adb", _key)) {
                                 if (!ConfirmYN("Execute ADBTools command?", "commands"))
                                     break
                             }
-                            ExecuteADBCommand(_key)
+                            DispatchCommand("adb", _key)
                         case "hybrid":
                             if (ShouldConfirmCommand("hybrid", _key)) {
                                 if (!ConfirmYN("Execute HybridManagement command?", "commands"))
                                     break
                             }
-                            ExecuteHybridManagementCommand(_key)
+                            DispatchCommand("hybrid", _key)
                         case "vaultflow":
                             if (ShouldConfirmCommand("vaultflow", _key)) {
                                 if (!ConfirmYN("Execute VaultFlow command?", "commands"))
                                     break
                             }
-                            ExecuteVaultFlowCommand(_key)
+                            DispatchCommand("vaultflow", _key)
                     }
                     break  ; Exit after executing command
                 } else if (InStr(currentMenu, "timestamps_")) {

@@ -383,6 +383,36 @@ no_confirm_keys=s h
 
 ## ⚙️ Configuración Avanzada
 
+### Custom Commands y CommandFlag (qué y cómo)
+
+- Custom Commands (`[CustomCommands]`): definen QUÉ ejecutar (tipo:payload).
+- CommandFlag (`[CommandFlag.<Nombre>]`): definen CÓMO ejecutar (terminal, admin, working_dir, env, etc.).
+- Menú por categoría (`[<catKey>_category]`): cada tecla puede apuntar a una acción con `k_action=@Nombre` o `k_action=tipo:payload` inline.
+- Confirmación: se controla por la jerarquía actual (global → categoría → per-key listas); no se define en CommandFlag.
+- Variables opcionales (`[CustomVars]`): placeholders `{Var}` en payloads/opciones.
+
+Ejemplo:
+```ini
+[CustomCommands]
+GitStatus=cmd:git status
+
+[CommandFlag.GitStatus]
+terminal=conhost
+keep_open=true
+
+[t_category]
+title=Tools
+order=g
+g=Git Status
+g_action=@GitStatus
+; confirmación si se desea, en la categoría:
+; confirm_keys=g
+```
+
+Para detalles ver `doc/COMMANDS_CUSTOM.md`.
+
+
+
 ### Archivo commands.ini - Sección [Settings]
 
 ```ini

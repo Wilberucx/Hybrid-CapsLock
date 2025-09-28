@@ -120,6 +120,9 @@ Developers — Confirmation configuration (Timestamps)
 
 #### `commands.ini` – Configuración de Comandos
 
+Ver también: `doc/COMMANDS_CUSTOM.md` para el esquema de Custom Commands (qué ejecutar) y CommandFlag (cómo ejecutar).
+
+
 ```ini
 [Settings]
 show_output=true
