@@ -50,23 +50,22 @@ Nota de terminología: En esta documentación usamos el término "leader" para r
 
 - En uso:
   - `[Programs]`: rutas/URIs de apps.
-  - `[ProgramMapping]`: `key_<letra>=ProgramName`.
-  - `[MenuDisplay]`: `line1..lineN` para construir el menú.
+  - `[ProgramMapping]`: `key_<letra>=ProgramName` y listas `confirm_keys`/`no_confirm_keys` (per-key, case-sensitive). 
+  - `[Settings]`: `timeout_seconds` para el tiempo del menú, `auto_launch` y `show_confirmation`.
 
 - Iteración 3 (acotado):
-  - `[Settings]` efectivo: `auto_launch` (por defecto `true`), `show_confirmation` (por defecto `false`).
-  - Descartados: `timeout_seconds`, `search_in_path`, `show_launch_feedback`, `feedback_duration`.
+  - `[Settings]` efectivo: `timeout_seconds`, `auto_launch` (por defecto `true`) y `show_confirmation` (por defecto `false`).
+  - Descartados: `search_in_path`, `show_launch_feedback`, `feedback_duration`.
 
 ### 3) `config/information.ini`
 
 - En uso:
   - `[PersonalInfo]`: contenidos a insertar.
-  - `[InfoMapping]`: `key_<letra>=InfoName`.
-  - `[MenuDisplay]`: `info_line1..N`.
+  - `[InfoMapping]`: `order` para el menú y `key_<letra>=InfoName`.
 
 - Iteración 3 (acotado):
-  - `[Settings]` efectivo: `show_confirmation` (por defecto `false`) y `auto_paste` (si `false`, muestra detalles y requiere ENTER; si `true`, inserta inmediatamente).
-  - Descartados: `timeout_seconds`, `feedback_duration`.
+  - `[Settings]` efectivo: `timeout_seconds`, `show_confirmation` (por defecto `false`) y `auto_paste` (si `false`, muestra detalles y requiere ENTER; si `true`, inserta inmediatamente).
+  - Descartados: `feedback_duration`.
 
 ### 4) `config/timestamps.ini`
 
@@ -75,19 +74,20 @@ Nota de terminología: En esta documentación usamos el término "leader" para r
   - `[MenuDisplay]`: `date_lineX`, `time_lineX`, `datetime_lineX`.
 
 - Iteración 3 (acotado):
-  - `[Settings]` efectivo: `show_confirmation` (por defecto `false`).
-  - Descartados: `timeout_seconds`, `auto_insert`, `preview_format`, `remember_last_format`, `feedback_duration`.
+  - `[Settings]` efectivo: `timeout_seconds` y `show_confirmation`.
+  - Descartados: `auto_insert`, `preview_format`, `remember_last_format`, `feedback_duration`.
 
 ### 5) `config/commands.ini`
 
-- En uso:
-  - `[MenuDisplay]`: `main_lineX`, `system_lineX`, `network_lineX`, `git_lineX`, `monitoring_lineX`, `folder_lineX`, `windows_lineX`, `vaultflow_lineX` (para mostrar texto de menú cuando están presentes).
+- En uso (UI con C# Tooltips):
+  - `[Categories]` y secciones `[<key>_category]` (por ejemplo `s_category`, `n_category`, etc.) para construir el menú y submenús.
+  - Confirmaciones: `show_confirmation_global` (configuration.ini) → `[CategorySettings]` `<Friendly>_show_confirmation` → `confirm_keys/no_confirm_keys` por categoría/sección → default de capa.
+  - `[Settings]`: `timeout_seconds` para la capa Commands (tiempo del menú).
 
 - Pendiente (Iteración 4):
-  - `[CustomCommands]`, `[CustomCategories]`: aún no hay ejecución dinámica.
-  - `[Settings]`: `show_output`, `close_on_success`, `timeout_seconds`, `enable_custom_commands`.
-  - `[CategorySettings]`: `*_timeout`, `show_execution_feedback`, `feedback_duration`, `auto_close_terminals`.
-  - `power_lineX` (en `[MenuDisplay]`): el submenú de Power Options sigue hardcodeado.
+  - `[CustomCommands]`, `[CustomCategories]`: ejecución dinámica aún no cableada (la ejecución sigue por switch en código).
+  - `[CategorySettings]`: `*_timeout`, `show_execution_feedback`, `feedback_duration`, `auto_close_terminals` (no funcional en su mayoría).
+  - Power Options: el submenú visual sigue hardcodeado (no se lee de INI).
 
 ### 6) Capa Obsidian
 

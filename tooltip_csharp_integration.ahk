@@ -755,7 +755,10 @@ ShowWindowsCommandsMenuCS() {
 
 ; Submenú Power Options (leader → c → o)
 ShowPowerOptionsCommandsMenuCS() {
-    items := "s:Sleep|h:Hibernate|r:Restart|S:Shutdown|l:Lock Screen|o:Sign Out"
+    items := BuildCommandItemsFromCategoryKey("o")
+    if (items = "") {
+        items := "s:Sleep|h:Hibernate|r:Restart|S:Shutdown|l:Lock Screen|o:Sign Out"
+    }
     ShowCSharpOptionsMenu("POWER OPTIONS", items, "\\: Back|ESC: Exit")
 }
 

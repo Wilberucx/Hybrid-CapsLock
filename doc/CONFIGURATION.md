@@ -135,6 +135,10 @@ show_confirmation=false
 ; Per-command confirmation (lists): confirm_keys / no_confirm_keys
 ```
 
+Notas:
+- UI (C# Tooltips) se construye desde `[Categories]` y secciones `[<key>_category]` (por ejemplo `s_category`, `n_category`, etc.).
+- `[MenuDisplay]` quedó como legado para la capa de comandos.
+
 Developers — Confirmation configuration (Commands)
 
 - Precedencia (mayor a menor):
