@@ -2850,6 +2850,11 @@ CapsLock & Space:: {
                 ; Handle submenu cases
                 if (InStr(currentMenu, "commands_")) {
                     category := StrReplace(currentMenu, "commands_", "")
+                    ; Dynamic show submenu if INI-defined, else fallback
+                    catKeyDyn := FindCategoryKeySymbolByInternal(category)
+                    if (catKeyDyn != "") {
+                        ShowDynamicCommandsMenu(catKeyDyn)
+                    } else {
                     ; Show the appropriate command category menu
                     switch category {
                         case "system":
@@ -2873,7 +2878,7 @@ CapsLock & Space:: {
                         case "vaultflow":
                             ShowVaultFlowCommandsMenu()
                     }
-                } else if (InStr(currentMenu, "timestamps_")) {
+                }} else if (InStr(currentMenu, "timestamps_")) {
                     mode := StrReplace(currentMenu, "timestamps_", "")
                     ; Show the appropriate timestamp menu
                     switch mode {
@@ -3074,76 +3079,106 @@ CapsLock & Space:: {
                         menuStack.Push(currentMenu)
                         currentMenu := "commands_vaultflow"
                     default:
-                        ShowCenteredToolTip("Unknown command category: " . _key)
-                        SetTimer(RemoveToolTip, -1000)
+                        ; Dynamic categories: read from [Categories].order and navigate if key exists
+                        order := IniRead(CommandsIni, "Categories", "order", "")
+                        handled := false
+                        if (order != "" && order != "ERROR") {
+                            keys := StrSplit(order, [",", " ", "`t"])
+                            for _, k in keys {
+                                if (Trim(k) = _key) {
+                                    menuStack.Push(currentMenu)
+                                    catName := IniRead(CommandsIni, "Categories", _key, _key)
+                                    catInternal := NormalizeCategoryToken(catName)
+                                    if (catInternal != "") {
+                                        currentMenu := "commands_" . catInternal
+                                        handled := true
+                                    }
+                                    break
+                                }
+                            }
+                        }
+                        if (!handled) {
+                            ShowCenteredToolTip("Unknown command category: " . _key)
+                            SetTimer(RemoveToolTip, -1000)
+                        }
                 }
             
             default:
                 ; Handle submenu actions
                 if (InStr(currentMenu, "commands_")) {
                     category := StrReplace(currentMenu, "commands_", "")
-                    ; Execute command based on category
-                    switch category {
-                        case "system":
-                            if (ShouldConfirmCommand("system", _key)) {
-                                if (!ConfirmYN("Execute System command?", "commands"))
-                                    break
-                            }
-                            DispatchCommand("system", _key)
-                        case "network":
-                            if (ShouldConfirmCommand("network", _key)) {
-                                if (!ConfirmYN("Execute Network command?", "commands"))
-                                    break
-                            }
-                            DispatchCommand("network", _key)
-                        case "git":
-                            if (ShouldConfirmCommand("git", _key)) {
-                                if (!ConfirmYN("Execute Git command?", "commands"))
-                                    break
-                            }
-                            DispatchCommand("git", _key)
-                        case "monitoring":
-                            if (ShouldConfirmCommand("monitoring", _key)) {
-                                if (!ConfirmYN("Execute Monitoring command?", "commands"))
-                                    break
-                            }
-                            DispatchCommand("monitoring", _key)
-                        case "folder":
-                            if (ShouldConfirmCommand("folder", _key)) {
-                                if (!ConfirmYN("Execute Folder command?", "commands"))
-                                    break
-                            }
-                            DispatchCommand("folder", _key)
-                        case "windows":
-                            if (ShouldConfirmCommand("windows", _key)) {
-                                if (!ConfirmYN("Execute Windows command?", "commands"))
-                                    break
-                            }
-                            DispatchCommand("windows", _key)
-                        case "power":
-                            if (ShouldConfirmCommand("power", _key)) {
-                                if (!ConfirmYN("Execute PowerOptions command?", "commands"))
-                                    break
-                            }
-                            DispatchCommand("power", _key)
-                        case "adb":
-                            if (ShouldConfirmCommand("adb", _key)) {
-                                if (!ConfirmYN("Execute ADBTools command?", "commands"))
-                                    break
-                            }
-                            DispatchCommand("adb", _key)
-                        case "hybrid":
-                            if (ShouldConfirmCommand("hybrid", _key)) {
-                                if (!ConfirmYN("Execute HybridManagement command?", "commands"))
-                                    break
-                            }
-                            DispatchCommand("hybrid", _key)
-                        case "vaultflow":
-                            if (ShouldConfirmCommand("vaultflow", _key)) {
-                                if (!ConfirmYN("Execute VaultFlow command?", "commands"))
-                                    break
-                            }
-                            DispatchCommand("vaultflow", _key)
+                    ; Execute command based on category (dynamic + fallback)
+                    catName := IniRead(CommandsIni, "Categories", GetCategoryKeySymbol(category), category)
+                    catInternalDyn := NormalizeCategoryToken(catName)
+                    if (catInternalDyn != "") {
+                        if (ShouldConfirmCommand(catInternalDyn, _key)) {
+                            if (!ConfirmYN("Execute " . GetFriendlyCategoryName(catInternalDyn) . " command?", "commands"))
+                                break
+                        }
+                        DispatchCommand(catInternalDyn, _key)
+                    } else {
+                        switch category {
+                            case "system":
+                                if (ShouldConfirmCommand("system", _key)) {
+                                    if (!ConfirmYN("Execute System command?", "commands"))
+                                        break
+                                }
+                                DispatchCommand("system", _key)
+                            case "network":
+                                if (ShouldConfirmCommand("network", _key)) {
+                                    if (!ConfirmYN("Execute Network command?", "commands"))
+                                        break
+                                }
+                                DispatchCommand("network", _key)
+                            case "git":
+                                if (ShouldConfirmCommand("git", _key)) {
+                                    if (!ConfirmYN("Execute Git command?", "commands"))
+                                        break
+                                }
+                                DispatchCommand("git", _key)
+                            case "monitoring":
+                                if (ShouldConfirmCommand("monitoring", _key)) {
+                                    if (!ConfirmYN("Execute Monitoring command?", "commands"))
+                                        break
+                                }
+                                DispatchCommand("monitoring", _key)
+                            case "folder":
+                                if (ShouldConfirmCommand("folder", _key)) {
+                                    if (!ConfirmYN("Execute Folder command?", "commands"))
+                                        break
+                                }
+                                DispatchCommand("folder", _key)
+                            case "windows":
+                                if (ShouldConfirmCommand("windows", _key)) {
+                                    if (!ConfirmYN("Execute Windows command?", "commands"))
+                                        break
+                                }
+                                DispatchCommand("windows", _key)
+                            case "power":
+                                if (ShouldConfirmCommand("power", _key)) {
+                                    if (!ConfirmYN("Execute PowerOptions command?", "commands"))
+                                        break
+                                }
+                                DispatchCommand("power", _key)
+                            case "adb":
+                                if (ShouldConfirmCommand("adb", _key)) {
+                                    if (!ConfirmYN("Execute ADBTools command?", "commands"))
+                                        break
+                                }
+                                DispatchCommand("adb", _key)
+                            case "hybrid":
+                                if (ShouldConfirmCommand("hybrid", _key)) {
+                                    if (!ConfirmYN("Execute HybridManagement command?", "commands"))
+                                        break
+                                }
+                                DispatchCommand("hybrid", _key)
+                            case "vaultflow":
+                                if (ShouldConfirmCommand("vaultflow", _key)) {
+                                    if (!ConfirmYN("Execute VaultFlow command?", "commands"))
+                                        break
+                                }
+                                DispatchCommand("vaultflow", _key)
+                        }
                     }
                     break  ; Exit after executing command
                 } else if (InStr(currentMenu, "timestamps_")) {
@@ -3184,6 +3219,53 @@ ShowCommandCategoryMenu(category) {
 }
 
 ; Helper function to show timestamp mode menus
+FindCategoryKeySymbolByInternal(categoryInternal) {
+    global CommandsIni
+    order := IniRead(CommandsIni, "Categories", "order", "")
+    if (order = "" or order = "ERROR")
+        return ""
+    keys := StrSplit(order, [",", " ", "`t"])
+    for _, k in keys {
+        k := Trim(k)
+        if (k = "")
+            continue
+        name := IniRead(CommandsIni, "Categories", k, "")
+        if (name = "" or name = "ERROR")
+            continue
+        if (NormalizeCategoryToken(name) = categoryInternal)
+            return k
+    }
+    return ""
+}
+
+ShowDynamicCommandsMenu(catKey) {
+    global CommandsIni
+    if (catKey = "") {
+        ShowCenteredToolTip("Unknown category")
+        SetTimer(RemoveToolTip, -1200)
+        return
+    }
+    sec := catKey . "_category"
+    title := IniRead(CommandsIni, sec, "title", "COMMANDS")
+    order := IniRead(CommandsIni, sec, "order", "")
+    ToolTipX := A_ScreenWidth // 2 - 120
+    ToolTipY := A_ScreenHeight // 2 - 90
+    menuText := StrUpper(title) . "`n`n"
+    if (order != "" and order != "ERROR") {
+        keys := StrSplit(order, [",", " ", "`t"])
+        for _, k in keys {
+            k := Trim(k)
+            if (k = "")
+                continue
+            label := IniRead(CommandsIni, sec, k, "")
+            if (label != "" and label != "ERROR")
+                menuText .= k . " - " . label . "`n"
+        }
+    }
+    menuText .= "`n[\: Back] [Esc: Exit]"
+    ToolTip(menuText, ToolTipX, ToolTipY, 2)
+}
+
 ShowTimestampModeMenu(mode) {
     switch mode {
         case "date":
