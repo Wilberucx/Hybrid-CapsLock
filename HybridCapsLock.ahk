@@ -19,8 +19,17 @@
 ; --------------------
 ; UI
 ; --------------------
-#Include src\ui\tooltip_csharp_integration.ahk
-#Include src\ui\tooltips_native_wrapper.ahk
+#Include src\\ui\\tooltip_csharp_integration.ahk
+#Include src\\ui\\tooltips_native_wrapper.ahk
+
+; --------------------
+; Startup logic
+; --------------------
+try {
+    LoadLayerFlags()
+    LoadLayerState()
+} catch {
+}
 
 ; --------------------
 ; Layers & Leader

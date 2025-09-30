@@ -1,10 +1,42 @@
 ; ==============================
-; Core global variables (paths)
+; Core global variables
 ; ==============================
-; Define INI paths early so any included module can read configuration safely
+; Define global state and INI paths early so any included module can read/use them safely
 
-global ConfigIni := A_ScriptDir . "\config\configuration.ini"
-global ProgramsIni := A_ScriptDir . "\config\programs.ini"
-global TimestampsIni := A_ScriptDir . "\config\timestamps.ini"
-global InfoIni := A_ScriptDir . "\config\information.ini"
-global CommandsIni := A_ScriptDir . "\config\commands.ini"
+; ---- INI paths ----
+global ConfigIni := A_ScriptDir . "\\config\\configuration.ini"
+global ProgramsIni := A_ScriptDir . "\\config\\programs.ini"
+global TimestampsIni := A_ScriptDir . "\\config\\timestamps.ini"
+global InfoIni := A_ScriptDir . "\\config\\information.ini"
+global CommandsIni := A_ScriptDir . "\\config\\commands.ini"
+
+; ---- Layer runtime states ----
+global isNvimLayerActive := false
+global _tempEditMode := false
+global VisualMode := false
+
+; Leader state flag
+global leaderActive := false
+
+; Other runtime flags
+global excelLayerActive := false
+global capsLockWasHeld := false
+global capsLockUsedAsModifier := false
+global rightClickHeld := false
+global scrollModeActive := false
+global _yankAwait := false
+global _deleteAwait := false
+global capsActsNormal := false
+
+; Temporary status tracking (UI)
+global currentTempStatus := ""
+global tempStatusExpiry := 0
+
+; ---- Layer enable flags (safe defaults) ----
+global nvimLayerEnabled := true
+global excelLayerEnabled := true
+global modifierLayerEnabled := true
+global leaderLayerEnabled := true
+
+; Persistence master flag (can be overwritten by LoadLayerFlags)
+global enableLayerPersistence := true
