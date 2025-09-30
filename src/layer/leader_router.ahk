@@ -21,6 +21,7 @@ TryActivateLeader() {
         ih.Start()
         ih.Wait()
         if (ih.EndReason = "EndKey" && ih.EndKey = "Escape") {
+            HideAllTooltips()
             ih.Stop()
             leaderActive := false
             return
@@ -36,6 +37,38 @@ TryActivateLeader() {
             continue
         } else if (key = "p" || key = "P") {
             LeaderProgramsMenuLoop()
+            continue
+        } else if (key = "t" || key = "T") {
+            ; Minimal timestamps handler: show main time menu and route to sub-mode
+            ShowTimeMenu()
+            ihTs := InputHook("L1 T" . GetEffectiveTimeout("timestamps"), "{Escape}{Backspace}")
+            ihTs.Start()
+            ihTs.Wait()
+            if (ihTs.EndReason = "EndKey") {
+                ihTs.Stop()
+                continue
+            }
+            tsKey := ihTs.Input
+            ihTs.Stop()
+            if (tsKey = "" || tsKey = Chr(0))
+                continue
+            HandleTimestampMode(tsKey)
+            continue
+        } else if (key = "i" || key = "I") {
+            ; Minimal information handler: show info menu and insert/preview by key
+            ShowInformationMenu()
+            ihInfo := InputHook("L1 T" . GetEffectiveTimeout("information"), "{Escape}{Backspace}")
+            ihInfo.Start()
+            ihInfo.Wait()
+            if (ihInfo.EndReason = "EndKey") {
+                ihInfo.Stop()
+                continue
+            }
+            infoKey := ihInfo.Input
+            ihInfo.Stop()
+            if (infoKey = "" || infoKey = Chr(0))
+                continue
+            InsertInformationFromKey(infoKey)
             continue
         } else {
             ShowCenteredToolTip("Unknown: " . key)
@@ -54,6 +87,8 @@ ShowLeaderMenu() {
         menuText := "LEADER MENU`n`n"
         menuText .= "w - Windows`n"
         menuText .= "p - Programs`n"
+        menuText .= "t - Timestamps`n"
+        menuText .= "i - Information`n"
         menuText .= "`n[Esc: Exit]"
         ToolTip(menuText, ToolTipX, ToolTipY, 2)
     }
@@ -92,6 +127,7 @@ LeaderWindowsMenuLoop() {
 }
 
 LeaderProgramsMenuLoop() {
+    global ProgramsIni
     Loop {
         ShowProgramMenu()
         ih := InputHook("L1 T" . GetEffectiveTimeout("programs"), "{Escape}{Backspace}")

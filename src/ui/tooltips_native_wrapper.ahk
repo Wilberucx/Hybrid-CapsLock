@@ -16,6 +16,25 @@ RemoveToolTip() {
     ToolTip()
 }
 
+; Hide current menu tooltip or C# tooltip (menus use id=2 in native)
+HideMenuTooltip() {
+    if (IsSet(tooltipConfig) && tooltipConfig.enabled) {
+        HideCSharpTooltip()
+    } else {
+        ; Hide menu tooltip with id=2
+        ToolTip(, , , 2)
+    }
+}
+
+; Hide all tooltips (both default and menu id)
+HideAllTooltips() {
+    if (IsSet(tooltipConfig) && tooltipConfig.enabled) {
+        HideCSharpTooltip()
+    }
+    ToolTip()
+    ToolTip(, , , 2)
+}
+
 ; Temporary status setter (shared with UI status)
 SetTempStatus(status, duration) {
     global currentTempStatus, tempStatusExpiry
