@@ -70,6 +70,22 @@ TryActivateLeader() {
                 continue
             InsertInformationFromKey(infoKey)
             continue
+        } else if (key = "c" || key = "C") {
+            ; Commands main menu
+            ShowCommandsMenu()
+            ihCmd := InputHook("L1 T" . GetEffectiveTimeout("commands"), "{Escape}{Backspace}")
+            ihCmd.Start()
+            ihCmd.Wait()
+            if (ihCmd.EndReason = "EndKey") {
+                ihCmd.Stop()
+                continue
+            }
+            catKey := ihCmd.Input
+            ihCmd.Stop()
+            if (catKey = "" || catKey = Chr(0))
+                continue
+            HandleCommandCategory(catKey)
+            continue
         } else {
             ShowCenteredToolTip("Unknown: " . key)
             SetTimer(() => RemoveToolTip(), -800)
@@ -87,6 +103,7 @@ ShowLeaderMenu() {
         menuText := "LEADER MENU`n`n"
         menuText .= "w - Windows`n"
         menuText .= "p - Programs`n"
+        menuText .= "c - Commands`n"
         menuText .= "t - Timestamps`n"
         menuText .= "i - Information`n"
         menuText .= "`n[Esc: Exit]"
