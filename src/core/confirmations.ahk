@@ -207,7 +207,25 @@ GetCategoryKeySymbol(categoryInternal) {
         case "adb": return "a"
         case "hybrid": return "h"
         case "vaultflow": return "v"
-        default: return ""
+        default:
+            ; Dynamic fallback: resolve symbol from [Categories] by matching normalized title
+            global CommandsIni
+            order := IniRead(CommandsIni, "Categories", "order", "")
+            if (order != "" && order != "ERROR") {
+                normWanted := NormalizeCategoryToken(categoryInternal)
+                keys := StrSplit(order, [",", " ", "`t"]) 
+                for _, k in keys {
+                    k := Trim(k)
+                    if (k = "")
+                        continue
+                    title := IniRead(CommandsIni, "Categories", k, "")
+                    if (title = "" || title = "ERROR")
+                        continue
+                    if (NormalizeCategoryToken(title) = normWanted)
+                        return k
+                }
+            }
+            return ""
     }
 }
 

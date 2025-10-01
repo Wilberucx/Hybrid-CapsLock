@@ -248,10 +248,188 @@ HandleCommandCategory(catKey) {
             ExecuteGitCommand(key)
         case "monitoring":
             ExecuteMonitoringCommand(key)
+        case "folder":
+            ExecuteFolderCommand(key)
+        case "windows":
+            ExecuteWindowsCommand(key)
+        case "power":
+            ExecutePowerOptionsCommand(key)
+        case "adb":
+            ExecuteADBCommand(key)
+        case "vaultflow":
+            ExecuteVaultFlowCommand(key)
+        case "hybrid":
+            ExecuteHybridManagementCommand(key)
         default:
             HideMenuTooltip()
             ShowCenteredToolTip("Category '" . categoryInternal . "' not implemented yet")
             SetTimer(() => RemoveToolTip(), -1200)
+    }
+}
+
+ExecutePowerOptionsCommand(cmd) {
+    ; Ask confirmation for power actions by default (configurable via INI)
+    if (ShouldConfirmCommand("power", cmd)) {
+        if (!ConfirmYN("Execute power action?", "commands"))
+            return
+    }
+    if (IsSet(tooltipConfig) && tooltipConfig.enabled && tooltipConfig.autoHide)
+        HideCSharpTooltip()
+    switch cmd {
+        case "s": ; Sleep
+            DllCall("PowrProf.dll\\SetSuspendState", "int", 0, "int", 0, "int", 0)
+            ShowCommandExecuted("Power", "Sleep")
+        case "h": ; Hibernate
+            DllCall("PowrProf.dll\\SetSuspendState", "int", 1, "int", 0, "int", 0)
+            ShowCommandExecuted("Power", "Hibernate")
+        case "r": ; Restart
+            Run("shutdown.exe /r /t 0")
+            ShowCommandExecuted("Power", "Restart")
+        case "S": ; Shutdown (Shift+s)
+            Run("shutdown.exe /s /t 0")
+            ShowCommandExecuted("Power", "Shutdown")
+        case "l": ; Lock Screen
+            DllCall("user32.dll\\LockWorkStation")
+            ShowCommandExecuted("Power", "Lock Screen")
+        case "o": ; Sign Out
+            Run("shutdown.exe /l")
+            ShowCommandExecuted("Power", "Sign Out")
+        default:
+            ShowCenteredToolTip("Unknown power command: " . cmd)
+            SetTimer(() => RemoveToolTip(), -1500)
+            return
+    }
+}
+
+ExecuteADBCommand(cmd) {
+    if (IsSet(tooltipConfig) && tooltipConfig.enabled && tooltipConfig.autoHide)
+        HideCSharpTooltip()
+    switch cmd {
+        case "d": Run("cmd.exe /k adb devices"), ShowCommandExecuted("ADB", "List Devices")
+        case "i": Run("cmd.exe /k echo Select APK file to install && pause && adb install"), ShowCommandExecuted("ADB", "Install APK")
+        case "u": Run("cmd.exe /k echo Enter package name to uninstall && pause && adb uninstall"), ShowCommandExecuted("ADB", "Uninstall Package")
+        case "l": Run("cmd.exe /k adb logcat"), ShowCommandExecuted("ADB", "Logcat")
+        case "s": Run("cmd.exe /k adb shell"), ShowCommandExecuted("ADB", "Shell")
+        case "r": Run("cmd.exe /k adb reboot"), ShowCommandExecuted("ADB", "Reboot Device")
+        case "c": Run("cmd.exe /k echo Enter package name to clear data && pause && adb shell pm clear"), ShowCommandExecuted("ADB", "Clear App Data")
+        default:
+            ShowCenteredToolTip("Unknown ADB command: " . cmd)
+            SetTimer(() => RemoveToolTip(), -1500)
+            return
+    }
+}
+
+ExecuteVaultFlowCommand(cmd) {
+    if (IsSet(tooltipConfig) && tooltipConfig.enabled && tooltipConfig.autoHide)
+        HideCSharpTooltip()
+    switch cmd {
+        case "v": Run("powershell.exe -Command `"vaultflow`""), ShowCommandExecuted("VaultFlow", "Run VaultFlow")
+        case "s": Run("cmd.exe /k vaultflow status"), ShowCommandExecuted("VaultFlow", "Status")
+        case "l": Run("cmd.exe /k vaultflow list"), ShowCommandExecuted("VaultFlow", "List")
+        case "h": Run("cmd.exe /k vaultflow --help"), ShowCommandExecuted("VaultFlow", "Help")
+        default:
+            ShowCenteredToolTip("Unknown VaultFlow command: " . cmd)
+            SetTimer(() => RemoveToolTip(), -1500)
+            return
+    }
+}
+
+ExecuteHybridManagementCommand(cmd) {
+    if (IsSet(tooltipConfig) && tooltipConfig.enabled && tooltipConfig.autoHide)
+        HideCSharpTooltip()
+    switch cmd {
+        case "R": ; Reload Script
+            ShowCenteredToolTip("RELOADING SCRIPT...")
+            SetTimer(() => RemoveToolTip(), -800)
+            Sleep(800)
+            Run('"' . A_AhkPath . '" "' . A_ScriptFullPath . '"')
+            ExitApp()
+        case "e": ; Exit Script
+            ShowCenteredToolTip("EXITING SCRIPT...")
+            SetTimer(() => RemoveToolTip(), -800)
+            Sleep(800)
+            ExitApp()
+        case "c": ; Open Config Folder
+            Run('explorer.exe "' . A_ScriptDir . '\\config"')
+            ShowCommandExecuted("Hybrid", "Config Folder")
+        case "l": ; View Log File
+            logFile := A_ScriptDir . "\\hybrid_log.txt"
+            if (FileExist(logFile)) {
+                Run('notepad.exe "' . logFile . '"')
+                ShowCommandExecuted("Hybrid", "Log File")
+            } else {
+                ShowCenteredToolTip("No log file found")
+                SetTimer(() => RemoveToolTip(), -1500)
+                return
+            }
+        case "v": ; Show Version Info
+            ShowCenteredToolTip("HybridCapsLock (modular)\nAutoHotkey " . A_AhkVersion . "\nScript: " . A_ScriptName)
+            SetTimer(() => RemoveToolTip(), -1500)
+        case "r": ; Reload Config (flags + tooltip config)
+            LoadLayerFlags()
+            ReloadTooltipConfig()
+            if (IsSet(tooltipConfig) && tooltipConfig.enabled)
+                ShowCSharpStatusNotification("HYBRID", "CONFIG RELOADED")
+            else {
+                ShowCenteredToolTip("CONFIG RELOADED")
+                SetTimer(() => RemoveToolTip(), -1200)
+            }
+        default:
+            ShowCenteredToolTip("Unknown hybrid command: " . cmd)
+            SetTimer(() => RemoveToolTip(), -1500)
+            return
+    }
+}
+
+ExecuteFolderCommand(cmd) {
+    if (IsSet(tooltipConfig) && tooltipConfig.enabled && tooltipConfig.autoHide)
+        HideCSharpTooltip()
+    switch cmd {
+        case "t": Run('explorer.exe "' . EnvGet("TEMP") . '"')
+        case "a": Run('explorer.exe "' . EnvGet("APPDATA") . '"')
+        case "p": Run('explorer.exe "C:\\Program Files"')
+        case "u": Run('explorer.exe "' . EnvGet("USERPROFILE") . '"')
+        case "d": Run('explorer.exe "' . EnvGet("USERPROFILE") . '\\Desktop"')
+        case "s": Run('explorer.exe "C:\\Windows\\System32"')
+        default:
+            ShowCenteredToolTip("Unknown folder command: " . cmd)
+            SetTimer(() => RemoveToolTip(), -1500)
+            return
+    }
+    ShowCommandExecuted("Folder", cmd)
+}
+
+ExecuteWindowsCommand(cmd) {
+    if (IsSet(tooltipConfig) && tooltipConfig.enabled && tooltipConfig.autoHide)
+        HideCSharpTooltip()
+    switch cmd {
+        case "h":
+            ToggleHiddenFiles()
+        case "r":
+            Run("regedit.exe")
+            ShowCommandExecuted("Windows", "Registry Editor")
+        case "e":
+            Run("rundll32.exe sysdm.cpl,EditEnvironmentVariables")
+            ShowCommandExecuted("Windows", "Environment Variables")
+        default:
+            ShowCenteredToolTip("Unknown windows command: " . cmd)
+            SetTimer(() => RemoveToolTip(), -1500)
+            return
+    }
+}
+
+ToggleHiddenFiles() {
+    try {
+        currentValue := RegRead("HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced", "Hidden")
+        newValue := (currentValue = 1) ? 2 : 1
+        RegWrite(newValue, "REG_DWORD", "HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced", "Hidden")
+        Send("{F5}")
+        statusText := (newValue = 1) ? "HIDDEN FILES SHOWN" : "HIDDEN FILES HIDDEN"
+        ShowCenteredToolTip(statusText)
+        SetTimer(() => RemoveToolTip(), -2000)
+    } catch Error as err {
+        ShowCenteredToolTip("Error toggling hidden files")
+        SetTimer(() => RemoveToolTip(), -2000)
     }
 }
 
@@ -308,7 +486,14 @@ SymToInternal(catSym) {
         case "a": return "adb"
         case "h": return "hybrid"
         case "v": return "vaultflow"
-        default: return ""
+        default:
+            ; Dynamic fallback: look up title for this symbol in [Categories] and normalize it
+            global CommandsIni
+            title := IniRead(CommandsIni, "Categories", catSym, "")
+            if (title != "" && title != "ERROR") {
+                return NormalizeCategoryToken(title)
+            }
+            return ""
     }
 }
 
