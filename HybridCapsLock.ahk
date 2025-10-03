@@ -15,6 +15,7 @@
 #Include src\core\config.ahk
 #Include src\core\persistence.ahk
 #Include src\core\confirmations.ahk
+#Include src\core\mappings.ahk
 
 ; --------------------
 ; UI

@@ -226,7 +226,14 @@ HandleCommandCategory(catKey) {
     if (key = "" || key = Chr(0))
         return
 
-    categoryInternal := SymToInternal(k)
+    categoryInternal := ""
+    global CommandsIni
+    title := IniRead(CommandsIni, "Categories", k, "")
+    if (title != "" && title != "ERROR") {
+        categoryInternal := NormalizeCategoryToken(title)
+    } else {
+        categoryInternal := SymToInternal(k)
+    }
     if (categoryInternal = "") {
         HideMenuTooltip()
         ShowCenteredToolTip("Unknown category: '" . k . "'")

@@ -20,6 +20,8 @@ global leaderActive := false
 
 ; Other runtime flags
 global excelLayerActive := false
+; Default: enable static Excel hotkeys unless dynamic mappings disable them
+global excelStaticEnabled := true
 global capsLockWasHeld := false
 global capsLockUsedAsModifier := false
 global rightClickHeld := false
@@ -36,7 +38,15 @@ global tempStatusExpiry := 0
 global nvimLayerEnabled := true
 global excelLayerEnabled := true
 global modifierLayerEnabled := true
+; Default: enable static Modifier hotkeys unless dynamic mappings disable them
+global modifierStaticEnabled := true
 global leaderLayerEnabled := true
 
 ; Persistence master flag (can be overwritten by LoadLayerFlags)
 global enableLayerPersistence := true
+
+; ---- Helper: mark CapsLock usage as modifier ----
+MarkCapsLockAsModifier() {
+    global capsLockUsedAsModifier
+    capsLockUsedAsModifier := true
+}

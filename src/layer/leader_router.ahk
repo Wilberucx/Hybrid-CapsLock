@@ -7,9 +7,13 @@
 ; Depends on: core/config (GetEffectiveTimeout), ui (tooltips),
 ; windows_layer (ShowWindowMenu, ExecuteWindowAction)
 
+#HotIf (leaderLayerEnabled)
 CapsLock & Space:: {
+    ; Mark CapsLock as used as modifier so CapsLock tap does not toggle NVIM
+    MarkCapsLockAsModifier()
     TryActivateLeader()
 }
+#HotIf
 
 TryActivateLeader() {
     global leaderActive
@@ -70,6 +74,18 @@ TryActivateLeader() {
                 continue
             InsertInformationFromKey(infoKey)
             continue
+        } else if (key = "n" || key = "N") {
+            ; Toggle Excel layer on/off
+            global excelLayerEnabled, excelLayerActive
+            if (!excelLayerEnabled) {
+                ShowCenteredToolTip("EXCEL LAYER DISABLED")
+                SetTimer(() => RemoveToolTip(), -1000)
+                continue
+            }
+            excelLayerActive := !excelLayerActive
+            ShowExcelLayerStatus(excelLayerActive)
+            SetTempStatus(excelLayerActive ? "EXCEL LAYER ON" : "EXCEL LAYER OFF", 1500)
+            continue
         } else if (key = "c" || key = "C") {
             ; Commands main menu
             ShowCommandsMenu()
@@ -106,6 +122,7 @@ ShowLeaderMenu() {
         menuText .= "c - Commands`n"
         menuText .= "t - Timestamps`n"
         menuText .= "i - Information`n"
+        menuText .= "n - Excel/Numbers`n"
         menuText .= "`n[Esc: Exit]"
         ToolTip(menuText, ToolTipX, ToolTipY, 2)
     }
