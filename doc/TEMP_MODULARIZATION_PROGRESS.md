@@ -192,7 +192,7 @@ Reload sin reiniciar:
 - Luego dinamizar Modifier y Nvim.
 - Añadir hot reload de mappings desde Hybrid Management.
 - Motor de mapeos genérico: agregado ApplyGenericMappings/LoadSimpleMappings; seed de modifier_layer.ini y nvim_layer.ini (Nvim deshabilitado por defecto).
-- Nvim layer: implementación inicial (toggle por tap de CapsLock, navegación hjkl, Visual Mode básico, salida con q).
+- Nvim layer: implementación inicial (toggle por tap de CapsLock, navegación hjkl, Visual Mode básico, salida con q). Menús yank/delete, insert y replace implementados.
 
 ## 13) Seguimiento y PRs
 - PRs por bloque (core/ui; leader+windows+programs; timestamps+information; commands; modifier; nvim; excel)

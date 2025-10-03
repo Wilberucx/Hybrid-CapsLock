@@ -157,6 +157,48 @@ UnregisterGenericMappings(layerName) {
     }
 }
 
+ReloadModifierMappings() {
+    try {
+        iniPath := A_ScriptDir . "\\config\\modifier_layer.ini"
+        maps := LoadSimpleMappings(iniPath)
+        if (maps.Count > 0)
+            ApplyGenericMappings("modifier", maps, (*) => modifierLayerEnabled, "CapsLock & ")
+        else
+            UnregisterGenericMappings("modifier")
+    } catch {
+        UnregisterGenericMappings("modifier")
+    }
+}
+
+ReloadExcelMappings() {
+    try {
+        iniPath := A_ScriptDir . "\\config\\excel_layer.ini"
+        maps := LoadExcelMappings(iniPath)
+        if (maps.Count > 0)
+            ApplyExcelMappings(maps)
+        else
+            UnregisterExcelMappings()
+    } catch {
+        UnregisterExcelMappings()
+    }
+}
+
+ReloadNvimMappings() {
+    ; Placeholder for future dynamic Nvim mappings
+    try {
+        global nvimStaticEnabled
+        ; No dynamic maps yet — ensure static remains enabled
+        try nvimStaticEnabled := true
+    } catch {
+    }
+}
+
+ReloadAllMappings() {
+    ReloadModifierMappings()
+    ReloadExcelMappings()
+    ReloadNvimMappings()
+}
+
 ; ---- Excel mappings ----
 _excelRegisteredHotkeys := []
 

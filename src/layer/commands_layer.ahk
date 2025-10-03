@@ -84,7 +84,20 @@ ShowDynamicCommandsMenu(catKey) {
             itemTitle := IniRead(CommandsIni, sec, k, "")
             if (itemTitle != "" && itemTitle != "ERROR")
                 menuText .= k . " - " . itemTitle . "`n"
+            else
+                menuText .= k . " - [Missing mapping in [" . sec . "]]" . "`n"
         }
+    } else if (catKey = "h") {
+        ; Fallback default for Hybrid Management if INI is missing
+        menuText .= "R - Reload Script`n"
+        menuText .= "r - Reload Config`n"
+        menuText .= "m - Reload Mappings`n"
+        menuText .= "c - Open Config Folder`n"
+        menuText .= "l - View Log File`n"
+        menuText .= "v - Version Info`n"
+        menuText .= "e - Exit Script`n"
+    } else {
+        menuText .= "[Missing order in [" . sec . "]]" . "`n"
     }
     menuText .= "`n[\\: Back] [Esc: Exit]"
     ToolTip(menuText, ToolTipX, ToolTipY, 2)
@@ -373,15 +386,23 @@ ExecuteHybridManagementCommand(cmd) {
             ShowCenteredToolTip("HybridCapsLock (modular)\nAutoHotkey " . A_AhkVersion . "\nScript: " . A_ScriptName)
             SetTimer(() => RemoveToolTip(), -1500)
         case "r": ; Reload Config (flags + tooltip config)
-            LoadLayerFlags()
-            ReloadTooltipConfig()
-            if (IsSet(tooltipConfig) && tooltipConfig.enabled)
-                ShowCSharpStatusNotification("HYBRID", "CONFIG RELOADED")
-            else {
-                ShowCenteredToolTip("CONFIG RELOADED")
-                SetTimer(() => RemoveToolTip(), -1200)
-            }
-        default:
+           LoadLayerFlags()
+           ReloadTooltipConfig()
+           if (IsSet(tooltipConfig) && tooltipConfig.enabled)
+               ShowCSharpStatusNotification("HYBRID", "CONFIG RELOADED")
+           else {
+               ShowCenteredToolTip("CONFIG RELOADED")
+               SetTimer(() => RemoveToolTip(), -1200)
+           }
+       case "m": ; Reload Mappings (modifier/excel/nvim)
+           try ReloadAllMappings()
+           if (IsSet(tooltipConfig) && tooltipConfig.enabled)
+               ShowCSharpStatusNotification("HYBRID", "MAPPINGS RELOADED")
+           else {
+               ShowCenteredToolTip("MAPPINGS RELOADED")
+               SetTimer(() => RemoveToolTip(), -1200)
+           }
+       default:
             ShowCenteredToolTip("Unknown hybrid command: " . cmd)
             SetTimer(() => RemoveToolTip(), -1500)
             return
