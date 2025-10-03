@@ -135,14 +135,14 @@ CapsLock & u:: {
 } ; Prev tab
 
 ; ----- Mouse-like -----
-CapsLock & sc027:: {
-    MarkCapsLockAsModifier()
-    SendEvent("{LButton down}")
-}
-CapsLock & sc028::  {
-    MarkCapsLockAsModifier()
-    Click "Right"
-}
+;CapsLock & sc027:: {
+;    MarkCapsLockAsModifier()
+;    SendEvent("{LButton down}")
+;}
+;CapsLock & sc028::  {
+;    MarkCapsLockAsModifier()
+;    Click "Right"
+;}
 
 ; ----- Back / URL copy / Screenshot / Ctrl+Enter -----
 CapsLock & Backspace:: {
@@ -164,9 +164,11 @@ CapsLock & Enter:: {
 } ; Ctrl+Enter
 
 ; ----- Mouse release (click hold cleanup) -----
+#HotIf (modifierStaticEnabled ? (modifierLayerEnabled && GetKeyState("CapsLock", "P")) : false)
 sc027 up:: {
     SendEvent("{LButton up}")
 }
+#HotIf (modifierStaticEnabled ? (modifierLayerEnabled) : false)
 ~CapsLock up:: {
     SendEvent("{LButton up}")
 }
