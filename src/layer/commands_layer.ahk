@@ -252,11 +252,12 @@ HandleCommandCategory(catKey) {
 
     categoryInternal := ""
     global CommandsIni
-    title := IniRead(CommandsIni, "Categories", k, "")
-    if (title != "" && title != "ERROR") {
-        categoryInternal := NormalizeCategoryToken(title)
-    } else {
-        categoryInternal := SymToInternal(k)
+    ; Prefer key-based mapping first for reliability, then fall back to title-based
+    categoryInternal := SymToInternal(k)
+    if (categoryInternal = "") {
+        title := IniRead(CommandsIni, "Categories", k, "")
+        if (title != "" && title != "ERROR")
+            categoryInternal := NormalizeCategoryToken(title)
     }
     if (categoryInternal = "") {
         HideMenuTooltip()
@@ -308,10 +309,10 @@ ExecutePowerOptionsCommand(cmd) {
         HideCSharpTooltip()
     switch cmd {
         case "s": ; Sleep
-            DllCall("PowrProf.dll\\SetSuspendState", "int", 0, "int", 0, "int", 0)
+            DllCall("PowrProf\SetSuspendState", "int", 0, "int", 0, "int", 0)
             ShowCommandExecuted("Power", "Sleep")
         case "h": ; Hibernate
-            DllCall("PowrProf.dll\\SetSuspendState", "int", 1, "int", 0, "int", 0)
+            DllCall("PowrProf\SetSuspendState", "int", 1, "int", 0, "int", 0)
             ShowCommandExecuted("Power", "Hibernate")
         case "r": ; Restart
             Run("shutdown.exe /r /t 0")
@@ -320,7 +321,7 @@ ExecutePowerOptionsCommand(cmd) {
             Run("shutdown.exe /s /t 0")
             ShowCommandExecuted("Power", "Shutdown")
         case "l": ; Lock Screen
-            DllCall("user32.dll\\LockWorkStation")
+            DllCall("user32\LockWorkStation")
             ShowCommandExecuted("Power", "Lock Screen")
         case "o": ; Sign Out
             Run("shutdown.exe /l")

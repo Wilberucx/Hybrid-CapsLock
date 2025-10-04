@@ -72,6 +72,11 @@ Este documento sirve para llevar control y orden del refactor a estructura modul
 
 ## 7) Puntos pendientes (próximos)
 
+- Commands: Migrar categorías hardcodeadas a esquema dinámico por INI (Windows/System/Git/Monitoring/Network/Power)
+  - Se realizará después de culminar la migración general, idealmente en una rama dedicada.
+  - Mantener por ahora ejecutores hardcodeados para estabilidad y velocidad de desarrollo.
+
+
 - Loader INI (mejora): hacer opcional la clave `order` en `LoadSimpleMappings`/loaders
   - Implementar un AHK dedicado que parsee el INI y enumere todas las claves de la sección objetivo (`[Map]`, `[Normal]`, `[Visual]`, `[Insert]`, etc.) cuando `order` no exista.
   - Mantener `order` como override opcional (para forzar un orden o filtrar subconjuntos), pero no obligatorio.
