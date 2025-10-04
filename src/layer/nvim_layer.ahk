@@ -32,8 +32,35 @@
     try SaveLayerState()
 }
 
+; Try dynamic mappings if available (Normal mode)
+try {
+    global nvimMappings
+    nvimMappings := LoadSimpleMappings(A_ScriptDir . "\\config\\nvim_layer.ini", "Normal", "order")
+    if (nvimMappings.Count > 0)
+        ApplyGenericMappings("nvim_normal", nvimMappings, (*) => (isNvimLayerActive && !GetKeyState("CapsLock", "P") && NvimLayerAppAllowed()))
+} catch {
+}
+
+; Try dynamic mappings for Visual mode
+try {
+    global nvimVisualMappings
+    nvimVisualMappings := LoadSimpleMappings(A_ScriptDir . "\\config\\nvim_layer.ini", "Visual", "order")
+    if (nvimVisualMappings.Count > 0)
+        ApplyGenericMappings("nvim_visual", nvimVisualMappings, (*) => (isNvimLayerActive && VisualMode && !GetKeyState("CapsLock", "P") && NvimLayerAppAllowed()))
+} catch {
+}
+
+; Try dynamic mappings for Insert mode
+try {
+    global nvimInsertMappings
+    nvimInsertMappings := LoadSimpleMappings(A_ScriptDir . "\\config\\nvim_layer.ini", "Insert", "order")
+    if (nvimInsertMappings.Count > 0)
+        ApplyGenericMappings("nvim_insert", nvimInsertMappings, (*) => (_tempEditMode && !GetKeyState("CapsLock", "P") && NvimLayerAppAllowed()))
+} catch {
+}
+
 ; ---- Context hotkeys ----
-#HotIf (isNvimLayerActive && !GetKeyState("CapsLock", "P") && NvimLayerAppAllowed())
+#HotIf (nvimStaticEnabled ? (isNvimLayerActive && !GetKeyState("CapsLock", "P") && NvimLayerAppAllowed()) : false)
 
 ; Visual Mode toggle
 v:: {
@@ -102,6 +129,16 @@ y:: {
 ; Paste
 p::Send("^v")
 +p::PastePlain()
+
+; Exit Insert mode (if mapped dynamically)
+Esc:: {
+    global _tempEditMode
+    if (_tempEditMode) {
+        ReactivateNvimAfterInsert()
+    } else {
+        Send("{Escape}")
+    }
+}
 
 ; End of word (e)
 e::Send("^{Right}{Left}")
@@ -202,6 +239,54 @@ ReactivateNvimAfterInsert() {
         SetTimer(() => RemoveToolTip(), -1000)
     }
 }
+NvimHandleDeleteMenu() {
+    global VisualMode
+    if (VisualMode) {
+        Send("{Delete}")
+        return
+    }
+    ShowDeleteMenu()
+    ih := InputHook("L1 T" . GetEffectiveTimeout("nvim"), "{Escape}")
+    ih.Start()
+    ih.Wait()
+    if (ih.EndReason = "EndKey" && ih.EndKey = "Escape") {
+        try HideCSharpTooltip()
+        return
+    }
+    key := ih.Input
+    try HideCSharpTooltip()
+    switch key {
+        case "w": DeleteCurrentWord()
+        case "d": DeleteCurrentLine()
+        case "a": DeleteAll()
+    }
+}
+
+NvimHandleYankMenu() {
+    global VisualMode
+    if (VisualMode) {
+        Send("^c")
+        ShowCopyNotification()
+        return
+    }
+    ShowYankMenu()
+    ih := InputHook("L1 T" . GetEffectiveTimeout("nvim"), "{Escape}")
+    ih.Start()
+    ih.Wait()
+    if (ih.EndReason = "EndKey" && ih.EndKey = "Escape") {
+        try HideCSharpTooltip()
+        return
+    }
+    key := ih.Input
+    try HideCSharpTooltip()
+    switch key {
+        case "y": CopyCurrentLine()
+        case "w": CopyCurrentWord()
+        case "a": Send("^a^c"), ShowCopyNotification()
+        case "p": CopyCurrentParagraph()
+    }
+}
+
 ReactivateNvimAfterReplace() {
     global isNvimLayerActive, _tempEditMode
     if (_tempEditMode) {

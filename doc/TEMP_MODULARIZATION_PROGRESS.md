@@ -72,6 +72,13 @@ Este documento sirve para llevar control y orden del refactor a estructura modul
 
 ## 7) Puntos pendientes (próximos)
 
+- Loader INI (mejora): hacer opcional la clave `order` en `LoadSimpleMappings`/loaders
+  - Implementar un AHK dedicado que parsee el INI y enumere todas las claves de la sección objetivo (`[Map]`, `[Normal]`, `[Visual]`, `[Insert]`, etc.) cuando `order` no exista.
+  - Mantener `order` como override opcional (para forzar un orden o filtrar subconjuntos), pero no obligatorio.
+  - Beneficios: menos fricción al editar INIs, se evita mantener listas duplicadas, y se unifica el comportamiento (Excel ya tiene fallback de teclas conocidas).
+  - Alcance: `modifier_layer.ini`, `nvim_layer.ini` y cualquier loader genérico. Excel puede migrar a este parser común eliminando el fallback hardcodeado.
+
+
 - Capa Modifier (hjkl): Soportar modificadores combinados sobre flechas
   - Objetivo: que al usar las teclas de navegación `hjkl` (flechas) en la capa Modificador, puedan acompañarse de modificadores (Ctrl/Alt/Shift/Win) y se envíe la flecha con esos modificadores.
   - Ejemplos: `Alt+h` → envía `Alt+Left`, `Shift+j` → envía `Shift+Down`, `Ctrl+k` → `Ctrl+Up`, `Win+l` → `Win+Right`.

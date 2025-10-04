@@ -51,26 +51,29 @@ CapsLock & 2:: {
 }
 
 ; ----- Basic Navigation (Vim Style) -----
-; TODO(RovoDev): Future enhancement — hjkl modifier-aware arrows
-; - Detect Ctrl/Alt/Shift/Win active and send modified arrows accordingly (e.g., Alt+h -> !{Left}, Shift+j -> +{Down})
-; - Preserve reserved combos (Ctrl+a, Ctrl+c). Pending decision for Ctrl+Shift+c.
-; - Consider a feature flag and a configurable exceptions list in configuration.ini/modifier_layer.ini
+; hjkl modifier-aware arrows (Ctrl/Alt/Shift/Win). If any modifier is held,
+; it is applied to the arrow key. Reserved combos como Ctrl+a/Ctrl+c no se ven
+; afectados porque son otras teclas (no hjkl). Caso Ctrl+Shift+c queda pendiente.
 
 CapsLock & h:: {
     MarkCapsLockAsModifier()
-    Send("{Left}")
+    pref := GetActiveModPrefixForArrows()
+    Send(pref . "{Left}")
 }
 CapsLock & j:: {
     MarkCapsLockAsModifier()
-    Send("{Down}")
+    pref := GetActiveModPrefixForArrows()
+    Send(pref . "{Down}")
 }
 CapsLock & k:: {
     MarkCapsLockAsModifier()
-    Send("{Up}")
+    pref := GetActiveModPrefixForArrows()
+    Send(pref . "{Up}")
 }
 CapsLock & l:: {
     MarkCapsLockAsModifier()
-    Send("{Right}")
+    pref := GetActiveModPrefixForArrows()
+    Send(pref . "{Right}")
 }
 
 ; ----- Smooth Scrolling -----
@@ -174,6 +177,23 @@ sc027 up:: {
 }
 
 #HotIf
+
+; ---- Arrow modifiers helper ----
+GetActiveModPrefixForArrows() {
+    pref := ""
+    try {
+        if (GetKeyState("LWin", "P") || GetKeyState("RWin", "P"))
+            pref .= "#"
+        if (GetKeyState("Ctrl", "P"))
+            pref .= "^"
+        if (GetKeyState("Alt", "P"))
+            pref .= "!"
+        if (GetKeyState("Shift", "P"))
+            pref .= "+"
+    } catch {
+    }
+    return pref
+}
 
 ; ---- App filter for Modifier layer ----
 ModifierLayerAppAllowed() {

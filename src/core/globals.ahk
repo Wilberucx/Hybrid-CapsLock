@@ -42,6 +42,9 @@ global modifierLayerEnabled := true
 global modifierStaticEnabled := true
 global leaderLayerEnabled := true
 
+; Static mapping toggles for dynamic override
+global nvimStaticEnabled := true
+
 ; Persistence master flag (can be overwritten by LoadLayerFlags)
 global enableLayerPersistence := true
 

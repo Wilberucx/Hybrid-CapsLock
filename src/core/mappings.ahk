@@ -71,12 +71,13 @@ ExecuteAction(layer, action) {
                 }
             }
         case "showmenu":
-            ; delegate to layer-specific menu by name if available
-            if (layer = "nvim") {
+            if (SubStr(layer, 1, 4) = "nvim") {
                 if (StrLower(action.payload) = "delete")
-                    ShowDeleteMenu()
+                    NvimHandleDeleteMenu()
                 else if (StrLower(action.payload) = "yank")
-                    ShowYankMenu()
+                    NvimHandleYankMenu()
+            } else {
+                ; Unknown menu for this layer - no-op
             }
         default:
             ; Unknown: no-op
@@ -184,12 +185,28 @@ ReloadExcelMappings() {
 }
 
 ReloadNvimMappings() {
-    ; Placeholder for future dynamic Nvim mappings
+    ; Unregister previous nvim mappings (all subcontexts)
+    UnregisterGenericMappings("nvim_normal")
+    UnregisterGenericMappings("nvim_visual")
+    UnregisterGenericMappings("nvim_insert")
     try {
-        global nvimStaticEnabled
-        ; No dynamic maps yet — ensure static remains enabled
-        try nvimStaticEnabled := true
+        iniPath := A_ScriptDir . "\\config\\nvim_layer.ini"
+        normal := LoadSimpleMappings(iniPath, "Normal", "order")
+        visual := LoadSimpleMappings(iniPath, "Visual", "order")
+        insert := LoadSimpleMappings(iniPath, "Insert", "order")
+        if (normal.Count > 0)
+            ApplyGenericMappings("nvim_normal", normal, (*) => (isNvimLayerActive && !GetKeyState("CapsLock", "P") && NvimLayerAppAllowed()))
+        if (visual.Count > 0)
+            ApplyGenericMappings("nvim_visual", visual, (*) => (isNvimLayerActive && VisualMode && !GetKeyState("CapsLock", "P") && NvimLayerAppAllowed()))
+        if (insert.Count > 0)
+            ApplyGenericMappings("nvim_insert", insert, (*) => (_tempEditMode && !GetKeyState("CapsLock", "P") && NvimLayerAppAllowed()))
+        if (normal.Count = 0 && visual.Count = 0 && insert.Count = 0) {
+            ; fall back to static
+            global nvimStaticEnabled
+            nvimStaticEnabled := true
+        }
     } catch {
+        UnregisterGenericMappings("nvim")
     }
 }
 
