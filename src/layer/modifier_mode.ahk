@@ -9,7 +9,7 @@ try {
     global modifierMappings
     modifierMappings := LoadSimpleMappings(A_ScriptDir . "\\config\\modifier_layer.ini")
     if (modifierMappings.Count > 0)
-        ApplyGenericMappings("modifier", modifierMappings, (*) => modifierLayerEnabled, "CapsLock & ")
+        ApplyGenericMappings("modifier", modifierMappings, (*) => (modifierLayerEnabled && ModifierLayerAppAllowed()), "CapsLock & ")
 } catch {
 }
 
@@ -164,7 +164,7 @@ CapsLock & Enter:: {
 } ; Ctrl+Enter
 
 ; ----- Mouse release (click hold cleanup) -----
-#HotIf (modifierStaticEnabled ? (modifierLayerEnabled && GetKeyState("CapsLock", "P")) : false)
+#HotIf (modifierStaticEnabled ? (modifierLayerEnabled && GetKeyState("CapsLock", "P") && ModifierLayerAppAllowed()) : false)
 sc027 up:: {
     SendEvent("{LButton up}")
 }
@@ -174,3 +174,20 @@ sc027 up:: {
 }
 
 #HotIf
+
+; ---- App filter for Modifier layer ----
+ModifierLayerAppAllowed() {
+    try {
+        ini := A_ScriptDir . "\\config\\modifier_layer.ini"
+        wl := IniRead(ini, "Settings", "whitelist", "")
+        bl := IniRead(ini, "Settings", "blacklist", "")
+        proc := WinGetProcessName("A")
+        if (bl != "" && InStr("," . StrLower(bl) . ",", "," . StrLower(proc) . ","))
+            return false
+        if (wl = "")
+            return true
+        return InStr("," . StrLower(wl) . ",", "," . StrLower(proc) . ",")
+    } catch {
+        return true
+    }
+}

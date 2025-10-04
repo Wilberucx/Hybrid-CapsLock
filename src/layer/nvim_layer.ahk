@@ -33,7 +33,7 @@
 }
 
 ; ---- Context hotkeys ----
-#HotIf (isNvimLayerActive && !GetKeyState("CapsLock", "P"))
+#HotIf (isNvimLayerActive && !GetKeyState("CapsLock", "P") && NvimLayerAppAllowed())
 
 ; Visual Mode toggle
 v:: {
@@ -142,6 +142,23 @@ q:: {
 }
 
 #HotIf
+
+; ---- App filter for Nvim layer ----
+NvimLayerAppAllowed() {
+   try {
+       ini := A_ScriptDir . "\\config\\nvim_layer.ini"
+       wl := IniRead(ini, "Settings", "whitelist", "")
+       bl := IniRead(ini, "Settings", "blacklist", "")
+       proc := WinGetProcessName("A")
+       if (bl != "" && InStr("," . StrLower(bl) . ",", "," . StrLower(proc) . ","))
+           return false
+       if (wl = "")
+           return true
+       return InStr("," . StrLower(wl) . ",", "," . StrLower(proc) . ",")
+   } catch {
+       return true
+   }
+}
 
 ; ---- Helpers ----
 DeleteCurrentWord() {

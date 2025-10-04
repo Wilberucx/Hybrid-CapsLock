@@ -162,7 +162,7 @@ ReloadModifierMappings() {
         iniPath := A_ScriptDir . "\\config\\modifier_layer.ini"
         maps := LoadSimpleMappings(iniPath)
         if (maps.Count > 0)
-            ApplyGenericMappings("modifier", maps, (*) => modifierLayerEnabled, "CapsLock & ")
+            ApplyGenericMappings("modifier", maps, (*) => (modifierLayerEnabled && ModifierLayerAppAllowed()), "CapsLock & ")
         else
             UnregisterGenericMappings("modifier")
     } catch {
@@ -242,7 +242,7 @@ ApplyExcelMappings(mappings) {
     global excelStaticEnabled
     excelStaticEnabled := false
     ; context: excelLayerActive and CapsLock not physically pressed
-    HotIf((*) => (excelLayerActive && !GetKeyState("CapsLock", "P")))
+    HotIf((*) => (excelLayerActive && !GetKeyState("CapsLock", "P") && ExcelAppAllowedGuard()))
     for key, action in mappings.OwnProps() {
         hk := key
         Hotkey(hk, (*) => ExecuteAction("excel", action), "On")

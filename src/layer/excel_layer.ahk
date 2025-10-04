@@ -72,6 +72,10 @@ r::Send("^r")           ; Fill right
 
 ; === Status helper ===
 ExcelLayerAppAllowed() {
+    return ExcelAppAllowedGuard()
+}
+
+ExcelAppAllowedGuard() {
     ; Whitelist/Blacklist by process name from excel_layer.ini
     try {
         ini := A_ScriptDir . "\\config\\excel_layer.ini"
