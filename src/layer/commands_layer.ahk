@@ -70,8 +70,14 @@ ShowDynamicCommandsMenu(catKey) {
     }
     global CommandsIni
     sec := catKey . "_category"
-    title := IniRead(CommandsIni, sec, "title", "COMMANDS")
+    title := IniRead(CommandsIni, sec, "title", "")
+    if (title = "" || title = "ERROR")
+        title := IniRead(CommandsIni, "Categories", catKey, "COMMANDS")
     order := IniRead(CommandsIni, sec, "order", "")
+    if (order = "" || order = "ERROR") {
+        ; Fallback to simple order from Categories if present
+        order := IniRead(CommandsIni, "Categories", catKey, "")
+    }
     ToolTipX := A_ScreenWidth // 2 - 120
     ToolTipY := A_ScreenHeight // 2 - 100
     menuText := title . "`n`n"
@@ -225,6 +231,11 @@ HandleCommandCategory(catKey) {
     ; Show dynamic category menu for native tooltips
     if (!(IsSet(tooltipConfig) && tooltipConfig.enabled)) {
         ShowDynamicCommandsMenu(k)
+    }
+    else {
+        ; In C# mode we can still show a toast when category is missing
+        ; (actual UI handled in C# layer)
+        ; no-op here
     }
     ih := InputHook("L1 T" . GetEffectiveTimeout("commands"), "{Escape}{Backspace}")
     ih.Start()

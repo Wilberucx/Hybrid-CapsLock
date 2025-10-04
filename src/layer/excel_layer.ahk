@@ -13,7 +13,7 @@ try {
 } catch {
 }
 
-#HotIf (excelStaticEnabled ? (excelLayerActive && !GetKeyState("CapsLock", "P")) : false)
+#HotIf (excelStaticEnabled ? (excelLayerActive && !GetKeyState("CapsLock", "P") && ExcelLayerAppAllowed()) : false)
 
 ; === NUMPAD SECTION ===
 ; Top row (7, 8, 9)
@@ -71,6 +71,23 @@ r::Send("^r")           ; Fill right
 #HotIf
 
 ; === Status helper ===
+ExcelLayerAppAllowed() {
+    ; Whitelist/Blacklist by process name from excel_layer.ini
+    try {
+        ini := A_ScriptDir . "\\config\\excel_layer.ini"
+        wl := IniRead(ini, "Settings", "whitelist", "")
+        bl := IniRead(ini, "Settings", "blacklist", "")
+        proc := WinGetProcessName("A")
+        if (bl != "" && InStr("," . StrLower(bl) . ",", "," . StrLower(proc) . ","))
+            return false
+        if (wl = "" )
+            return true
+        return InStr("," . StrLower(wl) . ",", "," . StrLower(proc) . ",")
+    } catch {
+        return true
+    }
+}
+
 ShowExcelLayerStatus(isActive) {
     if (IsSet(tooltipConfig) && tooltipConfig.enabled) {
         ShowExcelLayerStatusCS(isActive)
