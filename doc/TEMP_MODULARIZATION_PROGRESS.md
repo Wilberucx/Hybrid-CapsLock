@@ -78,6 +78,7 @@ Este documento sirve para llevar control y orden del refactor a estructura modul
 
 
 - Loader INI (mejora): hacer opcional la clave `order` en `LoadSimpleMappings`/loaders
+- Mapping-friendly syntax: permitir `Ctrl/Alt/Shift/Windows` en INI y traducir a `^/!/+/#` automáticamente (normalización previa a enviar). Implementar helper (p. ej., NormalizeKeyChordText) o script dedicado que procese `send:` y `macro:`.
   - Implementar un AHK dedicado que parsee el INI y enumere todas las claves de la sección objetivo (`[Map]`, `[Normal]`, `[Visual]`, `[Insert]`, etc.) cuando `order` no exista.
   - Mantener `order` como override opcional (para forzar un orden o filtrar subconjuntos), pero no obligatorio.
   - Beneficios: menos fricción al editar INIs, se evita mantener listas duplicadas, y se unifica el comportamiento (Excel ya tiene fallback de teclas conocidas).
@@ -204,7 +205,7 @@ Reload sin reiniciar:
 - Luego dinamizar Modifier y Nvim.
 - Añadir hot reload de mappings desde Hybrid Management.
 - Motor de mapeos genérico: agregado ApplyGenericMappings/LoadSimpleMappings; seed de modifier_layer.ini y nvim_layer.ini (Nvim deshabilitado por defecto).
-- Nvim layer: implementación inicial (toggle por tap de CapsLock, navegación hjkl, Visual Mode básico, salida con q). Menús yank/delete, insert y replace implementados.
+- Nvim layer: dinámica por modos (Normal/Visual/Insert) habilitada por defecto en INI; menús yank/delete (showmenu) y fallback estático si INI deshabilitado. Tap de CapsLock con umbral anti-hold (capsTapThresholdMs=250ms) para evitar activación accidental.
 
 ## 13) Seguimiento y PRs
 - PRs por bloque (core/ui; leader+windows+programs; timestamps+information; commands; modifier; nvim; excel)

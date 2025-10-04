@@ -10,6 +10,10 @@
 
 ; ---- Toggle via CapsLock clean tap ----
 ; We keep CapsLock AlwaysOff; a clean tap (not used as modifier) toggles Nvim Layer
+~CapsLock:: {
+    global capsDownTick
+    capsDownTick := A_TickCount
+}
 ~CapsLock up:: {
     global nvimLayerEnabled, isNvimLayerActive, VisualMode, capsLockUsedAsModifier
     if (!nvimLayerEnabled)
@@ -19,6 +23,12 @@
         capsLockUsedAsModifier := false
         return
     }
+    ; Detect tap vs hold duration
+    global capsDownTick, capsTapThresholdMs
+    duration := (capsDownTick > 0) ? (A_TickCount - capsDownTick) : 0
+    capsDownTick := 0
+    if (duration > capsTapThresholdMs)
+        return
     ; Toggle Nvim layer
     isNvimLayerActive := !isNvimLayerActive
     if (isNvimLayerActive) {
@@ -239,6 +249,12 @@ ReactivateNvimAfterInsert() {
         SetTimer(() => RemoveToolTip(), -1000)
     }
 }
+NvimCapsHoldGuard() {
+    global capsHoldDetected
+    if GetKeyState("CapsLock", "P")
+        capsHoldDetected := true
+}
+
 NvimHandleDeleteMenu() {
     global VisualMode
     if (VisualMode) {

@@ -122,7 +122,7 @@ ApplyGenericMappings(layerName, mappings, contextFn, keyPrefix := "") {
     } else if (layerName = "excel") {
         global excelStaticEnabled
         excelStaticEnabled := false
-    } else if (layerName = "nvim") {
+    } else if (SubStr(layerName, 1, 4) = "nvim") {
         global nvimStaticEnabled
         try nvimStaticEnabled := false
     }
@@ -152,7 +152,7 @@ UnregisterGenericMappings(layerName) {
     } else if (layerName = "excel") {
         global excelStaticEnabled
         excelStaticEnabled := true
-    } else if (layerName = "nvim") {
+    } else if (SubStr(layerName, 1, 4) = "nvim") {
         global nvimStaticEnabled
         try nvimStaticEnabled := true
     }
