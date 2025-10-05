@@ -47,6 +47,9 @@ global leaderLayerEnabled := true
 ; Static mapping toggles for dynamic override
 global nvimStaticEnabled := true
 
+; Debug flag (loaded from configuration.ini [General].debug_mode)
+global debug_mode := false
+
 ; Persistence master flag (can be overwritten by LoadLayerFlags)
 global enableLayerPersistence := true
 

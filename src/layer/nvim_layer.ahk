@@ -12,14 +12,15 @@
 ; Block until release, then decide by duration and whether CapsLock was used as modifier.
 ~*CapsLock:: {
     global nvimLayerEnabled, isNvimLayerActive, VisualMode
-    global capsTapThresholdMs, capsLockUsedAsModifier
+    global capsTapThresholdMs, capsLockUsedAsModifier, debug_mode
     if (!nvimLayerEnabled)
         return
     capsLockUsedAsModifier := false ; reset at down
     downTick := A_TickCount
     KeyWait("CapsLock") ; wait for release
     dur := A_TickCount - downTick
-    OutputDebug "[NVIM] KeyWait dur=" dur ", usedAsMod=" capsLockUsedAsModifier ", thr=" capsTapThresholdMs "\n"
+    if (debug_mode)
+        OutputDebug "[NVIM] KeyWait dur=" dur ", usedAsMod=" capsLockUsedAsModifier ", thr=" capsTapThresholdMs "\n"
     if (capsLockUsedAsModifier)
         return ; used as modifier, do not toggle
     if (dur >= capsTapThresholdMs)

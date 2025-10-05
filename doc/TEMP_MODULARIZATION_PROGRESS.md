@@ -78,7 +78,7 @@ Este documento sirve para llevar control y orden del refactor a estructura modul
 
 
 - Loader INI (mejora): hacer opcional la clave `order` en `LoadSimpleMappings`/loaders
-- Mapping-friendly syntax: permitir `Ctrl/Alt/Shift/Windows` en INI y traducir a `^/!/+/#` automáticamente (normalización previa a enviar). Implementar helper (p. ej., NormalizeKeyChordText) o script dedicado que procese `send:` y `macro:`.
+- Mapping-friendly syntax: permitir `Ctrl/Alt/Shift/Windows` en INI y traducir a `^/!/+/#` automticamente (normalizacin previa a enviar). Implementado helper `NormalizeSendSpec` que procesa `send:` y pasos `macro:send:` y envuelve teclas nombradas (`Right`, `Left`, etc.) en llaves.
   - Implementar un AHK dedicado que parsee el INI y enumere todas las claves de la sección objetivo (`[Map]`, `[Normal]`, `[Visual]`, `[Insert]`, etc.) cuando `order` no exista.
   - Mantener `order` como override opcional (para forzar un orden o filtrar subconjuntos), pero no obligatorio.
   - Beneficios: menos fricción al editar INIs, se evita mantener listas duplicadas, y se unifica el comportamiento (Excel ya tiene fallback de teclas conocidas).

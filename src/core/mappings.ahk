@@ -34,13 +34,41 @@ ParseActionSpec(spec) {
     return { type: kind, payload: payload }
 }
 
+; ---- Normalize friendly modifier/key syntax ----
+NormalizeSendSpec(s) {
+    if (s = "")
+        return s
+    ; Translate friendly modifiers to AHK symbols (case-insensitive)
+    s := RegExReplace(s, "(?i)\bcontrol\+", "^")
+    s := RegExReplace(s, "(?i)\bctrl\+", "^")
+    s := RegExReplace(s, "(?i)\balt\+", "!")
+    s := RegExReplace(s, "(?i)\bshift\+", "+")
+    s := RegExReplace(s, "(?i)\bwin(dows)?\+", "#")
+    ; Wrap common named keys in braces if not already
+    s := RegExReplace(s, "(?i)(?<!\{)right(?!\})", "{Right}")
+    s := RegExReplace(s, "(?i)(?<!\{)left(?!\})", "{Left}")
+    s := RegExReplace(s, "(?i)(?<!\{)up(?!\})", "{Up}")
+    s := RegExReplace(s, "(?i)(?<!\{)down(?!\})", "{Down}")
+    s := RegExReplace(s, "(?i)(?<!\{)home(?!\})", "{Home}")
+    s := RegExReplace(s, "(?i)(?<!\{)end(?!\})", "{End}")
+    s := RegExReplace(s, "(?i)(?<!\{)pgup(?!\})", "{PgUp}")
+    s := RegExReplace(s, "(?i)(?<!\{)pgdn(?!\})", "{PgDn}")
+    s := RegExReplace(s, "(?i)(?<!\{)(delete|del)(?!\})", "{Delete}")
+    s := RegExReplace(s, "(?i)(?<!\{)(insert|ins)(?!\})", "{Insert}")
+    s := RegExReplace(s, "(?i)(?<!\{)(backspace|bs)(?!\})", "{Backspace}")
+    s := RegExReplace(s, "(?i)(?<!\{)(enter|return)(?!\})", "{Enter}")
+    s := RegExReplace(s, "(?i)(?<!\{)(escape|esc)(?!\})", "{Escape}")
+    s := RegExReplace(s, "(?i)(?<!\{)tab(?!\})", "{Tab}")
+    return s
+}
+
 ; ---- Execute action spec ----
 ExecuteAction(layer, action) {
     if (!IsObject(action))
         action := ParseActionSpec(action)
     switch action.type {
         case "send":
-            Send(action.payload)
+            Send(NormalizeSendSpec(action.payload))
         case "func":
             fn := action.payload
             %fn%()
@@ -56,7 +84,7 @@ ExecuteAction(layer, action) {
                 sk := StrLower(Trim(SubStr(step, 1, sColon - 1)))
                 sv := Trim(SubStr(step, sColon + 1))
                 if (sk = "send")
-                    Send(sv)
+                    Send(NormalizeSendSpec(sv))
                 else if (sk = "sleep")
                     Sleep(Integer(sv))
                 else if (sk = "tooltip") {
@@ -262,7 +290,7 @@ ApplyExcelMappings(mappings) {
     HotIf((*) => (excelLayerActive && !GetKeyState("CapsLock", "P") && ExcelAppAllowedGuard()))
     for key, action in mappings.OwnProps() {
         hk := key
-        Hotkey(hk, (*) => ExecuteAction("excel", action), "On")
+        Hotkey(hk, (*) => ExecuteAction("excel", action), "On")  ; Excel actions also go through NormalizeSendSpec via ExecuteAction
         _excelRegisteredHotkeys.Push(hk)
     }
     HotIf()
