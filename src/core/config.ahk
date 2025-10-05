@@ -51,7 +51,7 @@ KeyInList(key, listStr) {
 ; ---- Load layer enable flags from configuration ----
 LoadLayerFlags() {
     global capsTapThresholdMs, ConfigIni
-    global ConfigIni, nvimLayerEnabled, excelLayerEnabled, modifierLayerEnabled, leaderLayerEnabled, enableLayerPersistence
+    global ConfigIni, nvimLayerEnabled, excelLayerEnabled, modifierLayerEnabled, leaderLayerEnabled, enableLayerPersistence, debug_mode
     nvimLayerEnabled := CleanIniBool(IniRead(ConfigIni, "Layers", "nvim_layer_enabled", "true"))
     excelLayerEnabled := CleanIniBool(IniRead(ConfigIni, "Layers", "excel_layer_enabled", "true"))
     modifierLayerEnabled := CleanIniBool(IniRead(ConfigIni, "Layers", "modifier_layer_enabled", "true"))
