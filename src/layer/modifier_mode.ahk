@@ -172,9 +172,6 @@ sc027 up:: {
     SendEvent("{LButton up}")
 }
 #HotIf (modifierStaticEnabled ? (modifierLayerEnabled) : false)
-~CapsLock up:: {
-    SendEvent("{LButton up}")
-}
 
 #HotIf
 

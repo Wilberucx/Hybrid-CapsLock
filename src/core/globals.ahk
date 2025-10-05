@@ -27,6 +27,7 @@ global capsLockUsedAsModifier := false
 ; Tap detection for CapsLock (to toggle Nvim only on quick tap)
 global capsDownTick := 0
 global capsHoldDetected := false
+global capsPhysicallyDown := false
 global capsTapThresholdMs := 250  ; TODO: make configurable via configuration.ini [Behavior].nvim_tap_threshold_ms
 global rightClickHeld := false
 global scrollModeActive := false

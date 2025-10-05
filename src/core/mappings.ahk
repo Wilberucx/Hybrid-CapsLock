@@ -129,7 +129,7 @@ ApplyGenericMappings(layerName, mappings, contextFn, keyPrefix := "") {
     HotIf(contextFn)
     for key, action in mappings.OwnProps() {
         hk := (keyPrefix = "") ? key : (keyPrefix . key)
-        Hotkey(hk, (*) => ExecuteAction(layerName, action), "On")
+        Hotkey(hk, (*) => (layerName = "modifier" ? (MarkCapsLockAsModifier(), ExecuteAction(layerName, action)) : ExecuteAction(layerName, action)), "On")
         if (!_layerRegisteredHotkeys.Has(layerName))
             _layerRegisteredHotkeys[layerName] := []
         _layerRegisteredHotkeys[layerName].Push(hk)

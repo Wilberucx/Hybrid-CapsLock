@@ -8,28 +8,23 @@
 ; Depends on: core/globals (isNvimLayerActive, VisualMode, capsLockUsedAsModifier),
 ;             core/persistence (SaveLayerState), ui/tooltips_native_wrapper (status)
 
-; ---- Toggle via CapsLock clean tap ----
-; We keep CapsLock AlwaysOff; a clean tap (not used as modifier) toggles Nvim Layer
-~CapsLock:: {
-    global capsDownTick
-    capsDownTick := A_TickCount
-}
-~CapsLock up:: {
-    global nvimLayerEnabled, isNvimLayerActive, VisualMode, capsLockUsedAsModifier
+; ---- Toggle via CapsLock clean tap (KeyWait-based, Claude-style) ----
+; Block until release, then decide by duration and whether CapsLock was used as modifier.
+~*CapsLock:: {
+    global nvimLayerEnabled, isNvimLayerActive, VisualMode
+    global capsTapThresholdMs, capsLockUsedAsModifier
     if (!nvimLayerEnabled)
         return
-    ; If CapsLock was used as a modifier for any combo, do not toggle
-    if (capsLockUsedAsModifier) {
-        capsLockUsedAsModifier := false
-        return
-    }
-    ; Detect tap vs hold duration
-    global capsDownTick, capsTapThresholdMs
-    duration := (capsDownTick > 0) ? (A_TickCount - capsDownTick) : 0
-    capsDownTick := 0
-    if (duration > capsTapThresholdMs)
-        return
-    ; Toggle Nvim layer
+    capsLockUsedAsModifier := false ; reset at down
+    downTick := A_TickCount
+    KeyWait("CapsLock") ; wait for release
+    dur := A_TickCount - downTick
+    OutputDebug "[NVIM] KeyWait dur=" dur ", usedAsMod=" capsLockUsedAsModifier ", thr=" capsTapThresholdMs "\n"
+    if (capsLockUsedAsModifier)
+        return ; used as modifier, do not toggle
+    if (dur >= capsTapThresholdMs)
+        return ; long hold, ignore
+    ; Toggle
     isNvimLayerActive := !isNvimLayerActive
     if (isNvimLayerActive) {
         ShowNvimLayerStatus(true)
@@ -41,6 +36,7 @@
     }
     try SaveLayerState()
 }
+
 
 ; Try dynamic mappings if available (Normal mode)
 try {
