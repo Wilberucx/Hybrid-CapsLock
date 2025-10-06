@@ -7,6 +7,8 @@
 ; Try dynamic mappings if available (modifier)
 try {
     global modifierMappings
+    if (IsSet(debug_mode) && debug_mode)
+        OutputDebug "[MOD] Startup loading modifier INI...\n"
     modifierMappings := LoadSimpleMappings(A_ScriptDir . "\\config\\modifier_layer.ini")
     if (modifierMappings.Count > 0)
         ApplyGenericMappings("modifier", modifierMappings, (*) => (modifierLayerEnabled && ModifierLayerAppAllowed()), "CapsLock & ")

@@ -59,6 +59,9 @@ NormalizeSendSpec(s) {
     s := RegExReplace(s, "(?i)(?<!\{)(enter|return)(?!\})", "{Enter}")
     s := RegExReplace(s, "(?i)(?<!\{)(escape|esc)(?!\})", "{Escape}")
     s := RegExReplace(s, "(?i)(?<!\{)tab(?!\})", "{Tab}")
+    ; Do NOT wrap literal bracket keys in braces; let modifiers apply to the raw char
+    ; If you need layout-robust behavior, prefer scancodes: e.g., send:Ctrl+Alt+Shift+{sc01A} / {sc01B}
+
     return s
 }
 
@@ -139,6 +142,7 @@ LoadSimpleMappings(iniPath, mapSection := "Map", orderKey := "order") {
 }
 
 ApplyGenericMappings(layerName, mappings, contextFn, keyPrefix := "") {
+    global debug_mode
     global _layerRegisteredHotkeys
     UnregisterGenericMappings(layerName)
     if (!IsSet(mappings) || mappings.Count = 0)
@@ -166,8 +170,11 @@ ApplyGenericMappings(layerName, mappings, contextFn, keyPrefix := "") {
 }
 
 UnregisterGenericMappings(layerName) {
+    global debug_mode
     global _layerRegisteredHotkeys
     if (_layerRegisteredHotkeys.Has(layerName)) {
+        if (IsSet(debug_mode) && debug_mode)
+            OutputDebug "[MAP] Unregister layer=" layerName ", count=" _layerRegisteredHotkeys[layerName].Length "\n"
         for _, hk in _layerRegisteredHotkeys[layerName] {
             try Hotkey(hk, , "Off")
         }
@@ -187,13 +194,22 @@ UnregisterGenericMappings(layerName) {
 }
 
 ReloadModifierMappings() {
+    global debug_mode
     try {
         iniPath := A_ScriptDir . "\\config\\modifier_layer.ini"
         maps := LoadSimpleMappings(iniPath)
-        if (maps.Count > 0)
+        if (IsSet(debug_mode) && debug_mode)
+            OutputDebug "[MOD] ReloadModifierMappings loaded=" (IsObject(maps) ? maps.Count : -1) "\n"
+        if (maps.Count > 0) {
+            if (IsSet(debug_mode) && debug_mode)
+                OutputDebug "[MOD] Applying modifier mappings: " maps.Count "\n"
             ApplyGenericMappings("modifier", maps, (*) => (modifierLayerEnabled && ModifierLayerAppAllowed()), "CapsLock & ")
-        else
+        }
+        else {
+            if (IsSet(debug_mode) && debug_mode)
+                OutputDebug "[MOD] No modifier mappings found; unregistering\n"
             UnregisterGenericMappings("modifier")
+        }
     } catch {
         UnregisterGenericMappings("modifier")
     }

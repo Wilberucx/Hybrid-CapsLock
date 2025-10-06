@@ -72,6 +72,18 @@ Este documento sirve para llevar control y orden del refactor a estructura modul
 
 ## 7) Puntos pendientes (próximos)
 
+- Rama dedicada: Remapeo dinámico de la capa Modifier
+  - Objetivo: que los mapeos del INI (config/modifier_layer.ini) reemplacen de forma fiable a los atajos estáticos de `modifier_mode.ahk` cuando `enable=true`.
+  - Alcance:
+    - Confirmar carga y registro de hotkeys dinámicos por prefijo `CapsLock &` (ApplyGenericMappings)
+    - Deshabilitar estáticos (`modifierStaticEnabled := false`) y evitar duplicaciones/conflictos
+    - Añadir diagnóstico controlado (OutputDebug condicionado a `debug_mode`) y “Reload Mappings” confiable
+    - Alinear normalización de `Ctrl/Alt/Shift/Windows` (NormalizeSendSpec) y teclas especiales (scancodes cuando aplique)
+    - Validar whitelist/blacklist (ModifierLayerAppAllowed)
+  - Resultado esperado: Cambios en el INI (p. ej., `j=send:{Up}`) toman efecto tras `Hybrid → Reload Mappings` sin reiniciar.
+  - Nota: Se pospone para cerrar la migración de módulos; se abordará en una rama dedicada.
+
+
 - Commands: Migrar categorías hardcodeadas a esquema dinámico por INI (Windows/System/Git/Monitoring/Network/Power)
   - Se realizará después de culminar la migración general, idealmente en una rama dedicada.
   - Mantener por ahora ejecutores hardcodeados para estabilidad y velocidad de desarrollo.
