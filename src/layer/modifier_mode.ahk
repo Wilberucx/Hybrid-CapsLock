@@ -167,6 +167,12 @@ CapsLock & g:: {
     Send("^!+g")
 }
 
+; Missing hotkey from v1
+CapsLock & p:: {
+    MarkCapsLockAsModifier()
+    Send("+!p")
+}
+
 CapsLock & Backspace:: {
     MarkCapsLockAsModifier()
     Send("!{Left}")
