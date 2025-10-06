@@ -24,15 +24,6 @@
 #Include src\\ui\\tooltips_native_wrapper.ahk
 
 ; --------------------
-; Startup logic
-; --------------------
-try {
-    LoadLayerFlags()
-    LoadLayerState()
-} catch {
-}
-
-; --------------------
 ; Layers & Leader
 ; --------------------
 #Include src\layer\leader_router.ahk
@@ -44,6 +35,17 @@ try {
 #Include src\layer\excel_layer.ahk
 #Include src\layer\nvim_layer.ahk
 #Include src\layer\modifier_mode.ahk
+#Include src\layer\homerow_mods.ahk
+
+; --------------------
+; Startup logic
+; --------------------
+try {
+    LoadLayerFlags()
+    LoadLayerState()
+    InitHomeRowMods()  ; Load and setup home row mods if enabled
+} catch {
+}
 
 ; --------------------
 ; Minimal startup to confirm no errors
