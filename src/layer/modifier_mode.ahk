@@ -150,6 +150,23 @@ CapsLock & u:: {
 ;}
 
 ; ----- Back / URL copy / Screenshot / Ctrl+Enter -----
+
+; ----- Browse navigation (Back/Forward) -----
+CapsLock & [:: {
+    MarkCapsLockAsModifier()
+    Send("^!+{[}")
+}
+CapsLock & ]:: {
+    MarkCapsLockAsModifier()
+    Send("^!+{]}")
+}
+
+; Missing hotkey from v1
+CapsLock & g:: {
+    MarkCapsLockAsModifier()
+    Send("^!+g")
+}
+
 CapsLock & Backspace:: {
     MarkCapsLockAsModifier()
     Send("!{Left}")
