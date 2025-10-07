@@ -44,6 +44,7 @@ try {
     LoadLayerFlags()
     LoadLayerState()
     InitHomeRowMods()  ; Load and setup home row mods if enabled
+    StartTooltipApp()  ; Start C# tooltip application
 } catch {
 }
 

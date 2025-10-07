@@ -21,6 +21,9 @@ if (!IsSet(InfoIni)) {
 if (!IsSet(TimestampsIni)) {
     global TimestampsIni := A_ScriptDir . "\config\timestamps.ini"
 }
+if (!IsSet(CommandsIni)) {
+    global CommandsIni := A_ScriptDir . "\config\commands.ini"
+}
 
 ; Variables globales para configuración de tooltips
 global tooltipConfig := ReadTooltipConfig()
@@ -410,9 +413,7 @@ GenerateInformationItemsForCS() {
 ShowCommandsMenuCS() {
     items := BuildCommandsMainItemsFromCategories()
     if (items = "") {
-        BuildCommandsMainItemsFromCategories()
-        if (items = "")
-            items := "s:System Commands|n:Network Commands|g:Git Commands|m:Monitoring Commands|f:Folder Commands|w:Windows Commands|o:Power Options|a:ADB Tools|v:VaultFlow|h:Hybrid Management"
+        items := "s:System Commands|n:Network Commands|g:Git Commands|m:Monitoring Commands|f:Folder Commands|w:Windows Commands|o:Power Options|a:ADB Tools|v:VaultFlow|h:Hybrid Management"
     }
     ShowCSharpOptionsMenu("COMMAND PALETTE", items, "\\: Back|ESC: Exit")
 }

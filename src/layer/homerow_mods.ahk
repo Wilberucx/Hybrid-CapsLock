@@ -33,59 +33,86 @@ InitHomeRowMods() {
     global homeRowEnabled, homeRowTapThreshold, homeRowDebug
     global homeRowPermissiveHold, homeRowState, homeRowExcludedApps
 
-    configFile := A_ScriptDir "\config\homerow_mods.ini"
+    ; Read from main configuration file
+    mainConfigFile := A_ScriptDir "\config\configuration.ini"
+    homeRowConfigFile := A_ScriptDir "\config\homerow_mods.ini"
 
-    if (!FileExist(configFile)) {
-        OutputDebug("[HOMEROW] Config file not found, home row mods disabled`n")
-        return
-    }
-
-    ; Load general settings
-    homeRowEnabled := (IniRead(configFile, "General", "enabled", "false") = "true")
-    homeRowDebug := (IniRead(configFile, "General", "debug_mode", "false") = "true")
+    ; Check if enabled in main config
+    homeRowEnabled := (IniRead(mainConfigFile, "Layers", "home_row_mods_enabled", "false") = "true")
 
     if (!homeRowEnabled) {
-        OutputDebug("[HOMEROW] Home row mods disabled in config`n")
+        OutputDebug("[HOMEROW] Home row mods disabled in main configuration`n")
         return
     }
 
-    ; Load timing
-    homeRowTapThreshold := Integer(IniRead(configFile, "Timing", "tap_threshold_ms", "250"))
-    homeRowPermissiveHold := (IniRead(configFile, "Timing", "permissive_hold", "false") = "true")
-
-    ; Load left hand modifiers
-    homeRowState["a"].modifier := IniRead(configFile, "LeftHand", "a_modifier", "Win")
-    homeRowState["s"].modifier := IniRead(configFile, "LeftHand", "s_modifier", "Alt")
-    homeRowState["d"].modifier := IniRead(configFile, "LeftHand", "d_modifier", "Shift")
-    homeRowState["f"].modifier := IniRead(configFile, "LeftHand", "f_modifier", "Ctrl")
-
-    ; Load right hand modifiers
-    homeRowState["j"].modifier := IniRead(configFile, "RightHand", "j_modifier", "Ctrl")
-    homeRowState["k"].modifier := IniRead(configFile, "RightHand", "k_modifier", "Shift")
-    homeRowState["l"].modifier := IniRead(configFile, "RightHand", "l_modifier", "Alt")
-    homeRowState["semicolon"].modifier := IniRead(configFile, "RightHand", "semicolon_modifier", "Win")
-
-    ; Load exclusions
-    excludedStr := IniRead(configFile, "Exclusions", "excluded_apps", "")
-    if (excludedStr != "") {
-        homeRowExcludedApps := StrSplit(excludedStr, ",")
-        for index, app in homeRowExcludedApps {
-            homeRowExcludedApps[index] := Trim(app)
-        }
+    ; Check if detailed config file exists
+    if (!FileExist(homeRowConfigFile)) {
+        OutputDebug("[HOMEROW] Detailed config file not found, using defaults`n")
+        ; Use default values
+        homeRowDebug := false
+        homeRowTapThreshold := 250
+        homeRowPermissiveHold := false
+    } else {
+        ; Load detailed settings from homerow_mods.ini
+        homeRowDebug := (IniRead(homeRowConfigFile, "General", "debug_mode", "false") = "true")
+        homeRowTapThreshold := Integer(IniRead(homeRowConfigFile, "Timing", "tap_threshold_ms", "250"))
+        homeRowPermissiveHold := (IniRead(homeRowConfigFile, "Timing", "permissive_hold", "false") = "true")
     }
 
-    ; Register hotkeys for enabled keys
-    RegisterHomeRowHotkeys()
+    ; Load modifiers (from detailed config or defaults)
+    if (FileExist(homeRowConfigFile)) {
+        ; Load from detailed config
+        homeRowState["a"].modifier := IniRead(homeRowConfigFile, "LeftHand", "a_modifier", "Win")
+        homeRowState["s"].modifier := IniRead(homeRowConfigFile, "LeftHand", "s_modifier", "Alt")
+        homeRowState["d"].modifier := IniRead(homeRowConfigFile, "LeftHand", "d_modifier", "Shift")
+        homeRowState["f"].modifier := IniRead(homeRowConfigFile, "LeftHand", "f_modifier", "Ctrl")
+        homeRowState["j"].modifier := IniRead(homeRowConfigFile, "RightHand", "j_modifier", "Ctrl")
+        homeRowState["k"].modifier := IniRead(homeRowConfigFile, "RightHand", "k_modifier", "Shift")
+        homeRowState["l"].modifier := IniRead(homeRowConfigFile, "RightHand", "l_modifier", "Alt")
+        homeRowState["semicolon"].modifier := IniRead(homeRowConfigFile, "RightHand", "semicolon_modifier", "Win")
 
+        ; Load exclusions
+        excludedStr := IniRead(homeRowConfigFile, "Exclusions", "excluded_apps", "")
+        if (excludedStr != "") {
+            homeRowExcludedApps := StrSplit(excludedStr, ",")
+            for index, app in homeRowExcludedApps {
+                homeRowExcludedApps[index] := Trim(app)
+            }
+        }
+    } else {
+        ; Use default modifier assignments
+        homeRowState["a"].modifier := "Win"
+        homeRowState["s"].modifier := "Alt"
+        homeRowState["d"].modifier := "Shift"
+        homeRowState["f"].modifier := "Ctrl"
+        homeRowState["j"].modifier := "Ctrl"
+        homeRowState["k"].modifier := "Shift"
+        homeRowState["l"].modifier := "Alt"
+        homeRowState["semicolon"].modifier := "Win"
+
+        ; No excluded apps by default
+        homeRowExcludedApps := []
+    }
+
+    ; Register simple hotkeys like NVIM layer
+    RegisterSimpleHomeRowHotkeys()
+    
     if (homeRowDebug)
-        OutputDebug("[HOMEROW] Initialized with threshold=" homeRowTapThreshold "ms`n")
+        OutputDebug("[HOMEROW] Initialized with simple hotkeys, threshold=" homeRowTapThreshold "ms`n")
 }
 
 ; ===================================================================
-; REGISTER HOTKEYS DYNAMICALLY
+; REGISTER SIMPLE HOTKEYS - Same pattern as NVIM layer
 ; ===================================================================
-RegisterHomeRowHotkeys() {
-    global homeRowState, homeRowDebug
+RegisterSimpleHomeRowHotkeys() {
+    global homeRowState, homeRowDebug, homeRowEnabled
+
+    ; Double-check that home row mods are enabled
+    if (!homeRowEnabled) {
+        if (homeRowDebug)
+            OutputDebug("[HOMEROW] Home row mods disabled - no hotkeys registered`n")
+        return
+    }
 
     for key, state in homeRowState {
         if (state.modifier = "none") {
@@ -94,13 +121,14 @@ RegisterHomeRowHotkeys() {
             continue
         }
 
-        ; Register the hotkey
         actualKey := (key = "semicolon") ? ";" : key
 
         try {
-            Hotkey("~*" actualKey, (*) => HandleHomeRowKey(key))
+            ; CRITICAL: Use ~ prefix like CapsLock (from TROUBLESHOOTING_TAP_HOLD_NVIM.md)
+            Hotkey("~*" actualKey, (*) => HandleHomeRowTapHold(key))
+            
             if (homeRowDebug)
-                OutputDebug("[HOMEROW] Registered: " actualKey " -> " state.modifier "`n")
+                OutputDebug("[HOMEROW] Registered: ~*" actualKey " -> " state.modifier "`n")
         } catch as err {
             OutputDebug("[HOMEROW] Failed to register " actualKey ": " err.Message "`n")
         }
@@ -108,9 +136,9 @@ RegisterHomeRowHotkeys() {
 }
 
 ; ===================================================================
-; CORE HANDLER - Same pattern as CapsLock
+; HANDLE TAP-HOLD - Simple KeyWait pattern like CapsLock
 ; ===================================================================
-HandleHomeRowKey(key) {
+HandleHomeRowTapHold(key) {
     global homeRowState, homeRowTapThreshold, homeRowDebug
     global homeRowPermissiveHold, homeRowExcludedApps
 
@@ -118,22 +146,24 @@ HandleHomeRowKey(key) {
     if (IsInExcludedApp()) {
         if (homeRowDebug)
             OutputDebug("[HOMEROW] In excluded app, passthrough`n")
+        ; Send the key normally
+        actualKey := (key = "semicolon") ? ";" : key
+        Send("{" actualKey "}")
         return
     }
 
     state := homeRowState[key]
+    actualKey := (key = "semicolon") ? ";" : key
 
     ; Initialize state
     state.pressed := true
     state.pressTime := A_TickCount
     state.usedAsMod := false
 
-    actualKey := (key = "semicolon") ? ";" : key
-
     if (homeRowDebug)
-        OutputDebug("[HOMEROW] " actualKey " DOWN`n")
+        OutputDebug("[HOMEROW] " actualKey " DOWN - using KeyWait pattern`n")
 
-    ; CRITICAL: KeyWait ignores auto-repeats
+    ; CRITICAL: KeyWait blocks until release (same as CapsLock)
     KeyWait(actualKey)
 
     ; Calculate duration
@@ -162,7 +192,7 @@ HandleHomeRowKey(key) {
         if (homeRowPermissiveHold) {
             ; Send the letter anyway (permissive)
             if (homeRowDebug)
-                OutputDebug("[HOMEROW] " actualKey " HOLD unused - sending letter (permissive)`n")
+                OutputDebug("[HOMEROW] " actualKey " HOLD unused - sending (permissive)`n")
             Send("{" actualKey "}")
         } else {
             ; Do nothing (strict, like CapsLock)
@@ -260,7 +290,7 @@ IsInExcludedApp() {
 ; These need to be defined for every other key on the keyboard
 ; to detect when home row is used as modifier
 
-#HotIf IsAnyHomeRowKeyHeld()
+#HotIf homeRowEnabled && IsAnyHomeRowKeyHeld()
 
 ; Letters (excluding home row)
 b::SendWithHomeRowMod("b")
@@ -326,3 +356,7 @@ SendWithHomeRowMod(key) {
     ; Send with modifiers
     Send(mods "{" key "}")
 }
+
+; ===================================================================
+; CLEANUP ON EXIT (No longer needed - simple hotkeys clean themselves)
+; ===================================================================
