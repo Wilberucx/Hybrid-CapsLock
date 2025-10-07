@@ -225,14 +225,7 @@ HideCSharpTooltip() {
     FileAppend(jsonData, "tooltip_commands.json")
 }
 
-; Función específica para tooltips de OPCIONES/MENÚS (duración larga)
-ShowCSharpOptionsMenu(title, items, navigation := "", timeout := 0) {
-    if (timeout = 0) {
-        timeout := tooltipConfig.optionsTimeout
-    }
-    global tooltipConfig
-    ShowCSharpTooltip(title, items, navigation, timeout)
-}
+; Removed duplicate initial ShowCSharpOptionsMenu; stateful override defined later.
 
 ; Función específica para tooltips de ESTADO/NOTIFICACIONES (duración corta)
 ShowCSharpStatusNotification(title, message) {
@@ -294,6 +287,101 @@ StartStatusApp() {
     }
     return allStarted
 }
+
+; ===================================================================
+; INTERACTIVE MENU HANDLING (GENERIC KEY DISPATCH)
+; ===================================================================
+
+; Global state for menu interaction
+global tooltipMenuActive := false
+global tooltipCurrentTitle := ""
+
+TooltipMenuIsActive() {
+    global tooltipMenuActive
+    return tooltipMenuActive
+}
+
+; Central dispatcher for option selection
+HandleTooltipSelection(key) {
+    global tooltipMenuActive, tooltipCurrentTitle
+
+    ; Debug
+    OutputDebug("[TOOLTIP] Selection - title=" tooltipCurrentTitle " key=" key "`n")
+
+    if (key = "ESC") {
+        HideCSharpTooltip()
+        tooltipMenuActive := false
+        return
+    }
+
+    if (tooltipCurrentTitle = "COMMAND PALETTE") {
+        switch key {
+            case "\\":
+                ; Back to Leader menu
+                ShowLeaderModeMenuCS()
+            case "s":
+                ShowSystemCommandsMenuCS()
+            case "n":
+                ShowNetworkCommandsMenuCS()
+            case "g":
+                ShowGitCommandsMenuCS()
+            case "m":
+                ShowMonitoringCommandsMenuCS()
+            case "f":
+                ShowFolderCommandsMenuCS()
+            case "w":
+                ShowWindowsCommandsMenuCS()
+            case "o":
+                ShowPowerOptionsCommandsMenuCS()
+            case "a":
+                ShowADBCommandsMenuCS()
+            case "v":
+                ShowVaultFlowCommandsMenuCS()
+            case "h":
+                ShowHybridManagementMenuCS()
+            default:
+                OutputDebug("[TOOLTIP] Unknown key in COMMAND PALETTE: " key "`n")
+        }
+        return
+    }
+
+    ; Other menus can be handled here similarly, based on tooltipCurrentTitle
+}
+
+; Ensure ShowCSharpOptionsMenu marks menu as active and remembers title
+; (we hook by wrapping ShowCSharpOptionsMenu via a helper)
+Original_ShowCSharpOptionsMenu(title, items, navigation := "", timeout := 0) {
+    if (timeout = 0) {
+        timeout := tooltipConfig.optionsTimeout
+    }
+    global tooltipConfig
+    ShowCSharpTooltip(title, items, navigation, timeout)
+}
+
+; Override previous function name to set state then call original
+ShowCSharpOptionsMenu(title, items, navigation := "", timeout := 0) {
+    global tooltipMenuActive, tooltipCurrentTitle
+    tooltipMenuActive := true
+    tooltipCurrentTitle := title
+    Original_ShowCSharpOptionsMenu(title, items, navigation, timeout)
+}
+
+; Hotkeys active only while a tooltip menu is active
+#HotIf TooltipMenuIsActive()
+; Only bind the keys we need for Commands categories and navigation
+s::HandleTooltipSelection("s")
+n::HandleTooltipSelection("n")
+g::HandleTooltipSelection("g")
+m::HandleTooltipSelection("m")
+f::HandleTooltipSelection("f")
+w::HandleTooltipSelection("w")
+o::HandleTooltipSelection("o")
+a::HandleTooltipSelection("a")
+v::HandleTooltipSelection("v")
+h::HandleTooltipSelection("h")
+\::HandleTooltipSelection("\\")
+Esc::HandleTooltipSelection("ESC")
+#HotIf
 
 ; ===================================================================
 ; REEMPLAZOS DE FUNCIONES EXISTENTES
