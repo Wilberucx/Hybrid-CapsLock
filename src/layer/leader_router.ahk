@@ -21,6 +21,21 @@ TryActivateLeader() {
 
     Loop {
         ShowLeaderMenu()
+        if (IsSet(tooltipConfig) && tooltipConfig.enabled && tooltipConfig.handleInput) {
+            ; Let tooltip hotkeys handle input; wait for timeout/escape only
+            ih := InputHook("T" . GetEffectiveTimeout("leader"), "{Escape}")
+            ih.Start()
+            ih.Wait()
+            if (ih.EndReason = "EndKey" && ih.EndKey = "Escape") {
+                HideAllTooltips()
+                ih.Stop()
+                leaderActive := false
+                return
+            }
+            ; If timeout without selection, fall through to default continue
+            ih.Stop()
+            continue
+        }
         ih := InputHook("L1 T" . GetEffectiveTimeout("leader"), "{Escape}")
         ih.Start()
         ih.Wait()

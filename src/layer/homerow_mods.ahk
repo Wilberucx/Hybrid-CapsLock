@@ -107,7 +107,6 @@ InitHomeRowMods() {
 RegisterSimpleHomeRowHotkeys() {
     global homeRowState, homeRowDebug, homeRowEnabled
 
-    ; Double-check that home row mods are enabled
     if (!homeRowEnabled) {
         if (homeRowDebug)
             OutputDebug("[HOMEROW] Home row mods disabled - no hotkeys registered`n")
@@ -124,11 +123,12 @@ RegisterSimpleHomeRowHotkeys() {
         actualKey := (key = "semicolon") ? ";" : key
 
         try {
-            ; CRITICAL: Use ~ prefix like CapsLock (from TROUBLESHOOTING_TAP_HOLD_NVIM.md)
-            Hotkey("~*" actualKey, (*) => HandleHomeRowTapHold(key))
-            
+            ; Register down/up explicitly without tilde to suppress base key
+            Hotkey("*" actualKey, (*) => OnHomeRowDown(key))
+            Hotkey("*" actualKey " up", (*) => OnHomeRowUp(key))
+
             if (homeRowDebug)
-                OutputDebug("[HOMEROW] Registered: ~*" actualKey " -> " state.modifier "`n")
+                OutputDebug("[HOMEROW] Registered: *" actualKey " (down/up) -> " state.modifier "`n")
         } catch as err {
             OutputDebug("[HOMEROW] Failed to register " actualKey ": " err.Message "`n")
         }
@@ -136,72 +136,52 @@ RegisterSimpleHomeRowHotkeys() {
 }
 
 ; ===================================================================
-; HANDLE TAP-HOLD - Simple KeyWait pattern like CapsLock
+; HANDLE TAP-HOLD via explicit down/up handlers (no KeyWait)
 ; ===================================================================
-HandleHomeRowTapHold(key) {
-    global homeRowState, homeRowTapThreshold, homeRowDebug
-    global homeRowPermissiveHold, homeRowExcludedApps
-
-    ; Check if in excluded app
+OnHomeRowDown(key) {
+    global homeRowState, homeRowDebug
     if (IsInExcludedApp()) {
-        if (homeRowDebug)
-            OutputDebug("[HOMEROW] In excluded app, passthrough`n")
-        ; Send the key normally
-        actualKey := (key = "semicolon") ? ";" : key
-        Send("{" actualKey "}")
-        return
+        ; passthrough: do nothing here, base key suppressed but will be decided on up
     }
-
     state := homeRowState[key]
-    actualKey := (key = "semicolon") ? ";" : key
-
-    ; Initialize state
     state.pressed := true
     state.pressTime := A_TickCount
     state.usedAsMod := false
-
     if (homeRowDebug)
-        OutputDebug("[HOMEROW] " actualKey " DOWN - using KeyWait pattern`n")
+        OutputDebug("[HOMEROW] " ((key="semicolon")?";":key) " DOWN`n")
+}
 
-    ; CRITICAL: KeyWait blocks until release (same as CapsLock)
-    KeyWait(actualKey)
-
-    ; Calculate duration
-    duration := A_TickCount - state.pressTime
-
-    if (homeRowDebug) {
-        OutputDebug("[HOMEROW] " actualKey " UP - dur=" duration
-                    "ms, usedAsMod=" state.usedAsMod
-                    ", threshold=" homeRowTapThreshold "ms`n")
+OnHomeRowUp(key) {
+    global homeRowState, homeRowTapThreshold, homeRowDebug, homeRowPermissiveHold
+    state := homeRowState[key]
+    actualKey := (key = "semicolon") ? ";" : key
+    if (!state.pressed) {
+        return
     }
-
-    ; Decision logic
-    if (state.usedAsMod) {
-        ; Was used as modifier, do nothing
-        if (homeRowDebug)
-            OutputDebug("[HOMEROW] " actualKey " was used as modifier`n")
-    }
-    else if (duration < homeRowTapThreshold) {
-        ; TAP: Send the letter
-        if (homeRowDebug)
-            OutputDebug("[HOMEROW] " actualKey " TAP - sending letter`n")
+    ; Exclusions: pass through as normal key
+    if (IsInExcludedApp()) {
         Send("{" actualKey "}")
+        state.pressed := false
+        return
     }
-    else {
-        ; HOLD without use
-        if (homeRowPermissiveHold) {
-            ; Send the letter anyway (permissive)
-            if (homeRowDebug)
-                OutputDebug("[HOMEROW] " actualKey " HOLD unused - sending (permissive)`n")
+    duration := A_TickCount - state.pressTime
+    if (homeRowDebug)
+        OutputDebug("[HOMEROW] " actualKey " UP - dur=" duration "ms, usedAsMod=" state.usedAsMod "`n")
+
+    if (!state.usedAsMod) {
+        if (duration < homeRowTapThreshold) {
             Send("{" actualKey "}")
-        } else {
-            ; Do nothing (strict, like CapsLock)
             if (homeRowDebug)
-                OutputDebug("[HOMEROW] " actualKey " HOLD unused - no action (strict)`n")
+                OutputDebug("[HOMEROW] TAP -> send " actualKey "`n")
+        } else if (homeRowPermissiveHold) {
+            Send("{" actualKey "}")
+            if (homeRowDebug)
+                OutputDebug("[HOMEROW] HOLD unused (permissive) -> send " actualKey "`n")
+        } else {
+            if (homeRowDebug)
+                OutputDebug("[HOMEROW] HOLD unused (strict) -> no send`n")
         }
     }
-
-    ; Reset state
     state.pressed := false
 }
 
@@ -290,7 +270,7 @@ IsInExcludedApp() {
 ; These need to be defined for every other key on the keyboard
 ; to detect when home row is used as modifier
 
-#HotIf homeRowEnabled && IsAnyHomeRowKeyHeld()
+#HotIf homeRowEnabled && !IsInExcludedApp() && IsAnyHomeRowKeyHeld()
 
 ; Letters (excluding home row)
 b::SendWithHomeRowMod("b")

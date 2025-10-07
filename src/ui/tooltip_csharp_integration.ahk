@@ -51,6 +51,10 @@ ReadTooltipConfig() {
     enabledValue := CleanIniValue(IniRead(ConfigIni, "Tooltips", "enable_csharp_tooltips", "true"))
     config.enabled := enabledValue = "true"
     
+    ; Whether tooltip layer should also handle input (hotkeys) instead of InputHook
+    handleInputValue := CleanIniValue(IniRead(ConfigIni, "Tooltips", "tooltip_handles_input", "false"))
+    config.handleInput := handleInputValue = "true"
+    
     optionsTimeoutValue := CleanIniValue(IniRead(ConfigIni, "Tooltips", "options_menu_timeout", "10000"))
     config.optionsTimeout := Integer(optionsTimeoutValue)
     
@@ -319,6 +323,7 @@ HandleTooltipSelection(key) {
             case "\\":
                 ; Back to Leader menu
                 ShowLeaderModeMenuCS()
+                return
             case "s":
                 ShowSystemCommandsMenuCS()
             case "n":
@@ -366,9 +371,30 @@ ShowCSharpOptionsMenu(title, items, navigation := "", timeout := 0) {
     Original_ShowCSharpOptionsMenu(title, items, navigation, timeout)
 }
 
-; Hotkeys active only while a tooltip menu is active
-#HotIf TooltipMenuIsActive()
-; Only bind the keys we need for Commands categories and navigation
+; Context helpers for scoping hotkeys
+TooltipInLeaderMenu() {
+    global tooltipMenuActive, tooltipCurrentTitle, tooltipConfig
+    return tooltipMenuActive && tooltipConfig.handleInput && (tooltipCurrentTitle = "LEADER MODE")
+}
+TooltipInCommandsMenu() {
+    global tooltipMenuActive, tooltipCurrentTitle, tooltipConfig
+    return tooltipMenuActive && tooltipConfig.handleInput && (tooltipCurrentTitle = "COMMAND PALETTE")
+}
+
+; Leader menu hotkeys (only on LEADER MODE)
+#HotIf TooltipInLeaderMenu()
+p::HandleTooltipSelection("p")
+t::HandleTooltipSelection("t")
+c::HandleTooltipSelection("c")
+i::HandleTooltipSelection("i")
+w::HandleTooltipSelection("w")
+n::HandleTooltipSelection("n")
+\::HandleTooltipSelection("\\")
+Esc::HandleTooltipSelection("ESC")
+#HotIf
+
+; Commands palette hotkeys (only on COMMAND PALETTE)
+#HotIf TooltipInCommandsMenu()
 s::HandleTooltipSelection("s")
 n::HandleTooltipSelection("n")
 g::HandleTooltipSelection("g")
