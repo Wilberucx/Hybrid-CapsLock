@@ -53,10 +53,12 @@ TryActivateLeader() {
         }
         if (key = "w" || key = "W") {
             LeaderWindowsMenuLoop()
-            continue
+            leaderActive := false
+            return
         } else if (key = "p" || key = "P") {
             LeaderProgramsMenuLoop()
-            continue
+            leaderActive := false
+            return
         } else if (key = "t" || key = "T") {
             ; Minimal timestamps handler: show main time menu and route to sub-mode
             ShowTimeMenu()
