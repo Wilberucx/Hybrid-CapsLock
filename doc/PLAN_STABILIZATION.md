@@ -16,15 +16,11 @@ Acciones:
 1) Tooltip solo como visual:
    - `config/configuration.ini` → `[Tooltips] tooltip_handles_input=false`
    - El Leader Router maneja la entrada (InputHook) y el tooltip solo muestra UI.
-2) HomeRow activo con enfoque down/up (hooks):
-   - `config/configuration.ini` → `[Layers] home_row_mods_enabled=true`
-   - Ajustar `config/homerow_mods.ini` (umbral, exclusiones, mapeos).
 3) Desactivar temporalmente bloques experimentales por configuración si aplica.
 4) Smoke tests rápidos (ver sección al final) para validar el “modo estable”.
 
 Resultado esperado:
 - El Leader + Tooltip no se desincronizan.
-- HomeRow usa tap/hold sin autorepeat indeseado.
 - Capas principales funcionan en el 80% de los casos de uso diarios.
 
 
@@ -33,7 +29,6 @@ Resultado esperado:
 Acciones:
 1) Consolidar flags en `config/configuration.ini`:
    - `[Tooltips] tooltip_handles_input=false` (por defecto)
-   - `[Layers] home_row_mods_enabled=true` (si es prioridad)
    - Revisar y documentar el resto de banderas por bloque `[Layers]`.
 2) Poda y consolidación de código:
    - Mover archivos legacy/experimentales a `legacy/` (sin borrar todavía).
@@ -83,16 +78,7 @@ Acciones:
   - `tooltip_handles_input=false`
   - `enable_csharp_tooltips=true` (si prefieres las WPF; puedes usar nativo si lo deseas)
 - `[Layers]`
-  - `home_row_mods_enabled=true`
-  - Activar/desactivar otras capas según tu uso diario (Programs, Windows, Timestamps, Information, NVIM).
-
-`config/homerow_mods.ini`:
-- `[General]`
-  - `debug_mode=true` (temporal)
-  - `tap_threshold_ms=180..250` (ajustar a preferencia)
-  - `permissive_hold=false` (o `true` si te resulta más natural)
-- `[Exclusions]`
-  - Mantener apps donde no quieras HomeRow (ej.: editores remotos, juegos).
+  - Activar/desactivar capas según tu uso diario (Programs, Windows, Timestamps, Information, NVIM).
 
 
 ## Checklist de Smoke Tests (rápido)
@@ -106,13 +92,7 @@ Acciones:
 - Ver que el título del tooltip corresponde al nivel real.
 - Cambiar entre menús y que el tooltip se actualice o cierre a tiempo.
 
-3) HomeRow (hooks down/up)
-- Tap de `a s d f j k l ;` envía la letra.
-- Hold + otra tecla aplica el modificador correcto (ej.: `f + z` → `Ctrl+Z`).
-- Hold sin uso: en modo estricto no envía letra; en permisivo sí.
-- En apps excluidas, comportamiento normal sin mods.
-
-4) Programs
+3) Programs
 - Lanzar Notepad y VS Code (o tus programas comunes).
 
 5) Windows
@@ -129,8 +109,7 @@ Acciones:
 
 - Fase 0: Estabilización
   - [ ] Asegurar `tooltip_handles_input=false` y recargar
-  - [ ] Validar HomeRow en 2-3 apps con `debug_mode=true`
-  - [ ] Correr Smoke Tests (checklist arriba)
+    - [ ] Correr Smoke Tests (checklist arriba)
 
 - Fase 1: Limpieza
   - [ ] Mover archivos legacy/experimentales a `legacy/`

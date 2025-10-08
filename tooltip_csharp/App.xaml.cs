@@ -12,9 +12,6 @@ namespace TooltipApp
             var mainWindow = new MainWindow();
             // No llamar Show() aquí - la ventana se mostrará cuando sea necesario
             
-            // Crear y mostrar la ventana de estado (oculta inicialmente)
-            var statusWindow = new StatusWindow();
-            // No llamar Show() aquí - la ventana se mostrará cuando sea necesario
         }
     }
 }

@@ -15,6 +15,8 @@ namespace TooltipApp
         private FileSystemWatcher? _fileWatcher;
         private DispatcherTimer? _hideTimer;
         private const string CommandFile = "tooltip_commands.json";
+        private string? _lastJson;
+        private TooltipCommand? currentTooltip;
 
         // Colores especificados
         public static class Colors
@@ -31,6 +33,8 @@ namespace TooltipApp
             InitializeComponent();
             InitializeWindow();
             StartFileWatcher();
+            // Reposicionar cuando cambie el tamaño (evita desalineo al cambiar items)
+            this.SizeChanged += (s, e) => PositionWindow();
             
             // Fase 1: Mostrar tooltip básico estático
             ShowBasicTooltip();
@@ -242,6 +246,11 @@ namespace TooltipApp
                 if (string.IsNullOrWhiteSpace(jsonContent))
                     return null;
 
+                // Ignorar si el contenido no cambió (reduce parpadeos)
+                if (string.Equals(_lastJson, jsonContent, StringComparison.Ordinal))
+                    return null;
+                _lastJson = jsonContent;
+
                 // Usar System.Text.Json en lugar de Newtonsoft.Json
                 var options = new JsonSerializerOptions
                 {
@@ -310,6 +319,11 @@ namespace TooltipApp
                     _hideTimer.Interval = TimeSpan.FromMilliseconds(command.TimeoutMs);
                     _hideTimer.Stop();
                     _hideTimer.Start();
+                }
+                else
+                {
+                    // Timeout 0 => persistente hasta que llegue show=false
+                    _hideTimer.Stop();
                 }
             }
             catch (Exception ex)

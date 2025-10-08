@@ -83,6 +83,57 @@ ReloadTooltipConfig() {
 }
 
 ; ===================================================================
+; ESCRITURA ROBUSTA DEL JSON (ATÓMICA + THROTTLE)
+; ===================================================================
+
+; Ruta del archivo JSON principal (alineada a A_ScriptDir)
+GetTooltipJsonPath() {
+    return A_ScriptDir . "\tooltip_commands.json"
+}
+
+; Escritura atómica: escribe a .tmp y luego hace move para evitar lecturas parciales
+WriteFileAtomic(path, content) {
+    tmp := path . ".tmp"
+    try {
+        FileDelete(tmp)
+    }
+    FileAppend(content, tmp)
+    ; Move con overwrite (1) para reemplazo seguro
+    FileMove(tmp, path, 1)
+}
+
+; Estado para debounce de escritura
+global tooltipJsonPending := ""
+global tooltipDebounceMs := 100
+
+ScheduleTooltipJsonWrite(json) {
+    global tooltipJsonPending, tooltipDebounceMs
+    tooltipJsonPending := json
+    ; Reiniciar timer one-shot para consolidar múltiples escrituras
+    SetTimer(DebouncedTooltipWrite, 0)
+    SetTimer(DebouncedTooltipWrite, -tooltipDebounceMs)
+}
+
+DebouncedTooltipWrite() {
+    global tooltipJsonPending
+    if (tooltipJsonPending != "") {
+        WriteFileAtomic(GetTooltipJsonPath(), tooltipJsonPending)
+    }
+}
+
+; JSON Escape helper
+JsonEscape(str) {
+    if (!IsSet(str))
+        return ""
+    str := StrReplace(str, "\", "\\")
+    str := StrReplace(str, '"', '\"')
+    str := StrReplace(str, "`n", "\n")
+    str := StrReplace(str, "`r", "\r")
+    str := StrReplace(str, "`t", "\t")
+    return str
+}
+
+; ===================================================================
 ; FUNCIONES PRINCIPALES DE TOOLTIP C#
 
 ; Helper: Build items string from commands.ini [MenuDisplay] using a key prefix
@@ -212,21 +263,19 @@ ShowCSharpTooltip(title, items, navigation := "", timeout := 0) {
     jsonData .= '"show": true'
     jsonData .= "}"
     
-    ; Escribir archivo JSON (sobrescribir contenido)
-    try {
-        FileDelete("tooltip_commands.json")
-    }
-    FileAppend(jsonData, "tooltip_commands.json")
+    ; Escribir JSON de forma atómica con debounce en A_ScriptDir
+    ScheduleTooltipJsonWrite(jsonData)
 }
 
 ; Función para ocultar tooltip C#
 HideCSharpTooltip() {
+    ; Resetear estado activo del menú
+    global tooltipMenuActive, tooltipCurrentTitle
+    tooltipMenuActive := false
+    tooltipCurrentTitle := ""
     jsonData := '{"show": false}'
-    ; Sobrescribir archivo con show: false
-    try {
-        FileDelete("tooltip_commands.json")
-    }
-    FileAppend(jsonData, "tooltip_commands.json")
+    ; Escribir JSON de forma atómica con debounce
+    ScheduleTooltipJsonWrite(jsonData)
 }
 
 ; Removed duplicate initial ShowCSharpOptionsMenu; stateful override defined later.
@@ -668,22 +717,24 @@ ShowPersistentStatus(statusText, statusType) {
     jsonData .= '"type": "' . statusType . '"'
     jsonData .= "}"
     
-    ; Escribir archivo JSON específico para cada tipo de estado
-    statusFile := "status_" . statusType . "_commands.json"
+    ; Escribir archivo JSON específico para cada tipo de estado (atómico)
+    statusFile := A_ScriptDir . "\\status_" . statusType . "_commands.json"
     try {
-        FileDelete(statusFile)
+        FileDelete(statusFile . ".tmp")
     }
-    FileAppend(jsonData, statusFile)
+    FileAppend(jsonData, statusFile . ".tmp")
+    FileMove(statusFile . ".tmp", statusFile, 1)
 }
 
 ; Función para ocultar estado persistente específico
 HidePersistentStatus(statusType) {
     jsonData := '{"show": false}'
-    statusFile := "status_" . statusType . "_commands.json"
+    statusFile := A_ScriptDir . "\\status_" . statusType . "_commands.json"
     try {
-        FileDelete(statusFile)
+        FileDelete(statusFile . ".tmp")
     }
-    FileAppend(jsonData, statusFile)
+    FileAppend(jsonData, statusFile . ".tmp")
+    FileMove(statusFile . ".tmp", statusFile, 1)
 }
 
 ; Funciones específicas para cada estado persistente
@@ -924,11 +975,11 @@ StopTooltipApp() {
     }
     ; Limpiar archivos JSON
     try {
-        FileDelete("tooltip_commands.json")
-        FileDelete("status_nvim_commands.json")
-        FileDelete("status_visual_commands.json")
-        FileDelete("status_yank_commands.json")
-        FileDelete("status_excel_commands.json")
+        FileDelete(GetTooltipJsonPath())
+        FileDelete(A_ScriptDir . "\\status_nvim_commands.json")
+        FileDelete(A_ScriptDir . "\\status_visual_commands.json")
+        FileDelete(A_ScriptDir . "\\status_yank_commands.json")
+        FileDelete(A_ScriptDir . "\\status_excel_commands.json")
     }
 }
 

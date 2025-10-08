@@ -108,8 +108,12 @@ TryActivateLeader() {
             ihCmd.Start()
             ihCmd.Wait()
             if (ihCmd.EndReason = "EndKey") {
-                ihCmd.Stop()
-                continue
+                if (ihCmd.EndKey = "Escape" || ihCmd.EndKey = "Backspace") {
+                    HideAllTooltips()
+                    ihCmd.Stop()
+                    leaderActive := false
+                    return
+                }
             }
             catKey := ihCmd.Input
             ihCmd.Stop()
@@ -171,6 +175,7 @@ LeaderWindowsMenuLoop() {
         if (key = "" || key = Chr(0))
             return
         ExecuteWindowAction(key)
+        HideAllTooltips()
         return
     }
 }
@@ -202,6 +207,7 @@ LeaderProgramsMenuLoop() {
             return
         }
         LaunchProgramFromKey(key)
+        HideAllTooltips()
         return
     }
 }

@@ -35,6 +35,31 @@ dotnet run
 .\bin\Release\net6.0-windows\win-x64\publish\TooltipApp.exe
 ```
 
+## 📄 Esquema JSON (Contrato)
+
+La app C# lee `tooltip_commands.json` en el mismo directorio de ejecución (A_ScriptDir en AHK).
+
+Ejemplo completo:
+```json
+{
+  "show": true,
+  "tooltip_type": "leader",      
+  "title": "COMMAND PALETTE",
+  "items": [
+    {"key": "w", "description": "Windows"},
+    {"key": "p", "description": "Programs"}
+  ],
+  "navigation": ["\\: Back", "ESC: Exit"],
+  "timeout_ms": 5000
+}
+```
+Notas:
+- Timeout 0 hace que el tooltip permanezca visible hasta recibir show=false.
+- La ventana se reposiciona automáticamente cuando cambia su tamaño (p.ej. cantidad de items).
+- `show=false` oculta el tooltip.
+- `tooltip_type` puede ser `leader` (regular) o `status_persistent` (posiciona en esquina inferior izquierda y oculta items).
+- Escritura recomendada desde AHK: atómica (archivo .tmp + move) y con throttle para evitar parpadeos.
+
 ## 📋 Testing
 
 ### Fase 1 - Tooltip Básico:
@@ -72,7 +97,7 @@ dotnet run
 
 ## 🔗 Integración con AutoHotkey
 
-La aplicación lee comandos desde `tooltip_commands.json` para mostrar/ocultar tooltips dinámicamente.
+La aplicación lee comandos desde `tooltip_commands.json` para mostrar/ocultar tooltips dinámicamente. El archivo debe ubicarse en el mismo directorio donde se ejecuta el script AHK (`A_ScriptDir`).
 
 Ejemplo de integración en HybridCapsLock.ahk (v2):
 ```autohotkey

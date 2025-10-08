@@ -35,7 +35,6 @@
 #Include src\layer\excel_layer.ahk
 #Include src\layer\nvim_layer.ahk
 #Include src\layer\modifier_mode.ahk
-#Include src\layer\homerow_mods.ahk
 
 ; --------------------
 ; Startup logic
@@ -43,7 +42,7 @@
 try {
     LoadLayerFlags()
     LoadLayerState()
-    InitHomeRowMods()  ; Load and setup home row mods if enabled
+    
     StartTooltipApp()  ; Start C# tooltip application
 } catch {
 }
