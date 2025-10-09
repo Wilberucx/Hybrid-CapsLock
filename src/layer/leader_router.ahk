@@ -64,37 +64,63 @@ TryActivateLeader() {
             leaderActive := false
             return
         } else if (key = "t" || key = "T") {
-            ; Minimal timestamps handler: show main time menu and route to sub-mode
+            ; Timestamps menu with proper Back/Esc handling
             ShowTimeMenu()
             ihTs := InputHook("L1 T" . GetEffectiveTimeout("timestamps"), "{Escape}{Backspace}")
             ihTs.Start()
             ihTs.Wait()
             if (ihTs.EndReason = "EndKey") {
-                ihTs.Stop()
-                continue
+                if (ihTs.EndKey = "Escape") {
+                    HideAllTooltips()
+                    ihTs.Stop()
+                    leaderActive := false
+                    return
+                }
+                if (ihTs.EndKey = "Backspace") {
+                    ihTs.Stop()
+                    ; Back to Leader menu
+                    continue
+                }
             }
             tsKey := ihTs.Input
             ihTs.Stop()
+            if (tsKey = "\\")
+                continue
             if (tsKey = "" || tsKey = Chr(0))
                 continue
             HandleTimestampMode(tsKey)
-            continue
+            HideAllTooltips()
+            leaderActive := false
+            return
         } else if (key = "i" || key = "I") {
-            ; Minimal information handler: show info menu and insert/preview by key
+            ; Information menu with proper Back/Esc handling
             ShowInformationMenu()
             ihInfo := InputHook("L1 T" . GetEffectiveTimeout("information"), "{Escape}{Backspace}")
             ihInfo.Start()
             ihInfo.Wait()
             if (ihInfo.EndReason = "EndKey") {
-                ihInfo.Stop()
-                continue
+                if (ihInfo.EndKey = "Escape") {
+                    HideAllTooltips()
+                    ihInfo.Stop()
+                    leaderActive := false
+                    return
+                }
+                if (ihInfo.EndKey = "Backspace") {
+                    ihInfo.Stop()
+                    ; Back to Leader menu
+                    continue
+                }
             }
             infoKey := ihInfo.Input
             ihInfo.Stop()
+            if (infoKey = "\\")
+                continue
             if (infoKey = "" || infoKey = Chr(0))
                 continue
             InsertInformationFromKey(infoKey)
-            continue
+            HideAllTooltips()
+            leaderActive := false
+            return
         } else if (key = "n" || key = "N") {
             ; Toggle Excel layer on/off
             global excelLayerEnabled, excelLayerActive
