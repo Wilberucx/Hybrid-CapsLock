@@ -676,6 +676,10 @@ ParseEnvList(envStr) {
 }
 
 ExecuteCustomCommand(cmdType, payload, flags) {
+    ; Auto-hide C# tooltip on execute if configured
+    if (IsSet(tooltipConfig) && tooltipConfig.enabled && tooltipConfig.autoHide) {
+        HideCSharpTooltip()
+    }
     opts := ""
     if (flags.HasOwnProp("working_dir"))
         opts := flags["working_dir"]

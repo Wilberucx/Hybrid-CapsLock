@@ -205,8 +205,8 @@ LeaderCommandsMenuLoop() {
             return "EXIT"
         if (res = "BACK")
             continue
-        ; After executing a command or closing submenu, stay in Commands menu
-        continue
+        ; After executing a command or closing submenu, leave Commands entirely
+        return "EXIT"
     }
 }
 
