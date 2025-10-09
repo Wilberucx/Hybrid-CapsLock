@@ -349,6 +349,62 @@ StartStatusApp() {
 global tooltipMenuActive := false
 global tooltipCurrentTitle := ""
 
+; Breadcrumb navigation stack for intelligent back
+global tooltipNavStack := []
+
+TooltipNavReset() {
+    global tooltipNavStack
+    tooltipNavStack := []
+}
+
+TooltipNavTop() {
+    global tooltipNavStack
+    return tooltipNavStack.Length ? tooltipNavStack[tooltipNavStack.Length] : ""
+}
+
+TooltipNavPush(menuId) {
+    global tooltipNavStack
+    if (!tooltipNavStack.Length || tooltipNavStack[tooltipNavStack.Length] != menuId) {
+        tooltipNavStack.Push(menuId)
+    }
+}
+
+TooltipShowById(menuId) {
+    switch menuId {
+        case "LEADER": ShowLeaderModeMenuCS()
+        case "PROGRAMS": ShowProgramMenuCS()
+        case "WINDOWS": ShowWindowMenuCS()
+        case "TIMESTAMPS": ShowTimeMenuCS()
+        case "INFORMATION": ShowInformationMenuCS()
+        case "COMMANDS": ShowCommandsMenuCS()
+        case "CMD_s": ShowSystemCommandsMenuCS()
+        case "CMD_n": ShowNetworkCommandsMenuCS()
+        case "CMD_g": ShowGitCommandsMenuCS()
+        case "CMD_m": ShowMonitoringCommandsMenuCS()
+        case "CMD_f": ShowFolderCommandsMenuCS()
+        case "CMD_w": ShowWindowsCommandsMenuCS()
+        case "CMD_o": ShowPowerOptionsCommandsMenuCS()
+        case "CMD_a": ShowADBCommandsMenuCS()
+        case "CMD_v": ShowVaultFlowCommandsMenuCS()
+        case "CMD_h": ShowHybridManagementMenuCS()
+        default:
+            ; fallback to leader
+            ShowLeaderModeMenuCS()
+    }
+}
+
+TooltipNavBackCS() {
+    global tooltipNavStack
+    if (tooltipNavStack.Length > 1) {
+        tooltipNavStack.Pop() ; remove current
+        prev := tooltipNavStack[tooltipNavStack.Length]
+        TooltipShowById(prev)
+    } else {
+        ; nothing to go back to, show leader for consistency
+        ShowLeaderModeMenuCS()
+    }
+}
+
 TooltipMenuIsActive() {
     global tooltipMenuActive
     return tooltipMenuActive
@@ -370,8 +426,7 @@ HandleTooltipSelection(key) {
     if (tooltipCurrentTitle = "COMMAND PALETTE") {
         switch key {
             case "\\":
-                ; Back to Leader menu
-                ShowLeaderModeMenuCS()
+                TooltipNavBackCS()
                 return
             case "s":
                 ShowSystemCommandsMenuCS()
@@ -464,12 +519,15 @@ Esc::HandleTooltipSelection("ESC")
 
 ; Reemplazar ShowLeaderModeMenu() original
 ShowLeaderModeMenuCS() {
+    TooltipNavReset()
+    TooltipNavPush("LEADER")
     items := "p:Programs|t:Timestamps|c:Commands|i:Information|w:Windows|n:Excel/Numbers"
     ShowCSharpOptionsMenu("LEADER MODE", items, "\\: Back|ESC: Exit")
 }
 
 ; Reemplazar ShowProgramMenu() original  
 ShowProgramMenuCS() {
+    TooltipNavPush("PROGRAMS")
     items := GenerateProgramItemsForCS()
     ShowCSharpOptionsMenu("PROGRAM LAUNCHER", items, "\\: Back|ESC: Exit")
 }
@@ -516,18 +574,21 @@ GenerateProgramItemsForCS() {
 
 ; Reemplazar ShowWindowMenu() original
 ShowWindowMenuCS() {
+    TooltipNavPush("WINDOWS")
     items := "2:Split 50/50|3:Split 33/67|4:Quarter Split|x:Close|m:Maximize|-:Minimize|d:Draw|z:Zoom|c:Zoom with cursor|j:Next Window|k:Previous Window"
     ShowCSharpOptionsMenu("WINDOW MANAGER", items, "\\: Back|ESC: Exit")
 }
 
 ; Reemplazar ShowTimeMenu() original
 ShowTimeMenuCS() {
+    TooltipNavPush("TIMESTAMPS")
     items := "d:Date Formats|t:Time Formats|h:Date+Time Formats"
     ShowCSharpOptionsMenu("TIMESTAMP MANAGER", items, "\\: Back|ESC: Exit")
 }
 
 ; Reemplazar ShowInformationMenu() original
 ShowInformationMenuCS() {
+    TooltipNavPush("INFORMATION")
     items := GenerateInformationItemsForCS()
     ShowCSharpOptionsMenu("INFORMATION MANAGER", items, "\\: Back|ESC: Exit")
 }
@@ -574,6 +635,7 @@ GenerateInformationItemsForCS() {
 
 ; Reemplazar ShowCommandsMenu() original
 ShowCommandsMenuCS() {
+    TooltipNavPush("COMMANDS")
     items := BuildCommandsMainItemsFromCategories()
     if (items = "") {
         items := "s:System Commands|n:Network Commands|g:Git Commands|m:Monitoring Commands|f:Folder Commands|w:Windows Commands|o:Power Options|a:ADB Tools|v:VaultFlow|h:Hybrid Management"
@@ -855,6 +917,7 @@ ShowDeleteMenuCS() {
 
 ; Submenú System Commands (leader → c → s)
 ShowSystemCommandsMenuCS() {
+    TooltipNavPush("CMD_s")
     items := BuildCommandItemsFromCategoryKey("s")
     if (items = "") {
         BuildCommandItemsFromCategoryKey("s")
@@ -866,6 +929,7 @@ ShowSystemCommandsMenuCS() {
 
 ; Submenú Network Commands (leader → c → n)
 ShowNetworkCommandsMenuCS() {
+    TooltipNavPush("CMD_n")
     items := BuildCommandItemsFromCategoryKey("n")
     if (items = "") {
         BuildCommandItemsFromCategoryKey("n")
@@ -877,6 +941,7 @@ ShowNetworkCommandsMenuCS() {
 
 ; Submenú Git Commands (leader → c → g)
 ShowGitCommandsMenuCS() {
+    TooltipNavPush("CMD_g")
     items := BuildCommandItemsFromCategoryKey("g")
     if (items = "") {
         BuildCommandItemsFromCategoryKey("g")
@@ -888,6 +953,7 @@ ShowGitCommandsMenuCS() {
 
 ; Submenú Monitoring Commands (leader → c → m)
 ShowMonitoringCommandsMenuCS() {
+    TooltipNavPush("CMD_m")
     items := BuildCommandItemsFromCategoryKey("m")
     if (items = "") {
         BuildCommandItemsFromCategoryKey("m")
@@ -899,6 +965,7 @@ ShowMonitoringCommandsMenuCS() {
 
 ; Submenú Folder Commands (leader → c → f)
 ShowFolderCommandsMenuCS() {
+    TooltipNavPush("CMD_f")
     items := BuildCommandItemsFromCategoryKey("f")
     if (items = "") {
         BuildCommandItemsFromCategoryKey("f")
@@ -910,6 +977,7 @@ ShowFolderCommandsMenuCS() {
 
 ; Submenú Windows Commands (leader → c → w)
 ShowWindowsCommandsMenuCS() {
+    TooltipNavPush("CMD_w")
     items := BuildCommandItemsFromCategoryKey("w")
     if (items = "") {
         BuildCommandItemsFromCategoryKey("w")
@@ -921,6 +989,7 @@ ShowWindowsCommandsMenuCS() {
 
 ; Submenú Power Options (leader → c → o)
 ShowPowerOptionsCommandsMenuCS() {
+    TooltipNavPush("CMD_o")
     items := BuildCommandItemsFromCategoryKey("o")
     if (items = "") {
         items := "s:Sleep|h:Hibernate|r:Restart|S:Shutdown|l:Lock Screen|o:Sign Out"
@@ -930,6 +999,7 @@ ShowPowerOptionsCommandsMenuCS() {
 
 ; Submenú ADB Tools (leader → c → a)
 ShowADBCommandsMenuCS() {
+    TooltipNavPush("CMD_a")
     items := BuildCommandItemsFromCategoryKey("a")
     if (items = "") {
         items := "d:List Devices|i:Install APK|u:Uninstall Package|l:Logcat|s:Shell|r:Reboot Device|c:Clear App Data"
@@ -939,6 +1009,7 @@ ShowADBCommandsMenuCS() {
 
 ; Submenú Hybrid Management (leader → c → h)
 ShowHybridManagementMenuCS() {
+    TooltipNavPush("CMD_h")
     items := BuildCommandItemsFromCategoryKey("h")
     if (items = "") {
         items := "R:Reload Script|e:Exit Script|c:Open Config Folder|l:View Log File|v:Show Version Info|r:Reload Config"
@@ -948,6 +1019,7 @@ ShowHybridManagementMenuCS() {
 
 ; Submenú VaultFlow Commands (leader → c → v)
 ShowVaultFlowCommandsMenuCS() {
+    TooltipNavPush("CMD_v")
     items := BuildCommandItemsFromCategoryKey("v")
     if (items = "") {
         BuildCommandItemsFromCategoryKey("v")

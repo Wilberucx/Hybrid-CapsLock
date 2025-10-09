@@ -52,11 +52,15 @@ TryActivateLeader() {
             return
         }
         if (key = "w" || key = "W") {
-            LeaderWindowsMenuLoop()
+            res := LeaderWindowsMenuLoop()
+            if (res = "BACK")
+                continue
             leaderActive := false
             return
         } else if (key = "p" || key = "P") {
-            LeaderProgramsMenuLoop()
+            res := LeaderProgramsMenuLoop()
+            if (res = "BACK")
+                continue
             leaderActive := false
             return
         } else if (key = "t" || key = "T") {
@@ -104,24 +108,13 @@ TryActivateLeader() {
             SetTempStatus(excelLayerActive ? "EXCEL LAYER ON" : "EXCEL LAYER OFF", 1500)
             continue
         } else if (key = "c" || key = "C") {
-            ; Commands main menu
-            ShowCommandsMenu()
-            ihCmd := InputHook("L1 T" . GetEffectiveTimeout("commands"), "{Escape}{Backspace}")
-            ihCmd.Start()
-            ihCmd.Wait()
-            if (ihCmd.EndReason = "EndKey") {
-                if (ihCmd.EndKey = "Escape" || ihCmd.EndKey = "Backspace") {
-                    HideAllTooltips()
-                    ihCmd.Stop()
-                    leaderActive := false
-                    return
-                }
+            res := LeaderCommandsMenuLoop()
+            if (res = "EXIT") {
+                HideAllTooltips()
+                leaderActive := false
+                return
             }
-            catKey := ihCmd.Input
-            ihCmd.Stop()
-            if (catKey = "" || catKey = Chr(0))
-                continue
-            HandleCommandCategory(catKey)
+            ; BACK or finished -> return to Leader loop
             continue
         } else {
             ShowCenteredToolTip("Unknown: " . key)
@@ -169,16 +162,51 @@ LeaderWindowsMenuLoop() {
             }
             if (ih.EndKey = "Backspace") {
                 ih.Stop()
-                return
+                return "BACK"
             }
         }
         key := ih.Input
         ih.Stop()
+        if (key = "\\")
+            return "BACK"
         if (key = "" || key = Chr(0))
             return
         ExecuteWindowAction(key)
         HideAllTooltips()
         return
+    }
+}
+
+LeaderCommandsMenuLoop() {
+    ; Loop that keeps user inside Commands main and subcategories
+    Loop {
+        ShowCommandsMenu()
+        ihCmd := InputHook("L1 T" . GetEffectiveTimeout("commands"), "{Escape}{Backspace}")
+        ihCmd.Start()
+        ihCmd.Wait()
+        if (ihCmd.EndReason = "EndKey") {
+            if (ihCmd.EndKey = "Escape") {
+                ihCmd.Stop()
+                return "EXIT"
+            }
+            if (ihCmd.EndKey = "Backspace") {
+                ihCmd.Stop()
+                return "BACK"
+            }
+        }
+        catKey := ihCmd.Input
+        ihCmd.Stop()
+        if (catKey = "\\")
+            return "BACK"
+        if (catKey = "" || catKey = Chr(0))
+            return "BACK"
+        res := HandleCommandCategory(catKey)
+        if (res = "EXIT")
+            return "EXIT"
+        if (res = "BACK")
+            continue
+        ; After executing a command or closing submenu, stay in Commands menu
+        continue
     }
 }
 
@@ -196,11 +224,13 @@ LeaderProgramsMenuLoop() {
             }
             if (ih.EndKey = "Backspace") {
                 ih.Stop()
-                return
+                return "BACK"
             }
         }
         key := ih.Input
         ih.Stop()
+        if (key = "\\")
+            return "BACK"
         if (key = "" || key = Chr(0))
             return
         autoLaunch := CleanIniBool(IniRead(ProgramsIni, "Settings", "auto_launch", "true"), true)

@@ -231,22 +231,49 @@ HandleCommandCategory(catKey) {
     ; Show dynamic category menu for native tooltips
     if (!(IsSet(tooltipConfig) && tooltipConfig.enabled)) {
         ShowDynamicCommandsMenu(k)
-    }
-    else {
-        ; In C# mode we can still show a toast when category is missing
-        ; (actual UI handled in C# layer)
-        ; no-op here
+    } else {
+        ; In C# mode (handleInput=false), mostramos el submenú correspondiente
+        switch k {
+            case "s": ShowSystemCommandsMenuCS()
+            case "n": ShowNetworkCommandsMenuCS()
+            case "g": ShowGitCommandsMenuCS()
+            case "m": ShowMonitoringCommandsMenuCS()
+            case "f": ShowFolderCommandsMenuCS()
+            case "w": ShowWindowsCommandsMenuCS()
+            case "o": ShowPowerOptionsCommandsMenuCS()
+            case "a": ShowADBCommandsMenuCS()
+            case "v": ShowVaultFlowCommandsMenuCS()
+            case "h": ShowHybridManagementMenuCS()
+            default:
+                ; Si categoría no reconocida, continuar flujo normal
+        }
     }
     ih := InputHook("L1 T" . GetEffectiveTimeout("commands"), "{Escape}{Backspace}")
     ih.Start()
     ih.Wait()
     if (ih.EndReason = "EndKey") {
-        HideMenuTooltip()
+        if (ih.EndKey = "Backspace") {
+            ih.Stop()
+            if (IsSet(tooltipConfig) && tooltipConfig.enabled) {
+                ShowLeaderModeMenuCS()
+            }
+            return "BACK"
+        }
+        if (ih.EndKey = "Escape") {
+            ih.Stop()
+            return "EXIT"
+        }
         ih.Stop()
         return
     }
     key := ih.Input
     ih.Stop()
+    if (key = "\\") {
+        if (IsSet(tooltipConfig) && tooltipConfig.enabled) {
+            ShowLeaderModeMenuCS()
+        }
+        return "BACK"
+    }
     if (key = "" || key = Chr(0))
         return
 
