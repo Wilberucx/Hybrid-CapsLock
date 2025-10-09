@@ -246,8 +246,9 @@ LeaderProgramsMenuLoop() {
         ih.Wait()
         if (ih.EndReason = "EndKey") {
             if (ih.EndKey = "Escape") {
+                HideAllTooltips()
                 ih.Stop()
-                return
+                return "EXIT"
             }
             if (ih.EndKey = "Backspace") {
                 ih.Stop()
