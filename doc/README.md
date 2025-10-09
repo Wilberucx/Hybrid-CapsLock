@@ -55,7 +55,7 @@ Esta carpeta contiene toda la documentación detallada de HybridCapsLock.
 
 3) Timeouts y Tooltips
 - Timeouts jerárquicos: por capa en cada *.ini (Settings.timeout_seconds), líder y global en configuration.ini. Ver doc/CONFIGURATION.md → “Timeouts jerárquicos (InputHook)”
-- Tooltips C#: ajustar [Tooltips] en configuration.ini; ver doc/CONFIGURATION.md → “Tooltips (C#) configurables”
+- Tooltips C#: ajustar [Tooltips] en configuration.ini; ver doc/CONFIGURATION.md → “Tooltips (C#) configurables”. Navegación: Esc sale completamente; Backspace hace back inteligente; Backslash (\\) es opcional y puede no funcionar en todos los contextos.
 
 4) Aplicar cambios
 - Recarga desde el propio script (sin reiniciar Windows): leader → c → h → R (Hybrid Management → Reload Script)

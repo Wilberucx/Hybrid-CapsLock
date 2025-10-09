@@ -89,11 +89,17 @@ Capa persistente especializada para trabajo con hojas de cálculo y aplicaciones
 ## 🎮 Navegación
 
 ### Controles Universales
-- **`Esc`** - Salir completamente del modo líder
-- **`Backspace`** - Volver al menú principal (desde sub-capas)
-- **Timeout:** 7 segundos de inactividad cierra automáticamente
+- Esc: salir completamente del modo líder (EXIT total)
+- Backspace: volver al menú anterior (back inteligente con breadcrumb)
+- Backslash (\): reservado como back, pero no es confiable en todos los contextos; se estandariza Backspace
+- Timeout: 7 segundos de inactividad cierra automáticamente
 
 ### Flujo de Navegación
+
+Nota sobre navegación y back inteligente
+- Se implementó un breadcrumb (pila de navegación) cuando los tooltips C# están habilitados, y un bucle interno en AHK cuando no lo están, para garantizar que Backspace siempre regrese exactamente al menú anterior, no drásticamente al Leader.
+- Backspace es la tecla estándar de retroceso. Backslash (\) se intentó como alternativa, pero puede quedar capturado como entrada normal en ciertos submenús; por ergonomía y consistencia (estilo Vim/Neovim), se privilegia Backspace.
+
 ```
 leader → Menú Principal
                 ↓

@@ -1,5 +1,15 @@
 # Capa de Comandos (Líder: leader → `c`)
 
+Navegación y salida
+- Esc: salir completamente de la paleta de comandos desde cualquier nivel (EXIT total)
+- Backspace: volver al menú anterior (back inteligente). Si estás en una categoría, regresa a COMMAND PALETTE; si estás en COMMAND PALETTE, regresa al Leader.
+- Backslash (\): reservado para back, pero puede no funcionar en todos los contextos; se estandariza Backspace como tecla de back.
+
+Cómo se logró el back inteligente
+- Con tooltips C# deshabilitados para entrada (tooltip_handles_input=false), el router de Leader mantiene un bucle dedicado (LeaderCommandsMenuLoop) que intercepta Esc/Backspace/"\" y retorna "EXIT" o "BACK" según corresponda, evitando que "\" llegue a los ejecutores como opción desconocida.
+- Con tooltips C# habilitados para entrada, la navegación usa una pila (breadcrumb) que permite volver exactamente al menú anterior.
+
+
 > Referencia rápida
 > - Configuración: config/commands.ini
 > - Confirmaciones: ver “Confirmaciones — Modelo de Configuración” en doc/CONFIGURATION.md y “Precedencia de Confirmación (Commands)” en este documento
