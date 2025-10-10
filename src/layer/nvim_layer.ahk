@@ -273,11 +273,15 @@ a:: {
 *vkBA::ColonMaybeStart()    ; OEM_1 by virtual key, decide by Shift state
 #HotIf
 
+#InputLevel 2
 #HotIf (nvimStaticEnabled ? (isNvimLayerActive && ColonLogicActive && !GetKeyState("CapsLock", "P") && NvimLayerAppAllowed()) : false)
 *w::ColonLogicHandleW()
 *q::ColonLogicHandleQ()
 *Enter::ColonLogicEnter()
 *Esc::ColonLogicCancel()
+#HotIf
+#InputLevel 1
+#HotIf (nvimStaticEnabled ? (isNvimLayerActive && !GetKeyState("CapsLock", "P") && NvimLayerAppAllowed()) : false)
 #HotIf
 
 ColonMaybeStart() {
