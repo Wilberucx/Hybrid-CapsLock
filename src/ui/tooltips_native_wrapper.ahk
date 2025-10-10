@@ -85,11 +85,9 @@ ShowProcessTerminated() {
 }
 
 ShowNvimLayerStatus(isActive) {
-    if (IsSet(tooltipConfig) && tooltipConfig.enabled) {
-        ShowNvimLayerStatusCS(isActive)
-    } else {
-        ShowCenteredToolTip(isActive ? "NVIM LAYER ON" : "NVIM LAYER OFF")
-    }
+    ; Temporarily force native tooltip with elegant symbols
+    ShowCenteredToolTip(isActive ? "◉ NVIM" : "○ NVIM")
+    SetTimer(() => RemoveToolTip(), -900)
 }
 
 ShowVisualModeStatus(isActive) {

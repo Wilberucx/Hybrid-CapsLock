@@ -77,59 +77,37 @@ v:: {
     SetTimer(() => RemoveToolTip(), -1000)
 }
 
-; Basic navigation (hjkl)
-h::Send("{Left}")
-j::Send("{Down}")
-k::Send("{Up}")
-l::Send("{Right}")
+; Basic navigation (hjkl) wildcard to capture Ctrl/Alt/Shift combinations
+*h::NvimDirectionalSend("Left")
+*j::NvimDirectionalSend("Down")
+*k::NvimDirectionalSend("Up")
+*l::NvimDirectionalSend("Right")
+; Ensure Alt-modified combos also fire (avoid menu-steal)
+*!h::NvimDirectionalSend("Left")
+*!j::NvimDirectionalSend("Down")
+*!k::NvimDirectionalSend("Up")
+*!l::NvimDirectionalSend("Right")
 
-; Delete menu (d → w/d/a)
+; Delete simple (d) — borra la selección si está en Visual y sale de Visual; en Normal envía Delete
 d:: {
     global VisualMode
+    Send("{Delete}")
     if (VisualMode) {
-        Send("{Delete}")
-        return
-    }
-    ShowDeleteMenu()
-    ih := InputHook("L1 T" . GetEffectiveTimeout("nvim"), "{Escape}")
-    ih.Start()
-    ih.Wait()
-    if (ih.EndReason = "EndKey" && ih.EndKey = "Escape") {
-        try HideCSharpTooltip()
-        return
-    }
-    key := ih.Input
-    try HideCSharpTooltip()
-    switch key {
-        case "w": DeleteCurrentWord()
-        case "d": DeleteCurrentLine()
-        case "a": DeleteAll()
+        VisualMode := false
+        ShowVisualModeStatus(false)
+        SetTimer(() => RemoveToolTip(), -500)
     }
 }
 
-; Yank menu (y → y/w/a/p)
+; Yank simple (y) — copia con Ctrl+C; si estaba en Visual, sale de Visual
 y:: {
     global VisualMode
+    Send("^c")
+    ShowCopyNotification()
     if (VisualMode) {
-        Send("^c")
-        ShowCopyNotification()
-        return
-    }
-    ShowYankMenu()
-    ih := InputHook("L1 T" . GetEffectiveTimeout("nvim"), "{Escape}")
-    ih.Start()
-    ih.Wait()
-    if (ih.EndReason = "EndKey" && ih.EndKey = "Escape") {
-        try HideCSharpTooltip()
-        return
-    }
-    key := ih.Input
-    try HideCSharpTooltip()
-    switch key {
-        case "y": CopyCurrentLine()
-        case "w": CopyCurrentWord()
-        case "a": Send("^a^c"), ShowCopyNotification()
-        case "p": CopyCurrentParagraph()
+        VisualMode := false
+        ShowVisualModeStatus(false)
+        SetTimer(() => RemoveToolTip(), -500)
     }
 }
 
@@ -137,14 +115,30 @@ y:: {
 p::Send("^v")
 +p::PastePlain()
 
+; Cut (x)
+x::Send("^x")
+
+; Undo (u) / Redo (r arriba)
+u::Send("^z")
+
+; Scroll Ctrl+U / Ctrl+D
+^u::Send("{WheelUp 6}")
+^d::Send("{WheelDown 6}")
+
 ; Exit Insert mode (if mapped dynamically)
 Esc:: {
-    global _tempEditMode
+    global _tempEditMode, VisualMode
     if (_tempEditMode) {
         ReactivateNvimAfterInsert()
-    } else {
-        Send("{Escape}")
+        return
     }
+    if (VisualMode) {
+        VisualMode := false
+        ShowVisualModeStatus(false)
+        SetTimer(() => RemoveToolTip(), -500)
+        return
+    }
+    Send("{Escape}")
 }
 
 ; End of word (e)
@@ -154,26 +148,20 @@ e::Send("^{Right}{Left}")
 +e::Send("{WheelDown 3}")
 +y::Send("{WheelUp 3}")
 
-; Insert mode (temporary disable layer)
+; Insert mode (temporary disable layer) - manual return with Esc
+; After disabling layer, send Ctrl+Alt+Shift+I (as requested)
 i:: {
     global isNvimLayerActive, _tempEditMode
     isNvimLayerActive := false
     _tempEditMode := true
     ShowNvimLayerStatus(false)
-    SetTempStatus("INSERT MODE", 3000)
-    SetTimer(ReactivateNvimAfterInsert, -3000)
+    SetTempStatus("INSERT MODE (Esc para volver)", 1500)
+    Send("^!+i")
+    ; Ya no programamos auto retorno: se vuelve con Esc
 }
 
-; Replace mode (delete char, temporary disable)
-r:: {
-    global isNvimLayerActive, _tempEditMode
-    Send("{Delete}")
-    isNvimLayerActive := false
-    _tempEditMode := true
-    ShowNvimLayerStatus(false)
-    SetTempStatus("REPLACE: Type char then press ESC", 3000)
-    SetTimer(ReactivateNvimAfterReplace, -3000)
-}
+; Redo (r)
+r::Send("^y")
 
 ; Quick exit
 q:: {
@@ -185,7 +173,32 @@ q:: {
     try SaveLayerState()
 }
 
+; Send Ctrl+Alt+Shift+2 with f
+f::Send("^!+2")
+
+^!+i::Send("^!+i")
+
 #HotIf
+
+; Ctrl/Alt/Shift + hjkl sent to arrows with modifiers, honoring VisualMode
+; - Shift => selección (mantiene Shift)
+; - Ctrl  => navega por palabras/elementos (Ctrl+Arrow)
+; - Alt   => deja Alt+Arrow (útil en IDEs/editores con comportamiento propio)
+; Combinaciones (ej. Ctrl+Shift+h) se respetan
+NvimDirectionalSend(dir) {
+   global VisualMode
+   mods := ""
+   if GetKeyState("Ctrl", "P")
+       mods .= "^"
+   if GetKeyState("Alt", "P")
+       mods .= "!"
+   if GetKeyState("Shift", "P")
+       mods .= "+"
+   ; En VisualMode, asegurar que Shift esté presente para extender selección
+   if (VisualMode && !InStr(mods, "+"))
+       mods .= "+"
+   Send(mods . "{" . dir . "}")
+}
 
 ; ---- App filter for Nvim layer ----
 NvimLayerAppAllowed() {

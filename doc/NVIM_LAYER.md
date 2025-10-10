@@ -11,8 +11,8 @@ La Capa Nvim transforma tu teclado en un entorno de navegación y edición inspi
 **Método:** Presiona y suelta `CapsLock` rápidamente (tap)
 
 Un aviso visual aparecerá indicando el estado:
-- `NVIM LAYER ON` - Capa activada
-- `NVIM LAYER OFF` - Capa desactivada
+- `◉ NVIM` - Capa activada
+- `○ NVIM` - Capa desactivada
 
 > **Nota:** La capa se desactiva automáticamente al activar el Modo Líder (`leader`)
 
