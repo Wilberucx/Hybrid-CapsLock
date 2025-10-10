@@ -66,6 +66,9 @@ try {
 } catch {
 }
 
+global ColonLogicActive := false
+global ColonStage := ""
+
 ; ---- Context hotkeys ----
 #HotIf (nvimStaticEnabled ? (isNvimLayerActive && !GetKeyState("CapsLock", "P") && NvimLayerAppAllowed()) : false)
 
@@ -166,15 +169,6 @@ i:: {
 r::Send("^y")
 
 ; Quick exit
-q:: {
-    global isNvimLayerActive, VisualMode
-    isNvimLayerActive := false
-    VisualMode := false
-    ShowNvimLayerStatus(false)
-    SetTimer(() => RemoveToolTip(), -800)
-    try SaveLayerState()
-}
-
 ; Send Ctrl+Alt+Shift+2 with f and then deactivate NVIM layer
 f:: {
     Send("^!+2")
@@ -208,6 +202,10 @@ NvimDirectionalSend(dir) {
 }
 
 ; ---- App filter for Nvim layer ----
+
+#HotIf (nvimStaticEnabled ? (isNvimLayerActive && !GetKeyState("CapsLock", "P") && NvimLayerAppAllowed()) : false)
+#HotIf (nvimStaticEnabled ? (isNvimLayerActive && !GetKeyState("CapsLock", "P") && NvimLayerAppAllowed()) : false)
+
 NvimLayerAppAllowed() {
    try {
        ini := A_ScriptDir . "\\config\\nvim_layer.ini"
@@ -226,11 +224,17 @@ NvimLayerAppAllowed() {
 
 #HotIf (nvimStaticEnabled ? (isNvimLayerActive && !GetKeyState("CapsLock", "P") && NvimLayerAppAllowed()) : false)
 ; Word jumps like NVIM (w/b)
-w::NvimWordJumpHelper("Right")
+w:: {
+    global ColonLogicActive
+    if (ColonLogicActive) {
+        ColonLogicHandleW()
+        return
+    }
+    NvimWordJumpHelper("Right")
+}
 b::NvimWordJumpHelper("Left")
 
 ; Save
-s::Send("^s")
 
 ; Change (visual only): delete selection and enter insert (disable NVIM layer)
 c:: {
@@ -255,7 +259,97 @@ a:: {
     }
 }
 
-; ---- Helpers ----
+; ---- Colon command logic-only mode (triggered by Shift+; or :) ----
+; Entry: Shift+; (:) opens a temporary logical mode that waits for w or q, then Enter.
+; Stages:
+;   ""  -> awaiting w or q
+;   "w" -> awaiting q or Enter
+;   "q" -> awaiting Enter
+;   "wq"-> awaiting Enter
+; Tooltip: fixed text to emulate :w/:q/:wq waiting (does not change with stage).
+
+#HotIf (nvimStaticEnabled ? (isNvimLayerActive && !GetKeyState("CapsLock", "P") && NvimLayerAppAllowed()) : false)
+*SC027::ColonMaybeStart()   ; Semicolon/OEM_1 scancode, decide by Shift state
+*vkBA::ColonMaybeStart()    ; OEM_1 by virtual key, decide by Shift state
+#HotIf
+
+#HotIf (nvimStaticEnabled ? (isNvimLayerActive && ColonLogicActive && !GetKeyState("CapsLock", "P") && NvimLayerAppAllowed()) : false)
+*w::ColonLogicHandleW()
+*q::ColonLogicHandleQ()
+*Enter::ColonLogicEnter()
+*Esc::ColonLogicCancel()
+#HotIf
+
+ColonMaybeStart() {
+    ; Only start colon logic when Shift is physically held (i.e., we intend ':')
+    if GetKeyState("Shift", "P") {
+        ColonLogicStart()
+        ; Block the ':' character from being sent
+        return
+    }
+    ; Otherwise it's a bare semicolon ';' — pass it through
+    Send(";")
+}
+
+ColonLogicStart() {
+    global ColonLogicActive, ColonStage
+    ColonLogicActive := true
+    ColonStage := ""
+    ColonLogicShowTip()
+}
+
+ColonLogicCancel() {
+    global ColonLogicActive, ColonStage
+    ColonLogicActive := false
+    ColonStage := ""
+    ShowCenteredToolTip("Cmd: cancelled")
+    SetTimer(() => RemoveToolTip(), -600)
+}
+
+ColonLogicShowTip() {
+    ; Fixed tooltip text to give the sensation of :w/:q/:wq awaiting
+    ShowCenteredToolTip("Cmd:\n  :w  (Enter)\n  :q  (Enter)\n  :wq (Enter)")
+    
+}
+
+ColonLogicHandleW() {
+    global ColonStage
+    if (ColonStage = "") {
+        ColonStage := "w"
+    } else if (ColonStage = "w") {
+        ColonStage := "wq"
+    } else if (ColonStage = "q") {
+        ColonStage := "q" ; stays waiting only Enter
+    }
+    ColonLogicShowTip()
+}
+
+ColonLogicHandleQ() {
+    global ColonStage
+    if (ColonStage = "") {
+        ColonStage := "q"
+    } else if (ColonStage = "w") {
+        ColonStage := "wq"
+    } else if (ColonStage = "q") {
+        ColonStage := "q"
+    }
+    ColonLogicShowTip()
+}
+
+ColonLogicEnter() {
+    global ColonStage
+    if (ColonStage = "w") {
+        Send("^s")
+    } else if (ColonStage = "q") {
+        Send("!{F4}")
+    } else if (ColonStage = "wq") {
+        Send("^s")
+        Sleep(80)
+        Send("!{F4}")
+    }
+    ColonLogicCancel()
+}
+
 ; Jump by word like NVIM (used by w/b)
 NvimWordJumpHelper(dir) {
    global VisualMode
