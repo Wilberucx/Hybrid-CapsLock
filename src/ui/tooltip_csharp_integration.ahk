@@ -213,6 +213,10 @@ BuildCommandItemsFromCategoryKey(catKey) {
 
 ; Función principal para mostrar tooltip C# (con timeout personalizado)
 ShowCSharpTooltip(title, items, navigation := "", timeout := 0) {
+    return ShowCSharpTooltipWithType(title, items, navigation, timeout, "leader")
+}
+
+ShowCSharpTooltipWithType(title, items, navigation := "", timeout := 0, tooltipType := "leader") {
     global tooltipConfig
     
     ; Si no se especifica timeout, usar el de opciones por defecto
@@ -255,7 +259,7 @@ ShowCSharpTooltip(title, items, navigation := "", timeout := 0) {
     
     ; Construir JSON completo
     jsonData := "{"
-    jsonData .= '"tooltip_type": "leader",'
+    jsonData .= '"tooltip_type": "' . tooltipType . '",'
     jsonData .= '"title": "' . title . '",'
     jsonData .= '"items": [' . itemsJson . '],'
     jsonData .= '"navigation": [' . navJson . '],'
@@ -490,6 +494,7 @@ TooltipInCommandsMenu() {
 p::HandleTooltipSelection("p")
 t::HandleTooltipSelection("t")
 c::HandleTooltipSelection("c")
+
 i::HandleTooltipSelection("i")
 w::HandleTooltipSelection("w")
 n::HandleTooltipSelection("n")

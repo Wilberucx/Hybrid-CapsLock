@@ -59,11 +59,17 @@ namespace TooltipApp
             var screenHeight = SystemParameters.PrimaryScreenHeight;
             
             // Check if this is a persistent status tooltip
-            if (currentTooltip?.tooltip_type == "status_persistent")
+            if (currentTooltip?.TooltipType == "status_persistent")
             {
                 // Position in bottom-left corner
                 this.Left = 20; // 20px from left edge
                 this.Top = screenHeight - this.ActualHeight - 20; // 20px from bottom
+            }
+            else if (currentTooltip?.TooltipType == "sidebar_right")
+            {
+                // Right edge, vertically centered for sidebar list
+                this.Left = screenWidth - this.ActualWidth - 24;
+                this.Top = (screenHeight - this.ActualHeight) / 2;
             }
             else
             {
@@ -195,6 +201,51 @@ namespace TooltipApp
             }
         }
 
+        // Create a single-column vertical list for sidebar_right
+        private void CreateItemsList(TooltipItem[] items)
+        {
+            ItemsGrid.Children.Clear();
+            ItemsGrid.RowDefinitions.Clear();
+            ItemsGrid.ColumnDefinitions.Clear();
+            ItemsGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+            for (int i = 0; i < items.Length; i++)
+            {
+                ItemsGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+                var itemPanel = new StackPanel
+                {
+                    Orientation = Orientation.Horizontal,
+                    Margin = new Thickness(0, 2, 0, 2)
+                };
+
+                var keyText = new TextBlock
+                {
+                    Text = items[i].Key,
+                    FontFamily = new FontFamily("Consolas"),
+                    FontSize = 12,
+                    FontWeight = FontWeights.Bold,
+                    Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString(Colors.AccentOptions)),
+                    Width = 28
+                };
+
+                var descText = new TextBlock
+                {
+                    Text = items[i].Description,
+                    FontFamily = new FontFamily("Consolas"),
+                    FontSize = 12,
+                    Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString(Colors.Text)),
+                    Margin = new Thickness(8, 0, 0, 0)
+                };
+
+                itemPanel.Children.Add(keyText);
+                itemPanel.Children.Add(descText);
+
+                Grid.SetRow(itemPanel, i);
+                Grid.SetColumn(itemPanel, 0);
+                ItemsGrid.Children.Add(itemPanel);
+            }
+        }
+
         private void StartFileWatcher()
         {
             try
@@ -294,12 +345,19 @@ namespace TooltipApp
                 {
                     ApplyRegularTooltipStyle();
                     
-                    // Actualizar items si están presentes (solo para tooltips regulares)
+                    // Actualizar items si están presentes
                     if (command.Items?.Count > 0)
                     {
                         ItemsGrid.Children.Clear();
                         ItemsGrid.RowDefinitions.Clear();
-                        CreateItemsLayout(command.Items.ToArray());
+                        if (command.TooltipType == "sidebar_right")
+                        {
+                            CreateItemsList(command.Items.ToArray());
+                        }
+                        else
+                        {
+                            CreateItemsLayout(command.Items.ToArray());
+                        }
                     }
                 }
 
