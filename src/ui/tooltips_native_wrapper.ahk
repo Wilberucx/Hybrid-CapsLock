@@ -98,7 +98,8 @@ ShowVisualModeStatus(isActive) {
             HideVisualStatus()
         }
     } else {
-        ShowCenteredToolTip(isActive ? "VISUAL MODE ON" : "VISUAL MODE OFF")
+        ShowCenteredToolTip(isActive ? "◉ VISUAL" : "○ VISUAL")
+        SetTimer(() => RemoveToolTip(), -900)
     }
 }
 

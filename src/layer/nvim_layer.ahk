@@ -100,7 +100,9 @@ d:: {
 }
 
 ; Yank simple (y) — copia con Ctrl+C; si estaba en Visual, sale de Visual
-y:: {
+; Nota: al hacer acciones Visual, mostramos un tooltip nativo del modo Visual
+;y:: {
+y:: { 
     global VisualMode
     Send("^c")
     ShowCopyNotification()
@@ -173,8 +175,13 @@ q:: {
     try SaveLayerState()
 }
 
-; Send Ctrl+Alt+Shift+2 with f
-f::Send("^!+2")
+; Send Ctrl+Alt+Shift+2 with f and then deactivate NVIM layer
+f:: {
+    Send("^!+2")
+    global isNvimLayerActive
+    isNvimLayerActive := false
+    ShowNvimLayerStatus(false)
+}
 
 ^!+i::Send("^!+i")
 
@@ -186,7 +193,7 @@ f::Send("^!+2")
 ; - Alt   => deja Alt+Arrow (útil en IDEs/editores con comportamiento propio)
 ; Combinaciones (ej. Ctrl+Shift+h) se respetan
 NvimDirectionalSend(dir) {
-   global VisualMode
+    global VisualMode
    mods := ""
    if GetKeyState("Ctrl", "P")
        mods .= "^"
@@ -217,7 +224,48 @@ NvimLayerAppAllowed() {
    }
 }
 
+#HotIf (nvimStaticEnabled ? (isNvimLayerActive && !GetKeyState("CapsLock", "P") && NvimLayerAppAllowed()) : false)
+; Word jumps like NVIM (w/b)
+w::NvimWordJumpHelper("Right")
+b::NvimWordJumpHelper("Left")
+
+; Save
+s::Send("^s")
+
+; Change (visual only): delete selection and enter insert (disable NVIM layer)
+c:: {
+    global VisualMode, isNvimLayerActive, _tempEditMode
+    if (VisualMode) {
+        Send("{Delete}")
+        VisualMode := false
+        ShowVisualModeStatus(false)
+        isNvimLayerActive := false
+        _tempEditMode := true
+        ShowNvimLayerStatus(false)
+        SetTempStatus("INSERT MODE (Esc para volver)", 1500)
+    }
+}
+
+; Select All (visual only)
+a:: {
+    global VisualMode
+    if (VisualMode) {
+        Send("^a")
+        ShowVisualModeStatus(true)
+    }
+}
+
 ; ---- Helpers ----
+; Jump by word like NVIM (used by w/b)
+NvimWordJumpHelper(dir) {
+   global VisualMode
+   mods := "^" ; Ctrl for word movement
+   if (VisualMode)
+       mods .= "+" ; add Shift to extend selection in Visual
+   arrow := (dir = "Right") ? "Right" : "Left"
+   Send(mods . "{" . arrow . "}")
+}
+
 DeleteCurrentWord() {
     Send("^{Right}^+{Left}{Delete}")
     ShowCenteredToolTip("WORD DELETED")

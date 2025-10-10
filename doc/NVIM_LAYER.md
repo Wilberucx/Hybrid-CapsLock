@@ -212,6 +212,18 @@ O para eliminar:
 3. U (redo - rehacer)
 ```
 
+## 🔄 Actualizaciones recientes (NVIM Layer)
+
+- Indicadores nativos: `◉ NVIM` activado / `○ NVIM` desactivado; Visual: `◉ VISUAL` / `○ VISUAL`.
+- Navegación con modificadores: `Ctrl/Alt/Shift` + `h/j/k/l` envían flechas con esos modificadores.
+- Saltos por palabra: `w` (Ctrl+→), `b` (Ctrl+←). En Visual, extienden selección (Ctrl+Shift+flecha).
+- Edición simplificada: `y` copia (Ctrl+C); `d` borra (Delete). En Visual ambos salen del modo Visual.
+- Guardar: `s` envía `Ctrl+S`.
+- Insert: `i` desactiva la capa y envía `Ctrl+Alt+Shift+I`; regresas con `Esc`.
+- Acción rápida: `f` envía `Ctrl+Alt+Shift+2` y desactiva la capa.
+- Visual-only: `c` borra selección y entra a “insert” (desactiva capa); `a` selecciona todo (`Ctrl+A`).
+- Scroll: `Ctrl+U` arriba, `Ctrl+D` abajo.
+
 ## ⚙️ Configuración y Estados
 
 ### Estados Visuales
