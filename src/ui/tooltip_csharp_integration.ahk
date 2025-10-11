@@ -216,6 +216,11 @@ ShowCSharpTooltip(title, items, navigation := "", timeout := 0) {
     return ShowCSharpTooltipWithType(title, items, navigation, timeout, "leader")
 }
 
+; Tooltip tipo lista anclado abajo a la derecha (C#)
+ShowBottomRightListTooltip(title, items, navigation := "", timeout := 0) {
+    return ShowCSharpTooltipWithType(title, items, navigation, timeout, "bottom_right_list")
+}
+
 ShowCSharpTooltipWithType(title, items, navigation := "", timeout := 0, tooltipType := "leader") {
     global tooltipConfig
     

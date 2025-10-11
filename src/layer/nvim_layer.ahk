@@ -306,14 +306,16 @@ ColonLogicCancel() {
     global ColonLogicActive, ColonStage
     ColonLogicActive := false
     ColonStage := ""
-    ShowCenteredToolTip("Cmd: cancelled")
+    try HideCSharpTooltip()
+    try ShowCenteredToolTipCS("Cmd: cancelled", 800)
     SetTimer(() => RemoveToolTip(), -600)
 }
 
 ColonLogicShowTip() {
-    ; Fixed tooltip text to give the sensation of :w/:q/:wq awaiting
-    ShowCenteredToolTip("Cmd:\n  :w  (Enter)\n  :q  (Enter)\n  :wq (Enter)")
-    
+    ; Mostrar tooltip tipo lista en esquina inferior derecha usando C#
+    ; Persistente (timeout 0) hasta Enter o Esc
+    items := "w:Save|q:Quit|wq:Save + Quit"
+    ShowBottomRightListTooltip("CMD", items, "Enter: Execute|Esc: Cancel", 0)
 }
 
 ColonLogicHandleW() {

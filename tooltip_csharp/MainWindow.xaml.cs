@@ -71,6 +71,12 @@ namespace TooltipApp
                 this.Left = screenWidth - this.ActualWidth - 24;
                 this.Top = (screenHeight - this.ActualHeight) / 2;
             }
+            else if (currentTooltip?.TooltipType == "bottom_right_list")
+            {
+                // Fixed to bottom-right corner
+                this.Left = screenWidth - this.ActualWidth - 20;
+                this.Top = screenHeight - this.ActualHeight - 20;
+            }
             else
             {
                 // Centro horizontal, 50px desde abajo para tooltips regulares
@@ -351,6 +357,10 @@ namespace TooltipApp
                         ItemsGrid.Children.Clear();
                         ItemsGrid.RowDefinitions.Clear();
                         if (command.TooltipType == "sidebar_right")
+                        {
+                            CreateItemsList(command.Items.ToArray());
+                        }
+                        else if (command.TooltipType == "bottom_right_list")
                         {
                             CreateItemsList(command.Items.ToArray());
                         }

@@ -42,7 +42,6 @@
 try {
     LoadLayerFlags()
     LoadLayerState()
-    
     StartTooltipApp()  ; Start C# tooltip application
 } catch {
 }
