@@ -73,6 +73,10 @@ ReadTooltipConfig() {
     clickThroughValue := CleanIniValue(IniRead(ConfigIni, "Tooltips", "tooltip_click_through", "true"))
     config.clickThrough := clickThroughValue = "true"
     
+    ; Layout for option menus: grid (default) or list_vertical
+   layoutValue := CleanIniValue(IniRead(ConfigIni, "Tooltips", "menu_layout", "grid"))
+   config.menuLayout := StrLower(layoutValue)
+
     return config
 }
 
@@ -213,7 +217,10 @@ BuildCommandItemsFromCategoryKey(catKey) {
 
 ; Función principal para mostrar tooltip C# (con timeout personalizado)
 ShowCSharpTooltip(title, items, navigation := "", timeout := 0) {
-    return ShowCSharpTooltipWithType(title, items, navigation, timeout, "leader")
+    ; Decide layout based on configuration
+    global tooltipConfig
+    tooltipType := (tooltipConfig.menuLayout = "list_vertical") ? "bottom_right_list" : "leader"
+    return ShowCSharpTooltipWithType(title, items, navigation, timeout, tooltipType)
 }
 
 ; Tooltip tipo lista anclado abajo a la derecha (C#)
@@ -473,7 +480,9 @@ Original_ShowCSharpOptionsMenu(title, items, navigation := "", timeout := 0) {
         timeout := tooltipConfig.optionsTimeout
     }
     global tooltipConfig
-    ShowCSharpTooltip(title, items, navigation, timeout)
+    ; Force layout decision here as well, so every options menu respects INI layout
+    tooltipType := (tooltipConfig.menuLayout = "list_vertical") ? "bottom_right_list" : "leader"
+    ShowCSharpTooltipWithType(title, items, navigation, timeout, tooltipType)
 }
 
 ; Override previous function name to set state then call original

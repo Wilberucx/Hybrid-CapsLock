@@ -132,7 +132,11 @@ u::Send("^z")
 
 ; Exit Insert mode (if mapped dynamically)
 Esc:: {
-    global _tempEditMode, VisualMode
+    global _tempEditMode, VisualMode, ColonLogicActive
+    if (ColonLogicActive) {
+        ColonLogicCancel()
+        return
+    }
     if (_tempEditMode) {
         ReactivateNvimAfterInsert()
         return
