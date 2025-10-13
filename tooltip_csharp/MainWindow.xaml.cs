@@ -275,7 +275,7 @@ namespace TooltipApp
                     FontFamily = new FontFamily("Consolas"),
                     FontSize = currentTooltip?.Style?.ItemFontSize ?? 12,
                     FontWeight = FontWeights.Bold,
-                    Foreground = BrushFromHex(currentTooltip?.Style?.AccentOptions, Colors.AccentOptions),
+                    Foreground = BrushFromHex(item.Color ?? currentTooltip?.Style?.AccentOptions, Colors.AccentOptions),
                     Margin = new Thickness(0, 0, 8, 0)
                 };
 
@@ -326,7 +326,7 @@ namespace TooltipApp
                     FontFamily = new FontFamily("Consolas"),
                     FontSize = currentTooltip?.Style?.ItemFontSize ?? 12,
                     FontWeight = FontWeights.Bold,
-                    Foreground = BrushFromHex(currentTooltip?.Style?.AccentOptions, Colors.AccentOptions),
+                    Foreground = BrushFromHex(items[i].Color ?? currentTooltip?.Style?.AccentOptions, Colors.AccentOptions),
                     Width = 28
                 };
 

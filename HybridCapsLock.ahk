@@ -55,9 +55,15 @@ try {
     ; Ignorar si no se puede ajustar el estado de CapsLock en este entorno
 }
 
-; Mensaje breve de arranque (opcional)
+; Startup welcome
 try {
-    ToolTip("HybridCapsLock (modular) loaded")
-    SetTimer(() => ToolTip(), -1000)
+    if (IsSet(tooltipConfig) && tooltipConfig.enabled) {
+        ; Show modern themed welcome with layers
+        ShowWelcomeStatusCS()
+    } else {
+        ; Native fallback
+        ShowCenteredToolTip("HybridCapsLock")
+        SetTimer(() => RemoveToolTip(), -1200)
+    }
 } catch {
 }

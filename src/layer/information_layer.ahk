@@ -12,6 +12,7 @@ ShowInformationMenu() {
         menuText := GenerateInformationMenuText()
         ToolTipX := A_ScreenWidth // 2 - 120
         ToolTipY := A_ScreenHeight // 2 - 100
+        menuText := NormalizeNavigationLabels(menuText)
         ToolTip(menuText, ToolTipX, ToolTipY, 2)
     }
 }
@@ -41,7 +42,7 @@ GenerateInformationMenuText() {
     }
     if (currentLine != "")
         menuText .= currentLine . "`n"
-    menuText .= "`n[\: Back] [Esc: Exit]"
+    menuText .= "`n[Backspace: Back] [Esc: Exit]"
     return menuText
 }
 

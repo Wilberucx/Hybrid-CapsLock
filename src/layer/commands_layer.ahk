@@ -57,7 +57,7 @@ ShowCommandsMenu() {
                 menuText .= "h - Hybrid Management`n"
             }
         }
-        menuText .= "`n[\\: Back] [Esc: Exit]"
+        menuText .= "`n[Backspace: Back] [Esc: Exit]"
         ToolTip(menuText, ToolTipX, ToolTipY, 2)
     }
 }
@@ -105,7 +105,7 @@ ShowDynamicCommandsMenu(catKey) {
     } else {
         menuText .= "[Missing order in [" . sec . "]]" . "`n"
     }
-    menuText .= "`n[\\: Back] [Esc: Exit]"
+    menuText .= "`n[Backspace: Back] [Esc: Exit]"
     ToolTip(menuText, ToolTipX, ToolTipY, 2)
 }
 
@@ -123,7 +123,7 @@ ShowSystemCommandsMenu() {
             if (lineContent != "" && lineContent != "ERROR")
                 menuText .= lineContent . "`n"
         }
-        menuText .= "`n[\\: Back] [Esc: Exit]"
+        menuText .= "`n[Backspace: Back] [Esc: Exit]"
         ToolTip(menuText, ToolTipX, ToolTipY, 2)
     }
 }
@@ -141,7 +141,7 @@ ShowNetworkCommandsMenu() {
             if (lineContent != "" && lineContent != "ERROR")
                 menuText .= lineContent . "`n"
         }
-        menuText .= "`n[\\: Back] [Esc: Exit]"
+        menuText .= "`n[Backspace: Back] [Esc: Exit]"
         ToolTip(menuText, ToolTipX, ToolTipY, 2)
     }
 }
@@ -159,7 +159,7 @@ ShowGitCommandsMenu() {
             if (lineContent != "" && lineContent != "ERROR")
                 menuText .= lineContent . "`n"
         }
-        menuText .= "`n[\\: Back] [Esc: Exit]"
+        menuText .= "`n[Backspace: Back] [Esc: Exit]"
         ToolTip(menuText, ToolTipX, ToolTipY, 2)
     }
 }
@@ -177,7 +177,7 @@ ShowMonitoringCommandsMenu() {
             if (lineContent != "" && lineContent != "ERROR")
                 menuText .= lineContent . "`n"
         }
-        menuText .= "`n[\\: Back] [Esc: Exit]"
+        menuText .= "`n[Backspace: Back] [Esc: Exit]"
         ToolTip(menuText, ToolTipX, ToolTipY, 2)
     }
 }
@@ -422,7 +422,7 @@ ExecuteHybridManagementCommand(cmd) {
                 return
             }
         case "v": ; Show Version Info
-            ShowCenteredToolTip("HybridCapsLock (modular)\nAutoHotkey " . A_AhkVersion . "\nScript: " . A_ScriptName)
+            ShowCenteredToolTip("HybridCapsLock")
             SetTimer(() => RemoveToolTip(), -1500)
         case "r": ; Reload Config (flags + tooltip config)
            LoadLayerFlags()

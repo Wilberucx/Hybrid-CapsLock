@@ -59,6 +59,10 @@ namespace TooltipApp.Models
 
         [JsonPropertyName("description")]
         public string Description { get; set; } = "";
+
+        // Optional per-item color (hex). If present, renderer will use it for key (and possibly description)
+        [JsonPropertyName("color")]
+        public string? Color { get; set; }
     }
 
     public class TooltipStyle

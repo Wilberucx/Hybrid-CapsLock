@@ -16,7 +16,7 @@ ShowTimeMenu() {
         menuText .= "d - Date Formats`n"
         menuText .= "t - Time Formats`n"
         menuText .= "h - Date+Time Formats`n`n"
-        menuText .= "[\: Back] [Esc: Exit]"
+        menuText .= "[Backspace: Back] [Esc: Exit]"
         ToolTip(menuText, ToolTipX, ToolTipY, 2)
     }
 }

@@ -4,6 +4,27 @@
 ; Provides fallback UI when C# tooltips are disabled or unavailable.
 ; Exposes unified functions used by core/confirmations and layers.
 
+; Normalize navigation labels in native tooltips using INI [TooltipStyle]/navigation_label.
+NormalizeNavigationLabels(text) {
+    global ConfigIni
+    ; Try read custom label
+    navLbl := ""
+    try navLbl := IniRead(ConfigIni, "TooltipStyle", "navigation_label", "")
+    if (navLbl != "" && navLbl != "ERROR") {
+        parts := StrSplit(navLbl, "|")
+        if (parts.Length >= 1)
+            text := StrReplace(text, "[\\: Back]", "[" . Trim(parts[1]) . "]")
+        if (parts.Length >= 2) {
+            text := StrReplace(text, "[Esc: Exit]", "[" . Trim(parts[2]) . "]")
+            text := StrReplace(text, "[ESC: Exit]", "[" . Trim(parts[2]) . "]")
+        }
+    } else {
+        ; Default normalization to Backspace
+        text := StrReplace(text, "[\\: Back]", "[BackSpace:Back]")
+    }
+    return text
+}
+
 ; Basic tooltip centered on screen
 ShowCenteredToolTip(Text) {
     ToolTipX := A_ScreenWidth // 2

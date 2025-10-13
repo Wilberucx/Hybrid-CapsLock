@@ -48,7 +48,7 @@ GenerateProgramMenuText() {
     }
     if (currentLine != "")
         menuText .= currentLine . "`n"
-    menuText .= "`n[\: Back] [Esc: Exit]"
+    menuText .= "`n[Backspace: Back] [Esc: Exit]"
     return menuText
 }
 

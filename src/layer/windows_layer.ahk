@@ -25,7 +25,8 @@ ShowWindowMenu() {
         menuText .= "c - Zoom with cursor`n`n"
         menuText .= "WINDOW SWITCHING:`n"
         menuText .= "j/k - Persistent Window Switch`n`n"
-        menuText .= "[\: Back] [Esc: Exit]"
+        menuText .= "[Backspace: Back] [Esc: Exit]"
+        menuText := NormalizeNavigationLabels(menuText)
         ToolTip(menuText, ToolTipX, ToolTipY, 2)
     }
 }
