@@ -444,8 +444,13 @@ namespace TooltipApp
                 // Actualizar título
                 TitleText.Text = !string.IsNullOrEmpty(command.Title) ? command.Title : TitleText.Text;
 
-                // Aplicar estilo según el tipo de tooltip
-                if (command.TooltipType == "status_persistent")
+                // Decidir estilo: usar estilo regular cuando haya layout=list, style en JSON o tooltip_type específico
+                bool isList = string.Equals(command.Layout, "list", StringComparison.OrdinalIgnoreCase)
+                               || string.Equals(command.TooltipType, "bottom_right_list", StringComparison.OrdinalIgnoreCase)
+                               || string.Equals(command.TooltipType, "sidebar_right", StringComparison.OrdinalIgnoreCase);
+                bool hasStyle = command.Style != null;
+
+                if (!isList && !hasStyle && command.TooltipType == "status_persistent")
                 {
                     ApplyPersistentStatusStyle();
                 }

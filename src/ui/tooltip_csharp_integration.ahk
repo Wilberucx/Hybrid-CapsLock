@@ -28,6 +28,9 @@ if (!IsSet(CommandsIni)) {
 ; Variables globales para configuración de tooltips
 global tooltipConfig := ReadTooltipConfig()
 
+; Stop/kills the TooltipApp process if running
+; duplicate removed
+
 ; ===================================================================
 ; FUNCIONES DE CONFIGURACIÓN
 ; ===================================================================
@@ -322,6 +325,7 @@ IsAbsolutePath(p) {
 }
 
 StartTooltipApp() {
+    global tooltipConfig
     global tooltipConfig
     ; Verificar si ya está ejecutándose
     if (!ProcessExist("TooltipApp.exe")) {
@@ -1302,7 +1306,6 @@ BuildNavArray(navStr) {
 ; Construir items de bienvenida con estado de capas y colores success/error
 ShowWelcomeStatusCS() {
     global tooltipConfig
-    StartTooltipApp()
     theme := ReadTooltipThemeDefaults()
 
     ; Read layers
@@ -1332,9 +1335,10 @@ ShowWelcomeStatusCS() {
 
     cmd := Map()
     cmd["show"] := true
-    cmd["title"] := "HybridCapsLock"
+    cmd["title"] := "Hybrid CapsLock"
     cmd["items"] := layers
     cmd["layout"] := "list"
+    cmd["tooltip_type"] := "bottom_right_list"
     cmd["timeout_ms"] := Number(IniRead(ConfigIni, "Tooltips", "status_notification_timeout", 2000))
 
     ; Apply theme style/position and flags

@@ -398,15 +398,27 @@ ExecuteHybridManagementCommand(cmd) {
         HideCSharpTooltip()
     switch cmd {
         case "R": ; Reload Script
-            ShowCenteredToolTip("RELOADING SCRIPT...")
-            SetTimer(() => RemoveToolTip(), -800)
-            Sleep(800)
+            if (IsSet(tooltipConfig) && tooltipConfig.enabled) {
+                try ShowCSharpStatusNotification("HYBRID", "RELOADING...")
+                Sleep(600)
+            } else {
+                ShowCenteredToolTip("RELOADING SCRIPT...")
+                SetTimer(() => RemoveToolTip(), -600)
+                Sleep(600)
+            }
+            try StopTooltipApp()
             Run('"' . A_AhkPath . '" "' . A_ScriptFullPath . '"')
             ExitApp()
         case "e": ; Exit Script
-            ShowCenteredToolTip("EXITING SCRIPT...")
-            SetTimer(() => RemoveToolTip(), -800)
-            Sleep(800)
+            if (IsSet(tooltipConfig) && tooltipConfig.enabled) {
+                try ShowCSharpStatusNotification("HYBRID", "EXITING...")
+                Sleep(500)
+                try StopTooltipApp()
+            } else {
+                ShowCenteredToolTip("EXITING SCRIPT...")
+                SetTimer(() => RemoveToolTip(), -600)
+                Sleep(600)
+            }
             ExitApp()
         case "c": ; Open Config Folder
             Run('explorer.exe "' . A_ScriptDir . '\\config"')
