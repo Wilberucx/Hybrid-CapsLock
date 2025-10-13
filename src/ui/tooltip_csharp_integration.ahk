@@ -1011,6 +1011,11 @@ ShowNvimLayerToggleCS(isActive) {
         try ShowNvimLayerStatus(isActive)
         return
     }
+    ; If turning OFF, simply hide the tooltip and exit (no OFF tooltip)
+    if (!isActive) {
+        try HideCSharpTooltip()
+        return
+    }
     theme := ReadTooltipThemeDefaults()
     cmd := Map()
     cmd["show"] := true
@@ -1444,7 +1449,7 @@ ShowWelcomeStatusCS() {
     ver := CleanIniValue(IniRead(ConfigIni, "General", "script_version", ""))
     desc := (ver != "" && ver != "ERROR") ? ("Hybrid CapsLock v" . ver) : "Hybrid CapsLock"
     item := Map()
-    item["key"] := ""  ; no key label
+    item["key"] := ">"
     item["description"] := desc
     itemsArr := []
     itemsArr.Push(item)
