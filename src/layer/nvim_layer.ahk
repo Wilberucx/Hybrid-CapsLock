@@ -188,11 +188,13 @@ r::Send("^y")
 NvimShowHelp() {
     try {
         if (IsSet(tooltipConfig) && tooltipConfig.enabled)
-            ShowNvimLayerToggleCS(true)
+            ShowNvimHelpCS()
         else
-            ShowNvimLayerStatus(true)
+            ShowCenteredToolTip("NVIM HELP: hjkl move | v visual | y copy | p paste | u undo | x cut | i insert")
+            SetTimer(() => RemoveToolTip(), -5000)
     } catch {
-        ShowNvimLayerStatus(true)
+        ShowCenteredToolTip("NVIM HELP: hjkl move | v visual | y copy | p paste | u undo | x cut | i insert")
+        SetTimer(() => RemoveToolTip(), -5000)
     }
 }
 

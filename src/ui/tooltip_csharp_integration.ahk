@@ -931,6 +931,17 @@ ShowCommandExecutedCS(category, command) {
 }
 
 ; ===================================================================
+; FUNCIONES ESPECÍFICAS PARA NVIM LAYER HELP
+
+ShowNvimHelpCS() {
+    global tooltipConfig
+    ; Basic NVIM help items (can be extended later or read from INI)
+    items := "h:Move left|j:Move down|k:Move up|l:Move right|v:Visual Mode|y:Copy|p:Paste|u:Undo|x:Cut|i:Insert Mode|w:Word right|b:Word left|e:End of word"
+    ; Show as bottom-right list with a close hint; duration from optionsTimeout
+    ShowBottomRightListTooltip("NVIM HELP", items, "ESC: Close", tooltipConfig.optionsTimeout)
+}
+
+; ===================================================================
 ; FUNCIONES ESPECÍFICAS PARA NVIM LAYER OPTIONS
 
 ; Build NVIM items for status from config/nvim_layer.ini [Normal]
