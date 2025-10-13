@@ -1150,6 +1150,11 @@ ReadTooltipThemeDefaults() {
         if (val != "" && val != "ERROR")
             defaults.position[key] := Number(val)
     }
+
+    ; Navigation label override (optional) from style section
+    navLbl := IniRead(ConfigIni, "TooltipStyle", "navigation_label", "")
+    if (navLbl != "" && navLbl != "ERROR")
+        defaults["navigation_label"] := navLbl
     return defaults
 }
 
@@ -1259,13 +1264,26 @@ BuildItemObjects(itemsStr) {
 ; Construir nav array desde string "a|b|c"
 BuildNavArray(navStr) {
     arr := []
-    if (navStr = "" || !IsSet(navStr))
-        return arr
+    theme := ReadTooltipThemeDefaults()
+
+    if (!IsSet(navStr) || navStr = "") {
+        if (theme.Has("navigation_label"))
+            navStr := theme["navigation_label"]
+        else
+            return arr
+    }
+
+    themeParts := []
+    if (theme.Has("navigation_label"))
+        themeParts := StrSplit(theme["navigation_label"], "|")
+
     parts := StrSplit(navStr, "|")
     for _, p in parts {
-        ; Normalizar etiqueta de navegación: usar "Backspace: Back" en lugar de "\\: Back"
-        if (p = "\\: Back")
-            p := "Backspace: Back"
+        ; Compatibilidad: reemplazar tokens antiguos por los del tema si están definidos
+        if (p = "\\: Back" && themeParts.Length >= 1)
+            p := Trim(themeParts[1])
+        else if ((p = "ESC: Exit" || p = "Esc: Exit") && themeParts.Length >= 2)
+            p := Trim(themeParts[2])
         arr.Push(p)
     }
     return arr

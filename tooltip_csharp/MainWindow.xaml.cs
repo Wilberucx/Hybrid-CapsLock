@@ -61,7 +61,7 @@ namespace TooltipApp
             this.SizeChanged += (s, e) => PositionWindow();
             
             // Fase 1: Mostrar tooltip básico estático (se ocultará/actualizará si llega JSON)
-            ShowBasicTooltip();
+            try { var initial = ReadTooltipCommand(); if (initial != null) UpdateTooltip(initial); } catch { }
         }
 
         private void InitializeWindow()
