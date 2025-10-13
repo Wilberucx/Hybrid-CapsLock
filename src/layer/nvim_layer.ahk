@@ -160,8 +160,9 @@ Esc:: {
 e::Send("^{Right}{Left}")
 
 ; Smooth scrolling
-+e::Send("{WheelDown 3}")
-+y::Send("{WheelUp 3}")
+; Removed Shift+e and Shift+y smooth scroll bindings per user request
+; +e::Send("{WheelDown 3}")
+; +y::Send("{WheelUp 3}")
 
 ; Insert mode (temporary disable layer) - manual return with Esc
 ; After disabling layer, send Ctrl+Alt+Shift+I (as requested)

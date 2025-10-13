@@ -220,7 +220,7 @@ O para eliminar:
 - Edición simplificada: `y` copia (Ctrl+C); `d` borra (Delete). En Visual ambos salen del modo Visual.
 - Guardar: comandos estilo NVIM dentro de la capa (esperan Enter): `:w` (guardar), `:q` (salir), `:wq` (guardar y salir).
 - Insert: `i` desactiva la capa y envía `Ctrl+Alt+Shift+I`; regresas con `Esc`.
-- Acción rápida: `f` envía `Ctrl+Alt+Shift+2` y desactiva la capa.
+- Find: `f` envía `Ctrl+Shift+Alt+2` y desactiva la capa. Configura en tu herramienta favorita (Fluent Search, Flow Launcher, PowerToys Run, etc.) que esta combinación abra la búsqueda/lanzador.
 - Visual-only: `c` borra selección y entra a “insert” (desactiva capa); `a` selecciona todo (`Ctrl+A`).
 - Scroll: `Ctrl+U` arriba, `Ctrl+D` abajo.
 

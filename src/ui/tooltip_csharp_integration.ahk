@@ -936,7 +936,7 @@ ShowCommandExecutedCS(category, command) {
 ShowNvimHelpCS() {
     global tooltipConfig
     ; Basic NVIM help items (can be extended later or read from INI)
-    items := "h:Move left|j:Move down|k:Move up|l:Move right|v:Visual Mode|y:Copy|p:Paste|u:Undo|x:Cut|i:Insert Mode|w:Word right|b:Word left|e:End of word|r:Redo|C-u:Scroll up 6|C-d:Scroll down 6|E:Smooth scroll down 3|Y:Smooth scroll up 3|Esc:Escape/Exit mode|f:Quick exit|::Cmd (w/q/wq)"
+    items := "h:Move left|j:Move down|k:Move up|l:Move right|v:Visual Mode|y:Copy|p:Paste|u:Undo|x:Cut|i:Insert Mode|w:Word right|b:Word left|e:End of word|r:Redo|C-u:Scroll up 6|C-d:Scroll down 6|Esc:Escape/Exit mode|f:Find|::Cmd (w/q/wq)"
     ; Show as bottom-right list with a close hint; duration from optionsTimeout (min 8000ms)
     to := (IsSet(tooltipConfig) && tooltipConfig.HasProp("optionsTimeout") && tooltipConfig.optionsTimeout > 0) ? tooltipConfig.optionsTimeout : 8000
     if (to < 8000)
