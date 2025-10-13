@@ -127,6 +127,21 @@ TryActivateLeader() {
             HideAllTooltips()
             leaderActive := false
             return
+        } else if (key = "s" || key = "S") {
+            global scrollLayerEnabled, scrollLayerActive
+            if (!IsSet(scrollLayerEnabled))
+                scrollLayerEnabled := true
+            if (!IsSet(scrollLayerActive))
+                scrollLayerActive := false
+            scrollLayerActive := !scrollLayerActive
+            try HideAllTooltips()
+            try HideCSharpTooltip()
+            Sleep 30
+            ShowScrollLayerStatus(scrollLayerActive)
+            SetTempStatus(scrollLayerActive ? "SCROLL LAYER ON" : "SCROLL LAYER OFF", 1500)
+            ; Exit Leader to avoid re-showing its menu on next iteration
+            leaderActive := false
+            return
         } else if (key = "n" || key = "N") {
             ; Toggle Excel layer on/off
             global excelLayerEnabled, excelLayerActive

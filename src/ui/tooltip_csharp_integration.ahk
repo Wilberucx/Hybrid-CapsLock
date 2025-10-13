@@ -363,34 +363,6 @@ StartTooltipApp() {
 }
 
 ; Función separada para iniciar todas las aplicaciones de estado
-StartStatusApp() {
-    statusScripts := [
-        "tooltip_csharp\\StatusWindow_Nvim.ps1",
-        "tooltip_csharp\\StatusWindow_Visual.ps1", 
-        "tooltip_csharp\\StatusWindow_Yank.ps1",
-        "tooltip_csharp\\StatusWindow_Excel.ps1"
-    ]
-    
-    allStarted := true
-    for index, script in statusScripts {
-        if (FileExist(script)) {
-            try {
-                Run('powershell.exe -WindowStyle Hidden -ExecutionPolicy Bypass -File "' . script . '"', , "Hide")
-                Sleep(200)  ; Pequeño delay entre cada inicio
-            } catch {
-                allStarted := false
-            }
-        } else {
-            MsgBox("No se encontró " . script, "Error", "IconX")
-            allStarted := false
-        }
-    }
-    
-    if (allStarted) {
-        Sleep(500)  ; Tiempo adicional para que todas inicien
-    }
-    return allStarted
-}
 
 ; ===================================================================
 ; INTERACTIVE MENU HANDLING (GENERIC KEY DISPATCH)
@@ -575,7 +547,7 @@ Esc::HandleTooltipSelection("ESC")
 ShowLeaderModeMenuCS() {
     TooltipNavReset()
     TooltipNavPush("LEADER")
-    items := "p:Programs|t:Timestamps|c:Commands|i:Information|w:Windows|n:Excel/Numbers"
+    items := "p:Programs|t:Timestamps|c:Commands|i:Information|w:Windows|n:Excel layer"
     ShowCSharpOptionsMenu("LEADER MODE", items, "\\: Back|ESC: Exit")
 }
 
@@ -915,6 +887,9 @@ ShowNvimLayerStatusCS(isActive) {
 }
 
 ShowExcelLayerToggleCS(isActive) {
+    ; Ensure previous tooltip is hidden to avoid overlap
+    try HideCSharpTooltip()
+    Sleep 30
     ; Ensure app is running; proceed even if process check lags to avoid recursion
     StartTooltipApp()
     if (!isActive) {
@@ -967,7 +942,7 @@ ShowCommandExecutedCS(category, command) {
 }
 
 ; ===================================================================
-; FUNCIONES ESPECÍFICAS PARA NVIM/ VISUAL/ EXCEL HELP
+; FUNCIONES ESPECÍFICAS PARA NVIM/ VISUAL/ EXCEL/ SCROLL HELP
 
 ShowNvimHelpCS() {
     global tooltipConfig
@@ -1125,7 +1100,7 @@ ShowNvimLayerToggleCS(isActive) {
 ShowExcelHelpCS() {
     global tooltipConfig
     ; Basic Excel layer help (can be later read from excel_layer.ini)
-    items := "7:Numpad7|8:Numpad8|9:Numpad9|u:Numpad4|i:Numpad5|o:Numpad6|j:Numpad1|k:Numpad2|l:Numpad3|m:Numpad0|,:Decimal|.:Dot|p:NumpadAdd|;:NumpadSub|/:NumpadDiv|w:Up|a:Left|s:Down|d:Right|[:Prev Tab|]:Next Tab|Enter:Fill down|Space:Edit cell|f:Find|r:Fill right|+:Exit Excel"
+    items := "7:Numpad7|8:Numpad8|9:Numpad9|u:Numpad4|i:Numpad5|o:Numpad6|j:Numpad1|k:Numpad2|l:Numpad3|m:Numpad0|,:Decimal|.:Dot|p:NumpadAdd|;:NumpadSub|/:NumpadDiv|w:Up|a:Left|s:Down|d:Right|[:Prev Tab|]:Next Tab|Enter:Fill down|Space:Edit cell|f:Find|r:Fill right|N:Exit Excel layer"
     to := (IsSet(tooltipConfig) && tooltipConfig.HasProp("optionsTimeout") && tooltipConfig.optionsTimeout > 0) ? tooltipConfig.optionsTimeout : 8000
     if (to < 8000)
         to := 8000

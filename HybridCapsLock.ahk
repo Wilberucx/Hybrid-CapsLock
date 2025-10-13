@@ -22,6 +22,7 @@
 ; --------------------
 #Include src\\ui\\tooltip_csharp_integration.ahk
 #Include src\\ui\\tooltips_native_wrapper.ahk
+#Include src\\ui\\scroll_tooltip_integration.ahk
 
 ; --------------------
 ; Layers & Leader
@@ -35,6 +36,7 @@
 #Include src\layer\excel_layer.ahk
 #Include src\layer\nvim_layer.ahk
 #Include src\layer\modifier_mode.ahk
+#Include src\layer\scroll_layer.ahk
 
 ; --------------------
 ; Startup logic
