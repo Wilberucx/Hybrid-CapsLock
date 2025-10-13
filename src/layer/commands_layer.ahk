@@ -195,8 +195,8 @@ ExecuteSystemCommand(cmd) {
     ; Auto-hide tooltip first if configured
     if (IsSet(tooltipConfig) && tooltipConfig.enabled && tooltipConfig.autoHide)
         HideCSharpTooltip()
-    ; Merge Windows commands into System
-    if (cmd = "h" || cmd = "r" || cmd = "E" || cmd = "e") {
+    ; Merge Windows commands into System (uppercase E only for Environment Variables)
+    if (cmd = "h" || cmd = "r" || cmd = "E") {
         ExecuteWindowsCommand(cmd)
         return
     }
@@ -204,7 +204,12 @@ ExecuteSystemCommand(cmd) {
         case "s": Run("cmd.exe /k systeminfo")
         case "t": Run("taskmgr.exe")
         case "v": Run("services.msc")
-        case "e": Run("eventvwr.msc")
+        case "x":
+            try {
+                Run(EnvGet("SystemRoot") . "\\system32\\eventvwr.msc")
+            } catch {
+                try Run("eventvwr.msc")
+            }
         case "d": Run("devmgmt.msc")
         case "c": Run("cleanmgr.exe")
         default:
@@ -484,14 +489,16 @@ ExecuteFolderCommand(cmd) {
 ExecuteWindowsCommand(cmd) {
     if (IsSet(tooltipConfig) && tooltipConfig.enabled && tooltipConfig.autoHide)
         HideCSharpTooltip()
-    cmd := StrLower(cmd)
+    ; Normalize only for comparisons that are case-insensitive; preserve case for 'E'
+    if (cmd != "E")
+        cmd := StrLower(cmd)
     switch cmd {
         case "h":
             ToggleHiddenFiles()
         case "r":
             Run("regedit.exe")
             ShowCommandExecuted("Windows", "Registry Editor")
-        case "e":
+        case "E":
             Run("rundll32.exe sysdm.cpl,EditEnvironmentVariables")
             ShowCommandExecuted("Windows", "Environment Variables")
         default:
