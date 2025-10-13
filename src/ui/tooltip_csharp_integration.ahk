@@ -97,8 +97,6 @@ ReadTooltipConfig() {
 
 ; Función para recargar configuración de tooltips
 ReloadTooltipConfig() {
-    ; After reload, show modern welcome with layers status
-    try ShowWelcomeStatusCS()
     global tooltipConfig
     tooltipConfig := ReadTooltipConfig()
 }
@@ -999,7 +997,7 @@ ShowNvimLayerToggleCS(isActive) {
     theme := ReadTooltipThemeDefaults()
     cmd := Map()
     cmd["show"] := true
-    cmd["title"] := isActive ? "NVIM layer enabled" : "NVIM layer disabled"
+    cmd["title"] := "Nvim"
     cmd["layout"] := "list"
     cmd["tooltip_type"] := "bottom_right_list"
     ; Read status timeout from config (string), then coerce to number safely
@@ -1010,21 +1008,19 @@ ShowNvimLayerToggleCS(isActive) {
         statusMs := Integer(Trim(statusMs))
     cmd["timeout_ms"] := statusMs
 
-    if (isActive) {
-        items := BuildNvimStatusItems()
-        if (items.Length = 0) {
-            fallback := Map()
-            fallback["key"] := "h j k l"
-            fallback["description"] := "Move left/down/up/right"
-            items.Push(fallback)
-        }
-        cmd["items"] := items
-    } else {
-        off := Map()
-        off["key"] := "○"
-        off["description"] := "Nvim layer is OFF"
-        cmd["items"] := [off]
+    items := BuildNvimStatusItems()
+    if (items.Length = 0) {
+        fallback := Map()
+        fallback["key"] := "h j k l"
+        fallback["description"] := "Move left/down/up/right"
+        items.Push(fallback)
     }
+    ; Estado al final
+    state := Map()
+    state["key"] := isActive ? "ON" : "○"
+    state["description"] := isActive ? "Nvim layer is ON" : "Nvim layer is OFF"
+    items.Push(state)
+    cmd["items"] := items
 
     ; Apply theme and accent by state
     if (theme.style.Count) {
@@ -1450,7 +1446,8 @@ ShowWelcomeStatusCS() {
     cmd["items"] := layers
     cmd["layout"] := "list"
     cmd["tooltip_type"] := "bottom_right_list"
-    cmd["timeout_ms"] := Number(IniRead(ConfigIni, "Tooltips", "status_notification_timeout", 2000))
+    ; For welcome, force a short 1s timeout
+    cmd["timeout_ms"] := 1000
 
     ; Apply theme style/position and flags
     if (theme.style.Count)
@@ -1465,10 +1462,7 @@ ShowWelcomeStatusCS() {
     if (theme.window.Has("opacity"))
         cmd["opacity"] := theme.window["opacity"]
 
-    ; Navigation default from theme
-    navArr := BuildNavArray("")
-    if (navArr.Length)
-        cmd["navigation"] := navArr
+    ; No navigation for welcome
 
     json := SerializeJson(cmd)
     ScheduleTooltipJsonWrite(json)

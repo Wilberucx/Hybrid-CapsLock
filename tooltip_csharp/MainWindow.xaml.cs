@@ -46,22 +46,9 @@ namespace TooltipApp
             InitializeComponent();
             InitializeWindow();
             StartFileWatcher();
-            // Intentar cargar y aplicar el último comando al iniciar
-            try
-            {
-                var initial = ReadTooltipCommand();
-                if (initial != null)
-                {
-                    UpdateTooltip(initial);
-                }
-            }
-            catch { }
-
             // Reposicionar cuando cambie el tamaño (evita desalineo al cambiar items)
             this.SizeChanged += (s, e) => PositionWindow();
             
-            // Fase 1: Mostrar tooltip básico estático (se ocultará/actualizará si llega JSON)
-            try { var initial = ReadTooltipCommand(); if (initial != null) UpdateTooltip(initial); } catch { }
         }
 
         private void InitializeWindow()
@@ -71,6 +58,9 @@ namespace TooltipApp
             
             // Posicionar ventana
             this.Loaded += (s, e) => PositionWindow();
+
+            // Iniciar oculta y sólo mostrar con comandos válidos
+            this.Visibility = Visibility.Hidden;
             
             // Configurar timer para auto-hide
             _hideTimer = new DispatcherTimer();

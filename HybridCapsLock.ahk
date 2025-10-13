@@ -55,15 +55,4 @@ try {
     ; Ignorar si no se puede ajustar el estado de CapsLock en este entorno
 }
 
-; Startup welcome
-try {
-    if (IsSet(tooltipConfig) && tooltipConfig.enabled) {
-        ; Show modern themed welcome with layers
-        ShowWelcomeStatusCS()
-    } else {
-        ; Native fallback
-        ShowCenteredToolTip("HybridCapsLock")
-        SetTimer(() => RemoveToolTip(), -1200)
-    }
-} catch {
-}
+; Startup welcome disabled (no welcome tooltip shown)

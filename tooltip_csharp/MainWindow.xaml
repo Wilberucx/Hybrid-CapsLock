@@ -9,7 +9,8 @@
         ShowInTaskbar="False"
         ResizeMode="NoResize"
         SizeToContent="WidthAndHeight"
-        WindowStartupLocation="Manual">
+        WindowStartupLocation="Manual"
+        Visibility="Hidden">
     
     <Border Name="TooltipBorder"
             Background="#1e1e1e"
@@ -22,7 +23,7 @@
         <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
             <!-- Title -->
             <TextBlock Name="TitleText"
-                       Text="WELCOME"
+                       Text=""
                        FontFamily="Consolas"
                        FontSize="14"
                        FontWeight="Bold"
@@ -40,14 +41,7 @@
                         Orientation="Horizontal" 
                         HorizontalAlignment="Center"
                         Margin="0,8,0,0">
-                <Border Background="#6c958e" 
-                        CornerRadius="2" 
-                        Padding="4,2">
-                    <TextBlock Text="ESC: Exit"
-                               FontFamily="Consolas"
-                               FontSize="10"
-                               Foreground="#ffffff"/>
-                </Border>
+                <!-- Navigation items will be created dynamically -->
             </StackPanel>
         </StackPanel>
     </Border>
