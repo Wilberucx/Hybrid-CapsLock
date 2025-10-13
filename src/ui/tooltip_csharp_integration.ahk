@@ -1419,42 +1419,41 @@ ShowWelcomeStatusCS() {
     global tooltipConfig
     theme := ReadTooltipThemeDefaults()
 
-    ; Read layers
-    layers := []
-    loop read, ConfigIni
-    {
-        ; no-op, we'll use IniRead to read section instead of loop file
-        break
-    }
-    ; Collect known layer keys
-    keys := ["nvim_layer_enabled","excel_layer_enabled","modifier_layer_enabled","leader_layer_enabled"]
-    for _, k in keys {
-        val := CleanIniValue(IniRead(ConfigIni, "Layers", k, ""))
-        if (val = "true" || val = "false") {
-            readable := StrReplace(StrReplace(k, "_layer_enabled", " layer"), "_", " ")
-            readable := Format("{1}{2}", SubStr(StrTitle(readable),1,1), SubStr(StrTitle(readable),2))
-            item := Map()
-            item["key"] := (val = "true") ? "✓" : "×"
-            item["description"] := readable . ": " . ((val = "true") ? "Enable" : "Disable")
-            layers.Push(item)
-        }
-    }
+    ; Build single-line version item matching leader scheme, no navigation
+    ver := CleanIniValue(IniRead(ConfigIni, "General", "script_version", ""))
+    desc := (ver != "" && ver != "ERROR") ? ("Hybrid CapsLock v" . ver) : "Hybrid CapsLock"
+    item := Map()
+    item["key"] := ""  ; no key label
+    item["description"] := desc
+    itemsArr := []
+    itemsArr.Push(item)
+
+    ; Decide tooltip type like leader does (respect INI menu_layout)
+    tooltipType := (tooltipConfig.menuLayout = "list_vertical") ? "bottom_right_list" : "leader"
 
     cmd := Map()
     cmd["show"] := true
     cmd["title"] := "Hybrid CapsLock"
-    cmd["items"] := layers
-    cmd["layout"] := "list"
-    cmd["tooltip_type"] := "bottom_right_list"
-    ; For welcome, force a short 1s timeout
-    cmd["timeout_ms"] := 1000
+    cmd["items"] := itemsArr
+    cmd["timeout_ms"] := 1000  ; 1s only at startup
 
-    ; Apply theme style/position and flags
+    ; Apply layout/columns from theme
+    if (theme.window.Has("layout"))
+        cmd["layout"] := theme.window["layout"]
+    if (theme.window.Has("columns") && theme.window["columns"] > 0)
+        cmd["columns"] := theme.window["columns"]
+
+    ; If list layout via tooltip type, enforce list
+    if (tooltipType = "bottom_right_list")
+        cmd["layout"] := "list"
+
+    ; Style and position from theme (same as leader)
     if (theme.style.Count)
         cmd["style"] := theme.style
     if (theme.position.Count)
         cmd["position"] := theme.position
 
+    ; Window flags
     if (theme.window.Has("topmost"))
         cmd["topmost"] := theme.window["topmost"]
     if (theme.window.Has("click_through"))
@@ -1462,8 +1461,12 @@ ShowWelcomeStatusCS() {
     if (theme.window.Has("opacity"))
         cmd["opacity"] := theme.window["opacity"]
 
-    ; No navigation for welcome
+    ; Explicit type for compatibility
+    cmd["tooltip_type"] := tooltipType
 
+    ; No navigation
+
+    StartTooltipApp()
     json := SerializeJson(cmd)
     ScheduleTooltipJsonWrite(json)
 }

@@ -55,4 +55,10 @@ try {
     ; Ignorar si no se puede ajustar el estado de CapsLock en este entorno
 }
 
-; Startup welcome disabled (no welcome tooltip shown)
+; Startup welcome (C# only)
+try {
+    if (IsSet(tooltipConfig) && tooltipConfig.enabled) {
+        ShowWelcomeStatusCS()
+    }
+} catch {
+}

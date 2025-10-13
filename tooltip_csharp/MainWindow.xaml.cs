@@ -261,7 +261,7 @@ namespace TooltipApp
 
                 var keyText = new TextBlock
                 {
-                    Text = $"[{item.Key}]",
+                    Text = string.IsNullOrWhiteSpace(item.Key) ? "" : $"[{item.Key}]",
                     FontFamily = new FontFamily("Consolas"),
                     FontSize = currentTooltip?.Style?.ItemFontSize ?? 12,
                     FontWeight = FontWeights.Bold,
@@ -463,10 +463,16 @@ namespace TooltipApp
                     }
                 }
 
-                // Actualizar navegación si está presente
+                // Actualizar navegación; ocultar si no hay
                 if (command.Navigation?.Count > 0)
                 {
+                    NavigationPanel.Visibility = Visibility.Visible;
                     UpdateNavigation(command.Navigation);
+                }
+                else
+                {
+                    NavigationPanel.Children.Clear();
+                    NavigationPanel.Visibility = Visibility.Collapsed;
                 }
 
                 // Aplicar límites opcionales de tamaño
