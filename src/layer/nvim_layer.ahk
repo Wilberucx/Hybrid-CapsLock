@@ -179,19 +179,25 @@ i:: {
 r::Send("^y")
 
 ; Help: show NVIM options with modern tooltip (Shift + / -> ?)
-+vkBF::NvimShowHelp()
-+SC035::NvimShowHelp()
-?::NvimShowHelp()
++vkBF:: (NvimHelpActive ? NvimCloseHelp() : NvimShowHelp())
++SC035:: (NvimHelpActive ? NvimCloseHelp() : NvimShowHelp())
+?:: (NvimHelpActive ? NvimCloseHelp() : NvimShowHelp())
 
 ; (moved function definition to global scope below)
 
+global NvimHelpActive := false
+
 NvimShowHelp() {
-    global isNvimLayerActive, tooltipConfig
+    global isNvimLayerActive, tooltipConfig, NvimHelpActive
     ; If C# is enabled, hide current persistent NVIM ON tooltip first to avoid overlap
     if (IsSet(tooltipConfig) && tooltipConfig.enabled) {
         try HideCSharpTooltip()
         Sleep 30
     }
+    NvimHelpActive := true
+    ; Auto-close timer using configured optionsTimeout (fallback 5000)
+    to := (IsSet(tooltipConfig) && tooltipConfig.HasProp("optionsTimeout") && tooltipConfig.optionsTimeout > 0) ? tooltipConfig.optionsTimeout : 5000
+    try SetTimer(NvimHelpAutoClose, -to)
     ; Show help (C# or native)
     try {
         if (IsSet(tooltipConfig) && tooltipConfig.enabled) {
@@ -202,19 +208,27 @@ NvimShowHelp() {
     } catch {
         ShowCenteredToolTip("NVIM HELP: hjkl move | v visual | y copy | p paste | u undo | x cut | i insert")
     }
-    ; Wait for ESC or timeout, then restore persistent NVIM ON tooltip if layer still active
-    ih := InputHook("L1 T" . GetEffectiveTimeout("nvim"), "{Escape}")
-    ih.Start()
-    ih.Wait()
-    ; Now hide the help tooltip (C#) if present
+}
+
+NvimHelpAutoClose() {
+    global NvimHelpActive
+    if (NvimHelpActive)
+        NvimCloseHelp()
+}
+
+NvimCloseHelp() {
+    global isNvimLayerActive, tooltipConfig, NvimHelpActive
+    ; Cancel any pending auto-close timer
+    try SetTimer(NvimHelpAutoClose, 0)
+    ; Hide help tooltip (C#) if present
     try HideCSharpTooltip()
+    NvimHelpActive := false
     if (isNvimLayerActive) {
         try {
             if (IsSet(tooltipConfig) && tooltipConfig.enabled)
                 ShowNvimLayerToggleCS(true)
-            else {
+            else
                 ShowNvimLayerStatus(true)
-            }
         } catch {
             ShowNvimLayerStatus(true)
         }
