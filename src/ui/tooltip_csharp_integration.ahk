@@ -1007,11 +1007,16 @@ ShowNvimLayerToggleCS(isActive) {
     cmd["layout"] := "list"
     cmd["tooltip_type"] := "bottom_right_list"
     ; Read status timeout from config (string), then coerce to number safely
-    statusMs := CleanIniValue(IniRead(ConfigIni, "Tooltips", "status_notification_timeout", ""))
-    if (statusMs = "" || statusMs = "ERROR")
-        statusMs := isActive ? 4000 : 2000
-    else
-        statusMs := Integer(Trim(statusMs))
+    ; Persist while ON (timeout 0). Use configured/short timeout when OFF.
+    if (isActive) {
+        statusMs := 0
+    } else {
+        statusMs := CleanIniValue(IniRead(ConfigIni, "Tooltips", "status_notification_timeout", ""))
+        if (statusMs = "" || statusMs = "ERROR")
+            statusMs := 2000
+        else
+            statusMs := Integer(Trim(statusMs))
+    }
     cmd["timeout_ms"] := statusMs
 
     ; Single item basic ON/OFF state
