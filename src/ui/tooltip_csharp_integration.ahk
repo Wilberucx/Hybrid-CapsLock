@@ -934,6 +934,121 @@ ShowCommandExecutedCS(category, command) {
 
 ; ===================================================================
 ; FUNCIONES ESPECÍFICAS PARA NVIM LAYER OPTIONS
+
+; Build NVIM items for status from config/nvim_layer.ini [Normal]
+BuildNvimStatusItems() {
+    ini := A_ScriptDir . "\\config\\nvim_layer.ini"
+    items := []
+    try {
+        order := IniRead(ini, "Normal", "order", "")
+        if (order = "" || order = "ERROR")
+            return items
+        keys := StrSplit(order, " ")
+        for _, k in keys {
+            k := Trim(k)
+            if (k = "")
+                continue
+            spec := IniRead(ini, "Normal", k, "")
+            if (spec = "" || spec = "ERROR")
+                continue
+            desc := NvimSpecToDescription(spec)
+            itm := Map()
+            itm["key"] := k
+            itm["description"] := desc
+            items.Push(itm)
+        }
+    } catch {
+    }
+    return items
+}
+
+NvimSpecToDescription(spec) {
+    spec := Trim(spec)
+    if (InStr(spec, ":")) {
+        t := StrLower(Trim(SubStr(spec, 1, InStr(spec, ":") - 1)))
+        v := Trim(SubStr(spec, InStr(spec, ":") + 1))
+        if (t = "send") {
+            ; Simple mapping for arrows and common combos
+            if (RegExMatch(v, "\{Left\}", &m))
+                return "Move left"
+            if (RegExMatch(v, "\{Right\}", &m))
+                return "Move right"
+            if (RegExMatch(v, "\{Up\}", &m))
+                return "Move up"
+            if (RegExMatch(v, "\{Down\}", &m))
+                return "Move down"
+            if (InStr(v, "^v"))
+                return "Paste"
+            return "Send " . v
+        } else if (t = "showmenu") {
+            v := StrLower(v)
+            if (v = "yank")
+                return "Yank menu"
+            if (v = "delete")
+                return "Delete menu"
+            return "Menu " . v
+        } else if (t = "func") {
+            return "Function: " . v
+        }
+        return t ": " v
+    }
+    return spec
+}
+
+ShowNvimLayerToggleCS(isActive) {
+    theme := ReadTooltipThemeDefaults()
+    cmd := Map()
+    cmd["show"] := true
+    cmd["title"] := isActive ? "NVIM layer enabled" : "NVIM layer disabled"
+    cmd["layout"] := "list"
+    cmd["tooltip_type"] := "bottom_right_list"
+    ; Read status timeout from config (string), then coerce to number safely
+    statusMs := CleanIniValue(IniRead(ConfigIni, "Tooltips", "status_notification_timeout", ""))
+    if (statusMs = "" || statusMs = "ERROR")
+        statusMs := isActive ? 4000 : 2000
+    else
+        statusMs := Integer(Trim(statusMs))
+    cmd["timeout_ms"] := statusMs
+
+    if (isActive) {
+        items := BuildNvimStatusItems()
+        if (items.Length = 0) {
+            fallback := Map()
+            fallback["key"] := "h j k l"
+            fallback["description"] := "Move left/down/up/right"
+            items.Push(fallback)
+        }
+        cmd["items"] := items
+    } else {
+        off := Map()
+        off["key"] := "○"
+        off["description"] := "Nvim layer is OFF"
+        cmd["items"] := [off]
+    }
+
+    ; Apply theme and accent by state
+    if (theme.style.Count) {
+        style := theme.style
+        if (isActive && style.Has("success"))
+            style["accent_options"] := style["success"]
+        else if (!isActive && style.Has("error"))
+            style["accent_options"] := style["error"]
+        cmd["style"] := style
+    }
+    if (theme.position.Count)
+        cmd["position"] := theme.position
+    if (theme.window.Has("topmost"))
+        cmd["topmost"] := theme.window["topmost"]
+    if (theme.window.Has("click_through"))
+        cmd["click_through"] := theme.window["click_through"]
+    if (theme.window.Has("opacity"))
+        cmd["opacity"] := theme.window["opacity"]
+
+    ; NVIM layer tooltip is not navigable; omit navigation entirely
+    StartTooltipApp()
+    json := SerializeJson(cmd)
+    ScheduleTooltipJsonWrite(json)
+}
 ; ===================================================================
 
 
@@ -1325,10 +1440,6 @@ ShowWelcomeStatusCS() {
             item := Map()
             item["key"] := (val = "true") ? "✓" : "×"
             item["description"] := readable . ": " . ((val = "true") ? "Enable" : "Disable")
-            if (theme.style.Has("success") && val = "true")
-                item["color"] := theme.style["success"]
-            else if (theme.style.Has("error") && val = "false")
-                item["color"] := theme.style["error"]
             layers.Push(item)
         }
     }

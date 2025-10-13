@@ -28,11 +28,17 @@
     ; Toggle
     isNvimLayerActive := !isNvimLayerActive
     if (isNvimLayerActive) {
-        ShowNvimLayerStatus(true)
+        if (IsSet(tooltipConfig) && tooltipConfig.enabled)
+            ShowNvimLayerToggleCS(true)
+        else
+            ShowNvimLayerStatus(true)
         SetTempStatus("NVIM LAYER ON", 1500)
     } else {
         VisualMode := false
-        ShowNvimLayerStatus(false)
+        if (IsSet(tooltipConfig) && tooltipConfig.enabled)
+            ShowNvimLayerToggleCS(false)
+        else
+            ShowNvimLayerStatus(false)
         SetTempStatus("NVIM LAYER OFF", 1500)
     }
     try SaveLayerState()
@@ -171,6 +177,24 @@ i:: {
 
 ; Redo (r)
 r::Send("^y")
+
+; Help: show NVIM options with modern tooltip (Shift + / -> ?)
++vkBF::NvimShowHelp()
++SC035::NvimShowHelp()
+?::NvimShowHelp()
+
+; (moved function definition to global scope below)
+
+NvimShowHelp() {
+    try {
+        if (IsSet(tooltipConfig) && tooltipConfig.enabled)
+            ShowNvimLayerToggleCS(true)
+        else
+            ShowNvimLayerStatus(true)
+    } catch {
+        ShowNvimLayerStatus(true)
+    }
+}
 
 ; Quick exit
 ; Send Ctrl+Alt+Shift+2 with f and then deactivate NVIM layer
