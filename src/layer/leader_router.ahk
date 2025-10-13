@@ -16,8 +16,14 @@ CapsLock & Space:: {
 #HotIf
 
 TryActivateLeader() {
-    global leaderActive
+    global leaderActive, isNvimLayerActive
     leaderActive := true
+    ; If NVIM layer is active, deactivate it before showing Leader to avoid keymap conflicts
+    if (isNvimLayerActive) {
+        isNvimLayerActive := false
+        try ShowNvimLayerToggleCS(false)
+        try ShowNvimLayerStatus(false)
+    }
 
     Loop {
         ShowLeaderMenu()
