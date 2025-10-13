@@ -14,7 +14,7 @@ namespace TooltipApp
     {
         private FileSystemWatcher? _fileWatcher;
         private DispatcherTimer? _hideTimer;
-        private const string CommandFile = "tooltip_commands.json";
+        private static readonly string[] CommandFiles = new[] { "tooltip_commands.json", "#tooltip_command.json" };
         private string? _lastJson;
         private TooltipCommand? currentTooltip;
 
@@ -28,15 +28,39 @@ namespace TooltipApp
             public const string Border = "#404040";           // Gris
         }
 
+        private Brush BrushFromHex(string? hex, string fallback)
+        {
+            try
+            {
+                var code = string.IsNullOrWhiteSpace(hex) ? fallback : hex!;
+                return new SolidColorBrush((Color)ColorConverter.ConvertFromString(code));
+            }
+            catch
+            {
+                return new SolidColorBrush((Color)ColorConverter.ConvertFromString(fallback));
+            }
+        }
+
         public MainWindow()
         {
             InitializeComponent();
             InitializeWindow();
             StartFileWatcher();
+            // Intentar cargar y aplicar el último comando al iniciar
+            try
+            {
+                var initial = ReadTooltipCommand();
+                if (initial != null)
+                {
+                    UpdateTooltip(initial);
+                }
+            }
+            catch { }
+
             // Reposicionar cuando cambie el tamaño (evita desalineo al cambiar items)
             this.SizeChanged += (s, e) => PositionWindow();
             
-            // Fase 1: Mostrar tooltip básico estático
+            // Fase 1: Mostrar tooltip básico estático (se ocultará/actualizará si llega JSON)
             ShowBasicTooltip();
         }
 
@@ -55,34 +79,86 @@ namespace TooltipApp
 
         private void PositionWindow()
         {
+            ApplyPositionFromCommand(currentTooltip);
+        }
+
+        private void ApplyPositionFromCommand(TooltipCommand? command)
+        {
             var screenWidth = SystemParameters.PrimaryScreenWidth;
             var screenHeight = SystemParameters.PrimaryScreenHeight;
-            
-            // Check if this is a persistent status tooltip
-            if (currentTooltip?.TooltipType == "status_persistent")
+
+            // Defaults
+            double left = (screenWidth - this.ActualWidth) / 2;
+            double top = screenHeight - this.ActualHeight - 50; // bottom_center default
+
+            string preset = command?.Position?.Anchor ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(preset))
             {
-                // Position in bottom-left corner
-                this.Left = 20; // 20px from left edge
-                this.Top = screenHeight - this.ActualHeight - 20; // 20px from bottom
+                // Back-compat presets via tooltip_type
+                switch (command?.TooltipType)
+                {
+                    case "status_persistent":
+                        preset = "bottom_left";
+                        break;
+                    case "sidebar_right":
+                        preset = "center_right"; // custom alias handled below
+                        break;
+                    case "bottom_right_list":
+                        preset = "bottom_right";
+                        break;
+                    default:
+                        preset = "bottom_center";
+                        break;
+                }
             }
-            else if (currentTooltip?.TooltipType == "sidebar_right")
+
+            switch (preset)
             {
-                // Right edge, vertically centered for sidebar list
-                this.Left = screenWidth - this.ActualWidth - 24;
-                this.Top = (screenHeight - this.ActualHeight) / 2;
+                case "bottom_left":
+                    left = 20;
+                    top = screenHeight - this.ActualHeight - 20;
+                    break;
+                case "bottom_right":
+                    left = screenWidth - this.ActualWidth - 20;
+                    top = screenHeight - this.ActualHeight - 20;
+                    break;
+                case "top_left":
+                    left = 20;
+                    top = 20;
+                    break;
+                case "top_right":
+                    left = screenWidth - this.ActualWidth - 20;
+                    top = 20;
+                    break;
+                case "top_center":
+                    left = (screenWidth - this.ActualWidth) / 2;
+                    top = 20;
+                    break;
+                case "center":
+                    left = (screenWidth - this.ActualWidth) / 2;
+                    top = (screenHeight - this.ActualHeight) / 2;
+                    break;
+                case "center_right":
+                    left = screenWidth - this.ActualWidth - 24;
+                    top = (screenHeight - this.ActualHeight) / 2;
+                    break;
+                case "manual":
+                    left = command?.Position?.X ?? left;
+                    top = command?.Position?.Y ?? top;
+                    break;
+                case "bottom_center":
+                default:
+                    left = (screenWidth - this.ActualWidth) / 2;
+                    top = screenHeight - this.ActualHeight - 50;
+                    break;
             }
-            else if (currentTooltip?.TooltipType == "bottom_right_list")
-            {
-                // Fixed to bottom-right corner
-                this.Left = screenWidth - this.ActualWidth - 20;
-                this.Top = screenHeight - this.ActualHeight - 20;
-            }
-            else
-            {
-                // Centro horizontal, 50px desde abajo para tooltips regulares
-                this.Left = (screenWidth - this.ActualWidth) / 2;
-                this.Top = screenHeight - this.ActualHeight - 50;
-            }
+
+            // Apply offsets
+            double dx = command?.Position?.OffsetX ?? 0;
+            double dy = command?.Position?.OffsetY ?? 0;
+
+            this.Left = left + dx;
+            this.Top = top + dy;
         }
 
         private void ShowBasicTooltip()
@@ -116,52 +192,74 @@ namespace TooltipApp
 
         private void ApplyPersistentStatusStyle()
         {
-            // Estilo para tooltips de estado persistentes
-            TooltipBorder.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#1e1e1e"));
-            TooltipBorder.BorderBrush = SystemParameters.WindowGlassBrush; // Color de acento del sistema
-            TooltipBorder.BorderThickness = new Thickness(2);
-            TooltipBorder.Padding = new Thickness(12, 8);
-            TooltipBorder.CornerRadius = new CornerRadius(3);
-            
-            // Título en mayúsculas y bold
+            TooltipBorder.Background = BrushFromHex(currentTooltip?.Style?.Background, Colors.Background);
+            TooltipBorder.BorderBrush = BrushFromHex(currentTooltip?.Style?.Border, Colors.Border);
+            TooltipBorder.BorderThickness = new Thickness(currentTooltip?.Style?.BorderThickness ?? 2);
+            TooltipBorder.Padding = currentTooltip?.Style?.Padding != null && currentTooltip.Style.Padding.Length == 4
+                ? new Thickness(currentTooltip.Style.Padding[0], currentTooltip.Style.Padding[1], currentTooltip.Style.Padding[2], currentTooltip.Style.Padding[3])
+                : new Thickness(12, 8, 12, 8);
+            TooltipBorder.CornerRadius = new CornerRadius(currentTooltip?.Style?.CornerRadius ?? 3);
+
             TitleText.FontWeight = FontWeights.Bold;
-            TitleText.FontSize = 12;
+            TitleText.FontSize = currentTooltip?.Style?.TitleFontSize ?? 12;
+            TitleText.Foreground = BrushFromHex(currentTooltip?.Style?.Text, Colors.Text);
             TitleText.Text = TitleText.Text.ToUpper();
-            
-            // Ocultar items grid y navigation para estados
+
             ItemsGrid.Visibility = Visibility.Collapsed;
             NavigationPanel.Visibility = Visibility.Collapsed;
+
+            this.Topmost = currentTooltip?.Topmost ?? true;
+            this.IsHitTestVisible = !(currentTooltip?.ClickThrough ?? true) ? true : false;
+            this.Opacity = currentTooltip?.Opacity ?? 1.0;
         }
 
         private void ApplyRegularTooltipStyle()
         {
-            // Estilo para tooltips regulares
-            TooltipBorder.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#1e1e1e"));
-            TooltipBorder.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#404040"));
-            TooltipBorder.BorderThickness = new Thickness(1);
-            TooltipBorder.Padding = new Thickness(16, 12);
-            TooltipBorder.CornerRadius = new CornerRadius(4);
+            TooltipBorder.Background = BrushFromHex(currentTooltip?.Style?.Background, Colors.Background);
+            TooltipBorder.BorderBrush = BrushFromHex(currentTooltip?.Style?.Border, Colors.Border);
+            TooltipBorder.BorderThickness = new Thickness(currentTooltip?.Style?.BorderThickness ?? 1);
+            TooltipBorder.Padding = currentTooltip?.Style?.Padding != null && currentTooltip.Style.Padding.Length == 4
+                ? new Thickness(currentTooltip.Style.Padding[0], currentTooltip.Style.Padding[1], currentTooltip.Style.Padding[2], currentTooltip.Style.Padding[3])
+                : new Thickness(16, 12, 16, 12);
+            TooltipBorder.CornerRadius = new CornerRadius(currentTooltip?.Style?.CornerRadius ?? 4);
             
-            // Título normal
             TitleText.FontWeight = FontWeights.Bold;
-            TitleText.FontSize = 14;
+            TitleText.FontSize = currentTooltip?.Style?.TitleFontSize ?? 14;
+            TitleText.Foreground = BrushFromHex(currentTooltip?.Style?.Text, Colors.Text);
             
-            // Mostrar items grid y navigation
             ItemsGrid.Visibility = Visibility.Visible;
             NavigationPanel.Visibility = Visibility.Visible;
+
+            // Apply window flags
+            this.Topmost = currentTooltip?.Topmost ?? true;
+            this.IsHitTestVisible = !(currentTooltip?.ClickThrough ?? true) ? true : false;
+            this.Opacity = currentTooltip?.Opacity ?? 1.0;
         }
 
         private void CreateItemsLayout(TooltipItem[] items)
         {
-            int itemsPerColumn = Math.Max(1, (int)Math.Ceiling(items.Length / 4.0));
-            int currentRow = 0;
-            int currentColumn = 0;
+            int columns = currentTooltip?.Columns > 0 ? currentTooltip.Columns : 4;
+            columns = Math.Max(1, columns);
 
-            // Crear filas necesarias
+            // Clear, then create column defs dynamically
+            ItemsGrid.Children.Clear();
+            ItemsGrid.RowDefinitions.Clear();
+            ItemsGrid.ColumnDefinitions.Clear();
+            for (int c = 0; c < columns; c++)
+            {
+                ItemsGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            }
+
+            int itemsPerColumn = (int)Math.Ceiling(items.Length / (double)columns);
+            itemsPerColumn = Math.Max(1, itemsPerColumn);
+
             for (int i = 0; i < itemsPerColumn; i++)
             {
                 ItemsGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
             }
+
+            int currentRow = 0;
+            int currentColumn = 0;
 
             foreach (var item in items)
             {
@@ -171,24 +269,22 @@ namespace TooltipApp
                     Margin = new Thickness(8, 2, 8, 2)
                 };
 
-                // Key con color dorado
                 var keyText = new TextBlock
                 {
                     Text = $"[{item.Key}]",
                     FontFamily = new FontFamily("Consolas"),
-                    FontSize = 12,
+                    FontSize = currentTooltip?.Style?.ItemFontSize ?? 12,
                     FontWeight = FontWeights.Bold,
-                    Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString(Colors.AccentOptions)),
+                    Foreground = BrushFromHex(currentTooltip?.Style?.AccentOptions, Colors.AccentOptions),
                     Margin = new Thickness(0, 0, 8, 0)
                 };
 
-                // Description con color blanco
                 var descText = new TextBlock
                 {
                     Text = item.Description,
                     FontFamily = new FontFamily("Consolas"),
-                    FontSize = 12,
-                    Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString(Colors.Text))
+                    FontSize = currentTooltip?.Style?.ItemFontSize ?? 12,
+                    Foreground = BrushFromHex(currentTooltip?.Style?.Text, Colors.Text)
                 };
 
                 itemPanel.Children.Add(keyText);
@@ -207,7 +303,7 @@ namespace TooltipApp
             }
         }
 
-        // Create a single-column vertical list for sidebar_right
+        // Create a single-column vertical list for list layout or sidebar_right
         private void CreateItemsList(TooltipItem[] items)
         {
             ItemsGrid.Children.Clear();
@@ -228,9 +324,9 @@ namespace TooltipApp
                 {
                     Text = items[i].Key,
                     FontFamily = new FontFamily("Consolas"),
-                    FontSize = 12,
+                    FontSize = currentTooltip?.Style?.ItemFontSize ?? 12,
                     FontWeight = FontWeights.Bold,
-                    Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString(Colors.AccentOptions)),
+                    Foreground = BrushFromHex(currentTooltip?.Style?.AccentOptions, Colors.AccentOptions),
                     Width = 28
                 };
 
@@ -238,8 +334,8 @@ namespace TooltipApp
                 {
                     Text = items[i].Description,
                     FontFamily = new FontFamily("Consolas"),
-                    FontSize = 12,
-                    Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString(Colors.Text)),
+                    FontSize = currentTooltip?.Style?.ItemFontSize ?? 12,
+                    Foreground = BrushFromHex(currentTooltip?.Style?.Text, Colors.Text),
                     Margin = new Thickness(8, 0, 0, 0)
                 };
 
@@ -256,10 +352,10 @@ namespace TooltipApp
         {
             try
             {
-                _fileWatcher = new FileSystemWatcher(".")
+                _fileWatcher = new FileSystemWatcher(Directory.GetCurrentDirectory())
                 {
-                    Filter = CommandFile,
-                    NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.CreationTime
+                    Filter = "*tooltip_command*.json",
+                    NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.CreationTime | NotifyFilters.FileName
                 };
 
                 _fileWatcher.Changed += OnCommandFileChanged;
@@ -296,10 +392,14 @@ namespace TooltipApp
         {
             try
             {
-                if (!File.Exists(CommandFile))
-                    return null;
+                string? found = null;
+                foreach (var f in CommandFiles)
+                {
+                    if (File.Exists(f)) { found = f; break; }
+                }
+                if (found == null) return null;
 
-                var jsonContent = File.ReadAllText(CommandFile);
+                var jsonContent = File.ReadAllText(found);
                 if (string.IsNullOrWhiteSpace(jsonContent))
                     return null;
 
@@ -336,11 +436,13 @@ namespace TooltipApp
                 // Guardar referencia al comando actual
                 currentTooltip = command;
 
+                // Flags globales de ventana
+                this.Topmost = command.Topmost ?? true;
+                this.IsHitTestVisible = !(command.ClickThrough ?? true) ? true : false;
+                this.Opacity = command.Opacity ?? 1.0;
+
                 // Actualizar título
-                if (!string.IsNullOrEmpty(command.Title))
-                {
-                    TitleText.Text = command.Title;
-                }
+                TitleText.Text = !string.IsNullOrEmpty(command.Title) ? command.Title : TitleText.Text;
 
                 // Aplicar estilo según el tipo de tooltip
                 if (command.TooltipType == "status_persistent")
@@ -350,24 +452,19 @@ namespace TooltipApp
                 else
                 {
                     ApplyRegularTooltipStyle();
-                    
+
+                    // Decidir layout: JSON layout tiene prioridad. Si no, mantener compatibilidad con tooltip_type presets
+                    bool useList = string.Equals(command.Layout, "list", StringComparison.OrdinalIgnoreCase)
+                                   || command.TooltipType == "sidebar_right"
+                                   || command.TooltipType == "bottom_right_list";
+
                     // Actualizar items si están presentes
                     if (command.Items?.Count > 0)
                     {
-                        ItemsGrid.Children.Clear();
-                        ItemsGrid.RowDefinitions.Clear();
-                        if (command.TooltipType == "sidebar_right")
-                        {
+                        if (useList)
                             CreateItemsList(command.Items.ToArray());
-                        }
-                        else if (command.TooltipType == "bottom_right_list")
-                        {
-                            CreateItemsList(command.Items.ToArray());
-                        }
                         else
-                        {
                             CreateItemsLayout(command.Items.ToArray());
-                        }
                     }
                 }
 
@@ -375,6 +472,13 @@ namespace TooltipApp
                 if (command.Navigation?.Count > 0)
                 {
                     UpdateNavigation(command.Navigation);
+                }
+
+                // Aplicar límites opcionales de tamaño
+                if (command.Style != null)
+                {
+                    this.MaxWidth = command.Style.MaxWidth ?? double.PositiveInfinity;
+                    this.MaxHeight = command.Style.MaxHeight ?? double.PositiveInfinity;
                 }
 
                 // Mostrar tooltip
@@ -408,7 +512,7 @@ namespace TooltipApp
             {
                 var border = new Border
                 {
-                    Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(Colors.AccentNavigation)),
+                    Background = BrushFromHex(currentTooltip?.Style?.AccentNavigation, Colors.AccentNavigation),
                     CornerRadius = new CornerRadius(2),
                     Padding = new Thickness(4, 2, 4, 2),
                     Margin = new Thickness(2, 0, 2, 0)
@@ -418,8 +522,8 @@ namespace TooltipApp
                 {
                     Text = navItem,
                     FontFamily = new FontFamily("Consolas"),
-                    FontSize = 10,
-                    Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString(Colors.Text))
+                    FontSize = currentTooltip?.Style?.NavigationFontSize ?? 10,
+                    Foreground = BrushFromHex(currentTooltip?.Style?.NavigationText ?? currentTooltip?.Style?.Text, Colors.Text)
                 };
 
                 border.Child = text;

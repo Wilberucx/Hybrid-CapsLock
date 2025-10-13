@@ -72,6 +72,10 @@ ReadTooltipConfig() {
     
     clickThroughValue := CleanIniValue(IniRead(ConfigIni, "Tooltips", "tooltip_click_through", "true"))
     config.clickThrough := clickThroughValue = "true"
+
+    ; Ruta opcional del ejecutable TooltipApp
+    exePathValue := CleanIniValue(IniRead(ConfigIni, "Tooltips", "tooltip_exe_path", ""))
+    config.exePath := exePathValue
     
     ; Layout for option menus: grid (default) or list_vertical
    layoutValue := CleanIniValue(IniRead(ConfigIni, "Tooltips", "menu_layout", "grid"))
@@ -125,18 +129,7 @@ DebouncedTooltipWrite() {
     }
 }
 
-; JSON Escape helper
-JsonEscape(str) {
-    if (!IsSet(str))
-        return ""
-    str := StrReplace(str, "\", "\\")
-    str := StrReplace(str, '"', '\"')
-    str := StrReplace(str, "`n", "\n")
-    str := StrReplace(str, "`r", "\r")
-    str := StrReplace(str, "`t", "\t")
-    return str
-}
-
+; (JsonEscape helper defined later once)
 ; ===================================================================
 ; FUNCIONES PRINCIPALES DE TOOLTIP C#
 
@@ -230,6 +223,13 @@ ShowBottomRightListTooltip(title, items, navigation := "", timeout := 0) {
 
 ShowCSharpTooltipWithType(title, items, navigation := "", timeout := 0, tooltipType := "leader") {
     global tooltipConfig
+    ; Enforce layout from INI: if list_vertical is configured, always use bottom_right_list for menus
+    if (tooltipConfig.menuLayout = "list_vertical" && tooltipType = "leader") {
+        tooltipType := "bottom_right_list"
+    }
+
+    ; Ensure C# app is running before writing JSON (lazy start)
+    StartTooltipApp()
     
     ; Si no se especifica timeout, usar el de opciones por defecto
     if (timeout = 0) {
@@ -240,47 +240,50 @@ ShowCSharpTooltipWithType(title, items, navigation := "", timeout := 0, tooltipT
     if (tooltipConfig.persistent) {
         timeout := 300000  ; 5 minutos (prácticamente infinito)
     }
-    ; Construir JSON para items
-    itemsJson := ""
-    itemArray := StrSplit(items, "|")
-    
-    for index, item in itemArray {
-        if (index > 1)
-            itemsJson .= ","
-        
-        ; Separar key y description (formato: "key:description")
-        itemParts := StrSplit(item, ":")
-        key := itemParts[1]
-        desc := itemParts[2]
-        
-        itemsJson .= '{"key": "' . key . '", "description": "' . desc . '"}'
-    }
-    
-    ; Construir JSON para navegación
-    navJson := ""
-    if (navigation != "") {
-        navArray := StrSplit(navigation, "|")
-        for index, navItem in navArray {
-            if (index > 1)
-                navJson .= ","
-            navJson .= '"' . navItem . '"'
-        }
-    } else {
-        navJson := '"HybridCapsLock Ready"'
-    }
-    
-    ; Construir JSON completo
-    jsonData := "{"
-    jsonData .= '"tooltip_type": "' . tooltipType . '",'
-    jsonData .= '"title": "' . title . '",'
-    jsonData .= '"items": [' . itemsJson . '],'
-    jsonData .= '"navigation": [' . navJson . '],'
-    jsonData .= '"timeout_ms": ' . timeout . ','
-    jsonData .= '"show": true'
-    jsonData .= "}"
-    
-    ; Escribir JSON de forma atómica con debounce en A_ScriptDir
-    ScheduleTooltipJsonWrite(jsonData)
+
+    ; Construir comando base usando helpers (incluye estilo/posición de INI)
+    cmd := Map()
+    cmd["show"] := true
+    cmd["title"] := title
+    cmd["items"] := BuildItemObjects(items)
+    navArr := BuildNavArray(navigation)
+    if (navArr.Length)
+        cmd["navigation"] := navArr
+    cmd["timeout_ms"] := timeout
+
+    ; Leer defaults de tema desde configuration.ini
+    theme := ReadTooltipThemeDefaults()
+
+    ; Aplicar layout/columns por defecto de tema
+    if (theme.window.Has("layout"))
+        cmd["layout"] := theme.window["layout"]
+    if (theme.window.Has("columns") && theme.window["columns"] > 0)
+        cmd["columns"] := theme.window["columns"]
+
+    ; Si tooltipType implica lista, forzar layout=list
+    if (tooltipType = "bottom_right_list")
+        cmd["layout"] := "list"
+
+    ; Copiar estilo y posición desde tema (si existen)
+    if (theme.style.Count)
+        cmd["style"] := theme.style
+    if (theme.position.Count)
+        cmd["position"] := theme.position
+
+    ; Flags de ventana desde tema
+    if (theme.window.Has("topmost"))
+        cmd["topmost"] := theme.window["topmost"]
+    if (theme.window.Has("click_through"))
+        cmd["click_through"] := theme.window["click_through"]
+    if (theme.window.Has("opacity"))
+        cmd["opacity"] := theme.window["opacity"]
+
+    ; Compatibilidad: incluir tooltip_type explícito
+    cmd["tooltip_type"] := tooltipType
+
+    ; Serializar y escribir
+    json := SerializeJson(cmd)
+    ScheduleTooltipJsonWrite(json)
 }
 
 ; Función para ocultar tooltip C#
@@ -304,25 +307,45 @@ ShowCSharpStatusNotification(title, message) {
 }
 
 ; Función para iniciar la aplicación C# tooltip
+IsAbsolutePath(p) {
+    return RegExMatch(p, "i)^[A-Z]:\\|^\\\\|^/")
+}
+
 StartTooltipApp() {
+    global tooltipConfig
     ; Verificar si ya está ejecutándose
     if (!ProcessExist("TooltipApp.exe")) {
         ; Intentar ejecutar desde diferentes ubicaciones
-        tooltipPaths := [
-            "tooltip_csharp\\bin\\Debug\\net6.0-windows\\TooltipApp.exe",
-            "tooltip_csharp\\bin\\Release\\net6.0-windows\\win-x64\\publish\\TooltipApp.exe",
-            "tooltip_csharp\\bin\\Release\\net6.0-windows\\TooltipApp.exe"
-        ]
-        
+        if (tooltipConfig.exePath) {
+            exePath := tooltipConfig.exePath
+            if (!IsAbsolutePath(exePath))
+                exePath := A_ScriptDir . "\\" . exePath
+            if (FileExist(exePath))
+                tooltipPaths := [ exePath ]
+            else
+                tooltipPaths := [
+                    "tooltip_csharp\\bin\\Release\\net6.0-windows\\TooltipApp.exe",
+                    A_ScriptDir . "\\TooltipApp.exe"
+                ]
+        } else {
+            tooltipPaths := [
+                "tooltip_csharp\\bin\\Release\\net6.0-windows\\TooltipApp.exe",
+                A_ScriptDir . "\\TooltipApp.exe"
+            ]
+        }
+        chosenPath := ""
         for index, path in tooltipPaths {
             if (FileExist(path)) {
                 try {
-                    Run('"' . path . '"', , "Hide")
+                    Run('"' . path . '"', A_ScriptDir, "Hide")
+                    chosenPath := path
                     Sleep(500)
                     break
                 }
             }
         }
+        ; Simple log para diagnosticar qué exe se lanzó
+        try FileAppend(FormatTime(, "yyyy-MM-dd HH:mm:ss") . " Launched: " . (chosenPath != "" ? chosenPath : "<none>") . "\n", A_ScriptDir . "\\tooltip_launch.log")
     }
     return true
 }
@@ -1075,9 +1098,274 @@ StopTooltipApp() {
 }
 
 ; ===================================================================
+; API AVANZADA: TEMA, MERGE Y SERIALIZACIÓN JSON
+; ===================================================================
+
+; Leer tema por defecto desde configuration.ini (opcional)
+ReadTooltipThemeDefaults() {
+    global ConfigIni
+    global ConfigIni
+    defaults := Map()
+    ; Layout/ventana
+    defaults.window := Map()
+    defaults.window["layout"] := StrLower(IniRead(ConfigIni, "TooltipWindow", "layout", ""))
+    defaults.window["columns"] := Integer(IniRead(ConfigIni, "TooltipWindow", "columns", "0"))
+    tw_topmost := StrLower(IniRead(ConfigIni, "TooltipWindow", "topmost", ""))
+    if (tw_topmost != "")
+        defaults.window["topmost"] := (tw_topmost = "true")
+    tw_click := StrLower(IniRead(ConfigIni, "TooltipWindow", "click_through", ""))
+    if (tw_click != "")
+        defaults.window["click_through"] := (tw_click = "true")
+    tw_opacity := IniRead(ConfigIni, "TooltipWindow", "opacity", "")
+    if (tw_opacity != "" && tw_opacity != "ERROR")
+        defaults.window["opacity"] := Number(tw_opacity)
+
+    ; Style
+    defaults.style := Map()
+    for key in ["background","text","border","accent_options","accent_navigation","navigation_text"] {
+        val := IniRead(ConfigIni, "TooltipStyle", key, "")
+        if (val != "" && val != "ERROR")
+            defaults.style[key] := val
+    }
+    for key in ["border_thickness","corner_radius","title_font_size","item_font_size","navigation_font_size","max_width","max_height"] {
+        val := IniRead(ConfigIni, "TooltipStyle", key, "")
+        if (val != "" && val != "ERROR")
+            defaults.style[key] := Number(val)
+    }
+    pad := IniRead(ConfigIni, "TooltipStyle", "padding", "") ; formato: L,T,R,B
+    if (pad != "" && pad != "ERROR") {
+        parts := StrSplit(pad, [","," ","`t"]) 
+        if (parts.Length >= 4) {
+            defaults.style.padding := [Number(parts[1]), Number(parts[2]), Number(parts[3]), Number(parts[4])]
+        }
+    }
+
+    ; Position
+    defaults.position := Map()
+    anc := IniRead(ConfigIni, "TooltipPosition", "anchor", "")
+    if (anc != "" && anc != "ERROR")
+        defaults.position["anchor"] := StrLower(anc)
+    for key in ["offset_x","offset_y","x","y"] {
+        val := IniRead(ConfigIni, "TooltipPosition", key, "")
+        if (val != "" && val != "ERROR")
+            defaults.position[key] := Number(val)
+    }
+    return defaults
+}
+
+; Deep merge de objetos (Map/Array simple). opts sobre escribe defaults
+DeepMerge(base, override) {
+    if (!IsObject(base))
+        return override
+    if (!IsObject(override))
+        return base
+    for k, v in override {
+        if (IsObject(v) && base.Has(k) && IsObject(base[k])) {
+            base[k] := DeepMerge(base[k], v)
+        } else {
+            base[k] := v
+        }
+    }
+    return base
+}
+
+; Detectar si un objeto es array secuencial 1..n
+IsSequentialArray(o) {
+    if (!IsObject(o))
+        return false
+    try {
+        idx := 1
+        for k, _ in o {
+            if (k != idx)
+                return false
+            idx++
+        }
+        return (idx > 1)
+    } catch {
+        return false
+    }
+}
+
+JsonEscape(s) {
+    s := StrReplace(s, "\\", "\\\\")
+    s := StrReplace(s, '"', '\\"')
+    s := StrReplace(s, "\r", "\\r")
+    s := StrReplace(s, "\n", "\\n")
+    s := StrReplace(s, "\t", "\\t")
+    return s
+}
+
+; Serializar a JSON (strings, números, arrays, maps). Booleans: claves conocidas emiten true/false.
+SerializeJson(val, parentKey := "") {
+    if (!IsObject(val)) {
+        if (Type(val) = "String")
+            return '"' . JsonEscape(val) . '"'
+        if (Type(val) = "Integer" || Type(val) = "Float") {
+            ; Si es valor 0/1 para claves booleanas, emitir true/false sin comillas
+            if (parentKey != "" && (parentKey = "show" || parentKey = "topmost" || parentKey = "click_through"))
+                return (val ? "true" : "false")
+            return val
+        }
+        return '"' . JsonEscape(val) . '"'
+    }
+    if (IsSequentialArray(val)) {
+        buf := "["
+        first := true
+        for _, v in val {
+            if (!first)
+                buf .= ","
+            first := false
+            buf .= SerializeJson(v)
+        }
+        buf .= "]"
+        return buf
+    } else {
+        buf := "{"
+        first := true
+        try {
+            for k, v in val {
+                if (!first)
+                    buf .= ","
+                first := false
+                buf .= '"' . JsonEscape(k) . '":' . SerializeJson(v, k)
+            }
+        } catch {
+            ; Fallback para objetos no enumerables
+            buf := "{}"
+        }
+        if (buf != "{}")
+            buf .= "}"
+        return buf
+    }
+}
+; Construir item objects desde string items "k:desc|..."
+BuildItemObjects(itemsStr) {
+    arr := []
+    if (itemsStr = "" || !IsSet(itemsStr))
+        return arr
+    parts := StrSplit(itemsStr, "|")
+    for _, p in parts {
+        seg := StrSplit(p, ":")
+        if (seg.Length >= 2) {
+            itm := Map()
+            itm["key"] := seg[1]
+            itm["description"] := seg[2]
+            arr.Push(itm)
+        }
+    }
+    return arr
+}
+
+; Construir nav array desde string "a|b|c"
+BuildNavArray(navStr) {
+    arr := []
+    if (navStr = "" || !IsSet(navStr))
+        return arr
+    parts := StrSplit(navStr, "|")
+    for _, p in parts {
+        ; Normalizar etiqueta de navegación: usar "Backspace: Back" en lugar de "\\: Back"
+        if (p = "\\: Back")
+            p := "Backspace: Back"
+        arr.Push(p)
+    }
+    return arr
+}
+
+; API avanzada: admite layout, columnas, estilo, posición y flags
+ShowCSharpTooltipAdvanced(title, items, navigation := "", opts := 0) {
+    global tooltipConfig
+    StartTooltipApp()
+
+    ; Defaults de timeout
+    timeout := (tooltipConfig.optionsTimeout)
+    if (tooltipConfig.persistent)
+        timeout := 300000
+    if (IsObject(opts) && opts.Has("timeout_ms"))
+        timeout := opts["timeout_ms"]
+
+    ; Construir comando base
+    cmd := Map()
+    cmd["show"] := true
+    cmd["title"] := title
+    cmd["items"] := BuildItemObjects(items)
+    navArr := BuildNavArray(navigation)
+    if (navArr.Length)
+        cmd["navigation"] := navArr
+    cmd["timeout_ms"] := timeout
+
+    ; Leer defaults de tema
+    theme := ReadTooltipThemeDefaults()
+
+    ; Aplicar window/layout defaults y opts
+    if (theme.window.Has("layout"))
+        cmd["layout"] := theme.window["layout"]
+    if (theme.window.Has("columns") && theme.window["columns"] > 0)
+        cmd["columns"] := theme.window["columns"]
+    if (IsObject(opts)) {
+        if (opts.Has("layout"))
+            cmd["layout"] := opts["layout"]
+        if (opts.Has("columns"))
+            cmd["columns"] := opts["columns"]
+    }
+
+    ; tooltip_type compat si layout=list y no definido
+    if (!cmd.Has("layout") && tooltipConfig.menuLayout = "list_vertical")
+        cmd["layout"] := "list"
+
+    ; Style merge
+    if (theme.style.Count)
+        cmd["style"] := theme.style
+    if (IsObject(opts) && opts.Has("style"))
+        cmd["style"] := DeepMerge(cmd.Has("style") ? cmd["style"] : Map(), opts["style"])
+
+    ; Position merge
+    if (theme.position.Count)
+        cmd["position"] := theme.position
+    if (IsObject(opts) && opts.Has("position"))
+        cmd["position"] := DeepMerge(cmd.Has("position") ? cmd["position"] : Map(), opts["position"])
+
+    ; Flags de ventana
+    if (theme.window.Has("topmost"))
+        cmd["topmost"] := theme.window["topmost"]
+    if (theme.window.Has("click_through"))
+        cmd["click_through"] := theme.window["click_through"]
+    if (theme.window.Has("opacity"))
+        cmd["opacity"] := theme.window["opacity"]
+    if (IsObject(opts)) {
+        for k in ["topmost","click_through","opacity"] {
+            if (opts.Has(k))
+                cmd[k] := opts[k]
+        }
+    }
+
+    ; Back-compat: tooltip_type si layout es list
+    if (IsObject(opts) && opts.Has("tooltip_type"))
+        cmd["tooltip_type"] := opts["tooltip_type"]
+    else if (cmd.Has("layout") && StrLower(cmd["layout"]) = "list")
+        cmd["tooltip_type"] := "bottom_right_list"
+    else
+        cmd["tooltip_type"] := "leader"
+
+    json := SerializeJson(cmd)
+    ScheduleTooltipJsonWrite(json)
+}
+
+; ===================================================================
 ; INICIALIZACIÓN AUTOMÁTICA
 ; ===================================================================
 
 ; Iniciar automáticamente la aplicación tooltip al cargar este archivo
 ; (Comentar la siguiente línea si prefieres iniciar manualmente)
 ; StartTooltipApp()
+
+; Demo hotkey to validate modern tooltip
+InitTooltipDemoHotkey() {
+    Hotkey("^!t", (*) => ShowCSharpTooltipAdvanced(
+        "COMMAND PALETTE",
+        "w:Windows|p:Programs|g:Git",
+        "\\: Back|ESC: Exit"
+    ))
+}
+
+; Register demo hotkey at load
+InitTooltipDemoHotkey()
