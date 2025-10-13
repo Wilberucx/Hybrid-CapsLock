@@ -547,15 +547,15 @@ Esc::HandleTooltipSelection("ESC")
 ShowLeaderModeMenuCS() {
     TooltipNavReset()
     TooltipNavPush("LEADER")
-    items := "p:Programs|t:Timestamps|c:Commands|i:Information|w:Windows|n:Excel layer"
-    ShowCSharpOptionsMenu("LEADER MODE", items, "\\: Back|ESC: Exit")
+    items := "p:Programs|t:Timestamps|c:Commands|i:Information|w:Windows|n:Excel layer|s:Scroll layer"
+    ShowCSharpOptionsMenu("LEADER MODE", items, "ESC: Exit")
 }
 
 ; Reemplazar ShowProgramMenu() original  
 ShowProgramMenuCS() {
     TooltipNavPush("PROGRAMS")
     items := GenerateProgramItemsForCS()
-    ShowCSharpOptionsMenu("PROGRAM LAUNCHER", items, "\\: Back|ESC: Exit")
+    ShowCSharpOptionsMenu("PROGRAM LAUNCHER", items, "BACKSPACE: Back|ESC: Exit")
 }
 
 ; Generate program items for C# tooltips from ProgramMapping order

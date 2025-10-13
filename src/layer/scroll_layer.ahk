@@ -17,6 +17,10 @@ if (!IsSet(scrollLayerActive))
 k::Send("{WheelUp}")
 j::Send("{WheelDown}")
 
+; Left / Right scroll
+h::Send("+{WheelUp}")
+l::Send("+{WheelDown}")
+
 ; Exit Scroll layer with Shift+n (consistent with Excel exit)
 s:: {
     global scrollLayerActive
