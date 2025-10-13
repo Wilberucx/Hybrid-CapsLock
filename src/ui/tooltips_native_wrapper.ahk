@@ -113,11 +113,7 @@ ShowNvimLayerStatus(isActive) {
 
 ShowVisualModeStatus(isActive) {
     if (IsSet(tooltipConfig) && tooltipConfig.enabled) {
-        if (isActive) {
-            ShowVisualStatus()
-        } else {
-            HideVisualStatus()
-        }
+        try ShowVisualLayerToggleCS(isActive)
     } else {
         ShowCenteredToolTip(isActive ? "◉ VISUAL" : "○ VISUAL")
         SetTimer(() => RemoveToolTip(), -900)

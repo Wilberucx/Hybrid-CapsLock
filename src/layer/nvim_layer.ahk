@@ -179,14 +179,49 @@ i:: {
 ; Redo (r)
 r::Send("^y")
 
-; Help: show NVIM options with modern tooltip (Shift + / -> ?)
-+vkBF:: (NvimHelpActive ? NvimCloseHelp() : NvimShowHelp())
-+SC035:: (NvimHelpActive ? NvimCloseHelp() : NvimShowHelp())
-?:: (NvimHelpActive ? NvimCloseHelp() : NvimShowHelp())
+; Help: NVIM or VISUAL (toggle with '?')
++vkBF:: (VisualMode ? (VisualHelpActive ? VisualCloseHelp() : VisualShowHelp()) : (NvimHelpActive ? NvimCloseHelp() : NvimShowHelp()))
++SC035:: (VisualMode ? (VisualHelpActive ? VisualCloseHelp() : VisualShowHelp()) : (NvimHelpActive ? NvimCloseHelp() : NvimShowHelp()))
+?:: (VisualMode ? (VisualHelpActive ? VisualCloseHelp() : VisualShowHelp()) : (NvimHelpActive ? NvimCloseHelp() : NvimShowHelp()))
 
 ; (moved function definition to global scope below)
 
 global NvimHelpActive := false
+global VisualHelpActive := false
+
+VisualShowHelp() {
+    global tooltipConfig, VisualHelpActive
+    ; Hide persistent Visual status to avoid overlap
+    try HideCSharpTooltip()
+    Sleep 30
+    VisualHelpActive := true
+    to := (IsSet(tooltipConfig) && tooltipConfig.HasProp("optionsTimeout") && tooltipConfig.optionsTimeout > 0) ? tooltipConfig.optionsTimeout : 8000
+    try SetTimer(VisualHelpAutoClose, -to)
+    try ShowVisualHelpCS()
+}
+
+VisualHelpAutoClose() {
+    global VisualHelpActive
+    if (VisualHelpActive)
+        VisualCloseHelp()
+}
+
+VisualCloseHelp() {
+    global isNvimLayerActive, VisualMode, tooltipConfig, VisualHelpActive
+    try SetTimer(VisualHelpAutoClose, 0)
+    try HideCSharpTooltip()
+    VisualHelpActive := false
+    if (VisualMode) {
+        ; Restore persistent Visual status
+        try ShowVisualLayerToggleCS(true)
+    } else if (isNvimLayerActive) {
+        ; Fall back to NVIM persistent if visual off but layer active
+        try ShowNvimLayerToggleCS(true)
+    } else {
+        try RemoveToolTip()
+    }
+}
+
 
 NvimShowHelp() {
     global isNvimLayerActive, tooltipConfig, NvimHelpActive
@@ -218,6 +253,9 @@ NvimHelpAutoClose() {
 }
 
 NvimCloseHelp() {
+    ; if Visual opened its help, ignore closing here
+    if (VisualHelpActive)
+        return
     global isNvimLayerActive, tooltipConfig, NvimHelpActive
     ; Cancel any pending auto-close timer
     try SetTimer(NvimHelpAutoClose, 0)

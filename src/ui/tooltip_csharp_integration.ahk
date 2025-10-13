@@ -931,17 +931,25 @@ ShowCommandExecutedCS(category, command) {
 }
 
 ; ===================================================================
-; FUNCIONES ESPECÍFICAS PARA NVIM LAYER HELP
+; FUNCIONES ESPECÍFICAS PARA NVIM/ VISUAL HELP
 
 ShowNvimHelpCS() {
     global tooltipConfig
-    ; Basic NVIM help items (can be extended later or read from INI)
     items := "h:Move left|j:Move down|k:Move up|l:Move right|v:Visual Mode|y:Copy|p:Paste|u:Undo|x:Cut|i:Insert Mode|w:Word right|b:Word left|e:End of word|r:Redo|C-u:Scroll up 6|C-d:Scroll down 6|Esc:Escape/Exit mode|f:Find|::Cmd (w/q/wq)"
-    ; Show as bottom-right list with a close hint; duration from optionsTimeout (min 8000ms)
     to := (IsSet(tooltipConfig) && tooltipConfig.HasProp("optionsTimeout") && tooltipConfig.optionsTimeout > 0) ? tooltipConfig.optionsTimeout : 8000
     if (to < 8000)
         to := 8000
     ShowBottomRightListTooltip("NVIM HELP", items, "?: Close", to)
+}
+
+ShowVisualHelpCS() {
+    global tooltipConfig
+    ; Visual mode specific help
+    items := "h:Extend left|j:Extend down|k:Extend up|l:Extend right|w:Extend word right|b:Extend word left|y:Copy selection|d:Delete selection|a:Select all|c:Change -> Insert|Esc:Exit Visual"
+    to := (IsSet(tooltipConfig) && tooltipConfig.HasProp("optionsTimeout") && tooltipConfig.optionsTimeout > 0) ? tooltipConfig.optionsTimeout : 8000
+    if (to < 8000)
+        to := 8000
+    ShowBottomRightListTooltip("VISUAL HELP", items, "?: Close", to)
 }
 
 ; ===================================================================
@@ -1078,6 +1086,46 @@ ShowNvimLayerToggleCS(isActive) {
 
 
 ; Menú de opciones Visual (v)
+ShowVisualLayerToggleCS(isActive) {
+    ; Ensure app is running; if not, fallback to native tooltip
+    StartTooltipApp()
+    if (!ProcessExist("TooltipApp.exe")) {
+        try ShowVisualModeStatus(isActive)
+        return
+    }
+    if (!isActive) {
+        try HideCSharpTooltip()
+        return
+    }
+    theme := ReadTooltipThemeDefaults()
+    cmd := Map()
+    cmd["show"] := true
+    cmd["title"] := "Visual"
+    cmd["layout"] := "list"
+    cmd["tooltip_type"] := "bottom_right_list"
+    cmd["timeout_ms"] := 0 ; persistent while visual is active
+    ; Single item hint
+    items := []
+    it := Map()
+    it["key"] := "?"
+    it["description"] := "help"
+    items.Push(it)
+    cmd["items"] := items
+    ; Apply theme
+    if (theme.style.Count)
+        cmd["style"] := theme.style
+    if (theme.position.Count)
+        cmd["position"] := theme.position
+    if (theme.window.Has("topmost"))
+        cmd["topmost"] := theme.window["topmost"]
+    if (theme.window.Has("click_through"))
+        cmd["click_through"] := theme.window["click_through"]
+    if (theme.window.Has("opacity"))
+        cmd["opacity"] := theme.window["opacity"]
+    json := SerializeJson(cmd)
+    ScheduleTooltipJsonWrite(json)
+}
+
 ShowVisualMenuCS() {
     items := "v:Visual Mode|l:Visual Line|b:Visual Block"
     ShowCSharpOptionsMenu("VISUAL MODE", items, "ESC: Cancel")
