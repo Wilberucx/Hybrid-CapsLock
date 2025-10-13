@@ -186,15 +186,41 @@ r::Send("^y")
 ; (moved function definition to global scope below)
 
 NvimShowHelp() {
+    global isNvimLayerActive, tooltipConfig
+    ; If C# is enabled, hide current persistent NVIM ON tooltip first to avoid overlap
+    if (IsSet(tooltipConfig) && tooltipConfig.enabled) {
+        try HideCSharpTooltip()
+        Sleep 30
+    }
+    ; Show help (C# or native)
     try {
-        if (IsSet(tooltipConfig) && tooltipConfig.enabled)
+        if (IsSet(tooltipConfig) && tooltipConfig.enabled) {
             ShowNvimHelpCS()
-        else
+        } else {
             ShowCenteredToolTip("NVIM HELP: hjkl move | v visual | y copy | p paste | u undo | x cut | i insert")
-            SetTimer(() => RemoveToolTip(), -5000)
+        }
     } catch {
         ShowCenteredToolTip("NVIM HELP: hjkl move | v visual | y copy | p paste | u undo | x cut | i insert")
-        SetTimer(() => RemoveToolTip(), -5000)
+    }
+    ; Wait for ESC or timeout, then restore persistent NVIM ON tooltip if layer still active
+    ih := InputHook("L1 T" . GetEffectiveTimeout("nvim"), "{Escape}")
+    ih.Start()
+    ih.Wait()
+    ; Now hide the help tooltip (C#) if present
+    try HideCSharpTooltip()
+    if (isNvimLayerActive) {
+        try {
+            if (IsSet(tooltipConfig) && tooltipConfig.enabled)
+                ShowNvimLayerToggleCS(true)
+            else {
+                ShowNvimLayerStatus(true)
+            }
+        } catch {
+            ShowNvimLayerStatus(true)
+        }
+    } else {
+        ; Ensure native tooltip is removed if we used it
+        try RemoveToolTip()
     }
 }
 

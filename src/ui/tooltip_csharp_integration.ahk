@@ -1030,11 +1030,16 @@ ShowNvimLayerToggleCS(isActive) {
     }
     cmd["timeout_ms"] := statusMs
 
-    ; Single item basic ON/OFF state
+    ; Single item: when ON show help hint, when OFF show OFF
     items := []
     it := Map()
-    it["key"] := ""
-    it["description"] := isActive ? "ON" : "OFF"
+    if (isActive) {
+        it["key"] := "?"
+        it["description"] := "help"
+    } else {
+        it["key"] := ""
+        it["description"] := "OFF"
+    }
     items.Push(it)
     cmd["items"] := items
 
