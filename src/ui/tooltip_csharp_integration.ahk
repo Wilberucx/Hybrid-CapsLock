@@ -405,7 +405,6 @@ TooltipShowById(menuId) {
         case "CMD_g": ShowGitCommandsMenuCS()
         case "CMD_m": ShowMonitoringCommandsMenuCS()
         case "CMD_f": ShowFolderCommandsMenuCS()
-        case "CMD_w": ShowWindowsCommandsMenuCS()
         case "CMD_o": ShowPowerOptionsCommandsMenuCS()
         case "CMD_a": ShowADBCommandsMenuCS()
         case "CMD_v": ShowVaultFlowCommandsMenuCS()
@@ -664,7 +663,7 @@ ShowCommandsMenuCS() {
     TooltipNavPush("COMMANDS")
     items := BuildCommandsMainItemsFromCategories()
     if (items = "") {
-        items := "s:System Commands|n:Network Commands|g:Git Commands|m:Monitoring Commands|f:Folder Commands|w:Windows Commands|o:Power Options|a:ADB Tools|v:VaultFlow|h:Hybrid Management"
+        items := "s:System Commands|n:Network Commands|g:Git Commands|m:Monitoring Commands|f:Folder Commands|o:Power Options|a:ADB Tools|v:VaultFlow|h:Hybrid Management"
     }
     ShowCSharpOptionsMenu("COMMAND PALETTE", items, "\\: Back|ESC: Exit")
 }
@@ -1188,7 +1187,7 @@ ShowSystemCommandsMenuCS() {
     if (items = "") {
         BuildCommandItemsFromCategoryKey("s")
         if (items = "")
-            items := "s:System Info|t:Task Manager|v:Services|e:Event Viewer|d:Device Manager|c:Disk Cleanup"
+            items := "s:System Info|t:Task Manager|v:Services|e:Event Viewer|d:Device Manager|c:Disk Cleanup|h:Toggle Hidden Files|r:Registry Editor|E:Environment Variables"
     }
     ShowCSharpOptionsMenu("SYSTEM COMMANDS", items, "\\: Back|ESC: Exit")
 }
@@ -1248,7 +1247,7 @@ ShowWindowsCommandsMenuCS() {
     if (items = "") {
         BuildCommandItemsFromCategoryKey("w")
         if (items = "")
-            items := "h:Toggle Hidden Files|r:Registry Editor|e:Environment Variables"
+            items := "h:Toggle Hidden Files|r:Registry Editor|E:Environment Variables"
     }
     ShowCSharpOptionsMenu("WINDOWS COMMANDS", items, "\\: Back|ESC: Exit")
 }

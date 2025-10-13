@@ -50,7 +50,6 @@ ShowCommandsMenu() {
                 menuText .= "g - Git Commands`n"
                 menuText .= "m - Monitoring Commands`n"
                 menuText .= "f - Folder Commands`n"
-                menuText .= "w - Windows Commands`n"
                 menuText .= "o - Power Options`n"
                 menuText .= "a - ADB Tools`n"
                 menuText .= "v - VaultFlow`n"
@@ -193,8 +192,14 @@ ShowCommandExecuted(category, command) {
 }
 
 ExecuteSystemCommand(cmd) {
+    ; Auto-hide tooltip first if configured
     if (IsSet(tooltipConfig) && tooltipConfig.enabled && tooltipConfig.autoHide)
         HideCSharpTooltip()
+    ; Merge Windows commands into System
+    if (cmd = "h" || cmd = "r" || cmd = "E" || cmd = "e") {
+        ExecuteWindowsCommand(cmd)
+        return
+    }
     switch cmd {
         case "s": Run("cmd.exe /k systeminfo")
         case "t": Run("taskmgr.exe")
@@ -309,8 +314,6 @@ HandleCommandCategory(catKey) {
             ExecuteMonitoringCommand(key)
         case "folder":
             ExecuteFolderCommand(key)
-        case "windows":
-            ExecuteWindowsCommand(key)
         case "power":
             ExecutePowerOptionsCommand(key)
         case "adb":
@@ -481,6 +484,7 @@ ExecuteFolderCommand(cmd) {
 ExecuteWindowsCommand(cmd) {
     if (IsSet(tooltipConfig) && tooltipConfig.enabled && tooltipConfig.autoHide)
         HideCSharpTooltip()
+    cmd := StrLower(cmd)
     switch cmd {
         case "h":
             ToggleHiddenFiles()
