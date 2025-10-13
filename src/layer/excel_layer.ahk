@@ -68,6 +68,11 @@ r::Send("^r")           ; Fill right
     SetTempStatus("EXCEL LAYER OFF", 2000)
 }
 
+; === HELP (toggle with ?) ===
++vkBF:: (ExcelHelpActive ? ExcelCloseHelp() : ExcelShowHelp())
++SC035:: (ExcelHelpActive ? ExcelCloseHelp() : ExcelShowHelp())
+?:: (ExcelHelpActive ? ExcelCloseHelp() : ExcelShowHelp())
+
 #HotIf
 
 ; === Status helper ===
@@ -92,9 +97,39 @@ ExcelAppAllowedGuard() {
     }
 }
 
+global ExcelHelpActive := false
+
+ExcelShowHelp() {
+    global tooltipConfig, ExcelHelpActive
+    try HideCSharpTooltip()
+    Sleep 30
+    ExcelHelpActive := true
+    to := (IsSet(tooltipConfig) && tooltipConfig.HasProp("optionsTimeout") && tooltipConfig.optionsTimeout > 0) ? tooltipConfig.optionsTimeout : 8000
+    try SetTimer(ExcelHelpAutoClose, -to)
+    try ShowExcelHelpCS()
+}
+
+ExcelHelpAutoClose() {
+    global ExcelHelpActive
+    if (ExcelHelpActive)
+        ExcelCloseHelp()
+}
+
+ExcelCloseHelp() {
+    global excelLayerActive, ExcelHelpActive
+    try SetTimer(ExcelHelpAutoClose, 0)
+    try HideCSharpTooltip()
+    ExcelHelpActive := false
+    if (excelLayerActive) {
+        try ShowExcelLayerStatus(true)
+    } else {
+        try RemoveToolTip()
+    }
+}
+
 ShowExcelLayerStatus(isActive) {
     if (IsSet(tooltipConfig) && tooltipConfig.enabled) {
-        ShowExcelLayerStatusCS(isActive)
+        ShowExcelLayerToggleCS(isActive)
     } else {
         ToolTip(isActive ? "EXCEL LAYER ON" : "EXCEL LAYER OFF")
         SetTimer(() => ToolTip(), -1200)

@@ -136,9 +136,15 @@ TryActivateLeader() {
                 continue
             }
             excelLayerActive := !excelLayerActive
+            ; Hide Leader tooltip to avoid overlap before showing Excel status
+            try HideAllTooltips()
+            try HideCSharpTooltip()
+            Sleep 30
             ShowExcelLayerStatus(excelLayerActive)
             SetTempStatus(excelLayerActive ? "EXCEL LAYER ON" : "EXCEL LAYER OFF", 1500)
-            continue
+            ; Exit Leader to avoid re-showing its menu on next loop iteration
+            leaderActive := false
+            return
         } else if (key = "c" || key = "C") {
             res := LeaderCommandsMenuLoop()
             if (res = "EXIT") {

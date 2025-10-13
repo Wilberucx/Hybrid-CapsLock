@@ -914,6 +914,42 @@ ShowNvimLayerStatusCS(isActive) {
     }
 }
 
+ShowExcelLayerToggleCS(isActive) {
+    ; Ensure app is running; proceed even if process check lags to avoid recursion
+    StartTooltipApp()
+    if (!isActive) {
+        try HideCSharpTooltip()
+        return
+    }
+    theme := ReadTooltipThemeDefaults()
+    cmd := Map()
+    cmd["show"] := true
+    cmd["title"] := "Excel"
+    cmd["layout"] := "list"
+    cmd["tooltip_type"] := "bottom_right_list"
+    cmd["timeout_ms"] := 0 ; persistent while excel is active
+    ; Single item hint
+    items := []
+    it := Map()
+    it["key"] := "?"
+    it["description"] := "help"
+    items.Push(it)
+    cmd["items"] := items
+    ; Apply theme
+    if (theme.style.Count)
+        cmd["style"] := theme.style
+    if (theme.position.Count)
+        cmd["position"] := theme.position
+    if (theme.window.Has("topmost"))
+        cmd["topmost"] := theme.window["topmost"]
+    if (theme.window.Has("click_through"))
+        cmd["click_through"] := theme.window["click_through"]
+    if (theme.window.Has("opacity"))
+        cmd["opacity"] := theme.window["opacity"]
+    json := SerializeJson(cmd)
+    ScheduleTooltipJsonWrite(json)
+}
+
 ShowExcelLayerStatusCS(isActive) {
     if (isActive) {
         ShowExcelStatus()
@@ -931,7 +967,7 @@ ShowCommandExecutedCS(category, command) {
 }
 
 ; ===================================================================
-; FUNCIONES ESPECÍFICAS PARA NVIM/ VISUAL HELP
+; FUNCIONES ESPECÍFICAS PARA NVIM/ VISUAL/ EXCEL HELP
 
 ShowNvimHelpCS() {
     global tooltipConfig
@@ -1084,6 +1120,17 @@ ShowNvimLayerToggleCS(isActive) {
 }
 ; ===================================================================
 
+
+; Excel Help
+ShowExcelHelpCS() {
+    global tooltipConfig
+    ; Basic Excel layer help (can be later read from excel_layer.ini)
+    items := "7:Numpad7|8:Numpad8|9:Numpad9|u:Numpad4|i:Numpad5|o:Numpad6|j:Numpad1|k:Numpad2|l:Numpad3|m:Numpad0|,:Decimal|.:Dot|p:NumpadAdd|;:NumpadSub|/:NumpadDiv|w:Up|a:Left|s:Down|d:Right|[:Prev Tab|]:Next Tab|Enter:Fill down|Space:Edit cell|f:Find|r:Fill right|+:Exit Excel"
+    to := (IsSet(tooltipConfig) && tooltipConfig.HasProp("optionsTimeout") && tooltipConfig.optionsTimeout > 0) ? tooltipConfig.optionsTimeout : 8000
+    if (to < 8000)
+        to := 8000
+    ShowBottomRightListTooltip("EXCEL HELP", items, "?: Close", to)
+}
 
 ; Menú de opciones Visual (v)
 ShowVisualLayerToggleCS(isActive) {
