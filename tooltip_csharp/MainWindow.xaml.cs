@@ -262,7 +262,7 @@ namespace TooltipApp
                 var keyText = new TextBlock
                 {
                     Text = string.IsNullOrWhiteSpace(item.Key) ? "" : $"[{item.Key}]",
-                    FontFamily = new FontFamily("Consolas"),
+                    FontFamily = new FontFamily("Segoe UI Symbol"),
                     FontSize = currentTooltip?.Style?.ItemFontSize ?? 12,
                     FontWeight = FontWeights.Bold,
                     Foreground = BrushFromHex(item.Color ?? currentTooltip?.Style?.AccentOptions, Colors.AccentOptions),
@@ -313,7 +313,7 @@ namespace TooltipApp
                 var keyText = new TextBlock
                 {
                     Text = items[i].Key,
-                    FontFamily = new FontFamily("Consolas"),
+                    FontFamily = new FontFamily("Segoe UI Symbol"),
                     FontSize = currentTooltip?.Style?.ItemFontSize ?? 12,
                     FontWeight = FontWeights.Bold,
                     Foreground = BrushFromHex(items[i].Color ?? currentTooltip?.Style?.AccentOptions, Colors.AccentOptions),

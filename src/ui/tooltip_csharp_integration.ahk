@@ -994,6 +994,12 @@ NvimSpecToDescription(spec) {
 }
 
 ShowNvimLayerToggleCS(isActive) {
+    ; Ensure app is running; if not, fallback to native tooltip
+    StartTooltipApp()
+    if (!ProcessExist("TooltipApp.exe")) {
+        try ShowNvimLayerStatus(isActive)
+        return
+    }
     theme := ReadTooltipThemeDefaults()
     cmd := Map()
     cmd["show"] := true
@@ -1008,18 +1014,12 @@ ShowNvimLayerToggleCS(isActive) {
         statusMs := Integer(Trim(statusMs))
     cmd["timeout_ms"] := statusMs
 
-    items := BuildNvimStatusItems()
-    if (items.Length = 0) {
-        fallback := Map()
-        fallback["key"] := "h j k l"
-        fallback["description"] := "Move left/down/up/right"
-        items.Push(fallback)
-    }
-    ; Estado al final
-    state := Map()
-    state["key"] := isActive ? "ON" : "○"
-    state["description"] := isActive ? "Nvim layer is ON" : "Nvim layer is OFF"
-    items.Push(state)
+    ; Single item basic ON/OFF state
+    items := []
+    it := Map()
+    it["key"] := ""
+    it["description"] := isActive ? "ON" : "OFF"
+    items.Push(it)
     cmd["items"] := items
 
     ; Apply theme and accent by state
