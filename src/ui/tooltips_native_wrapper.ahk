@@ -114,6 +114,12 @@ ShowNvimLayerStatus(isActive) {
 ShowVisualModeStatus(isActive) {
     if (IsSet(tooltipConfig) && tooltipConfig.enabled) {
         try ShowVisualLayerToggleCS(isActive)
+        ; If turning OFF Visual and NVIM layer remains active, restore NVIM persistent tooltip
+        try {
+            global isNvimLayerActive
+            if (!isActive && isNvimLayerActive)
+                ShowNvimLayerToggleCS(true)
+        }
     } else {
         ShowCenteredToolTip(isActive ? "◉ VISUAL" : "○ VISUAL")
         SetTimer(() => RemoveToolTip(), -900)
