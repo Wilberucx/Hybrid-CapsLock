@@ -50,6 +50,7 @@ KeyInList(key, listStr) {
 
 ; ---- Load layer enable flags from configuration ----
 LoadLayerFlags() {
+
     global capsTapThresholdMs, ConfigIni
     global ConfigIni, nvimLayerEnabled, excelLayerEnabled, modifierLayerEnabled, leaderLayerEnabled, enableLayerPersistence, debug_mode
     nvimLayerEnabled := CleanIniBool(IniRead(ConfigIni, "Layers", "nvim_layer_enabled", "true"))
@@ -61,6 +62,12 @@ LoadLayerFlags() {
     thr := CleanIniNumber(IniRead(ConfigIni, "Behavior", "nvim_tap_threshold_ms", ""))
     if (thr != "" && thr != "ERROR")
         capsTapThresholdMs := Integer(thr)
+
+    ; Hybrid pause settings
+    global hybridPauseMinutes, enableEmergencyResumeHotkey
+    m := CleanIniNumber(IniRead(ConfigIni, "Behavior", "hybrid_pause_minutes", ""))
+    hybridPauseMinutes := (m != "" && m != "ERROR") ? Integer(m) : 10
+    enableEmergencyResumeHotkey := CleanIniBool(IniRead(ConfigIni, "Behavior", "enable_emergency_resume_hotkey", "true"), true)
 }
 
 ; ---- Compute effective timeouts with precedence (layer-specific > leader > global > default) ----

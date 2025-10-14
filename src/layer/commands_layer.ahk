@@ -450,6 +450,9 @@ ExecuteHybridManagementCommand(cmd) {
         case "v": ; Show Version Info
             ShowCenteredToolTip("HybridCapsLock")
             SetTimer(() => RemoveToolTip(), -1500)
+        case "p": ; Hybrid Pause (auto timer + resume on Leader)
+            ToggleHybridPause()
+            return
        default:
             ShowCenteredToolTip("Unknown hybrid command: " . cmd)
             SetTimer(() => RemoveToolTip(), -1500)
@@ -475,6 +478,47 @@ ExecuteFolderCommand(cmd) {
     ShowCommandExecuted("Folder", cmd)
 }
 
+
+; ---- Hybrid Pause helpers ----
+ToggleHybridPause() {
+    global hybridPauseActive, hybridPauseMinutes
+    if (!hybridPauseActive && !A_IsSuspended) {
+        ; Start hybrid pause
+        Suspend(1)
+        hybridPauseActive := true
+        mins := (IsSet(hybridPauseMinutes) && hybridPauseMinutes > 0) ? hybridPauseMinutes : 10
+        try SetTimer(HybridAutoResumeTimer, -(mins * 60000))
+        if (IsSet(tooltipConfig) && tooltipConfig.enabled) {
+            try ShowCSharpStatusNotification("HYBRID", "SUSPENDED " . mins . "m — press Leader to resume")
+        } else {
+            ShowCenteredToolTip("SUSPENDED " . mins . "m — press Leader to resume")
+            SetTimer(() => RemoveToolTip(), -1500)
+        }
+    } else {
+        ; Already suspended -> resume now
+        try SetTimer(HybridAutoResumeTimer, 0)
+        Suspend(0)
+        hybridPauseActive := false
+        if (IsSet(tooltipConfig) && tooltipConfig.enabled) {
+            try ShowCSharpStatusNotification("HYBRID", "RESUMED")
+        } else {
+            ShowCenteredToolTip("RESUMED")
+            SetTimer(() => RemoveToolTip(), -900)
+        }
+    }
+}
+
+HybridAutoResumeTimer() {
+    global hybridPauseActive
+    Suspend(0)
+    hybridPauseActive := false
+    if (IsSet(tooltipConfig) && tooltipConfig.enabled) {
+        try ShowCSharpStatusNotification("HYBRID", "RESUMED (auto)")
+    } else {
+        ShowCenteredToolTip("RESUMED (auto)")
+        SetTimer(() => RemoveToolTip(), -1000)
+    }
+}
 
 ToggleHiddenFiles() {
     try {

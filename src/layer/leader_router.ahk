@@ -7,6 +7,7 @@
 ; Depends on: core/config (GetEffectiveTimeout), ui (tooltips),
 ; windows_layer (ShowWindowMenu, ExecuteWindowAction)
 
+#SuspendExempt
 #HotIf (leaderLayerEnabled)
 CapsLock & Space:: {
     ; Mark CapsLock as used as modifier so CapsLock tap does not toggle NVIM
@@ -15,8 +16,23 @@ CapsLock & Space:: {
 }
 #HotIf
 
+#SuspendExempt False
+
 TryActivateLeader() {
-    global leaderActive, isNvimLayerActive
+    global leaderActive, isNvimLayerActive, hybridPauseActive
+    ; If script is suspended, resume immediately on Leader
+    if (A_IsSuspended) {
+        try SetTimer(HybridAutoResumeTimer, 0) ; cancel pending auto-resume if any
+        Suspend(0)
+        hybridPauseActive := false
+        if (IsSet(tooltipConfig) && tooltipConfig.enabled) {
+            try ShowCSharpStatusNotification("HYBRID", "RESUMED")
+        } else {
+            ShowCenteredToolTip("RESUMED")
+            SetTimer(() => RemoveToolTip(), -900)
+        }
+        ; continue into Leader flow
+    }
     leaderActive := true
     ; If NVIM layer is active, deactivate it before showing Leader to avoid keymap conflicts
     if (isNvimLayerActive) {
@@ -230,6 +246,26 @@ LeaderWindowsMenuLoop() {
         return
     }
 }
+
+; Emergency resume hotkey (Ctrl+Alt+Win+R)
+#SuspendExempt
+#HotIf (enableEmergencyResumeHotkey)
+^!#r:: {
+    global hybridPauseActive
+    if (A_IsSuspended) {
+        try SetTimer(HybridAutoResumeTimer, 0)
+        Suspend(0)
+        hybridPauseActive := false
+        if (IsSet(tooltipConfig) && tooltipConfig.enabled) {
+            try ShowCSharpStatusNotification("HYBRID", "RESUMED (emergency)")
+        } else {
+            ShowCenteredToolTip("RESUMED (emergency)")
+            SetTimer(() => RemoveToolTip(), -900)
+        }
+    }
+}
+#HotIf
+#SuspendExempt False
 
 LeaderCommandsMenuLoop() {
     ; Loop that keeps user inside Commands main and subcategories

@@ -99,6 +99,15 @@ Esta capa proporciona un **command palette jerárquico** que permite ejecutar sc
 | `v` | **Launch VaultFlow** | Ejecutar comando VaultFlow |
 
 ### ⚡ Power Options (o)
+
+### 🧩 Hybrid Management (h)
+- R - Reload HybridCapsLock (confirma)
+- p - Pause Hybrid (suspende hotkeys, auto-resume configurable; reanuda al pulsar Leader)
+- l - View log file
+- c - Open config folder
+- v - Show version info
+- s - Show System Status
+- e - Exit Script
 | Tecla | Comando | Descripción |
 |-------|---------|-------------|
 | `s` | **Sleep** | Suspender el sistema |

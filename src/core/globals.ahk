@@ -12,6 +12,10 @@ global CommandsIni := A_ScriptDir . "\\config\\commands.ini"
 
 ; ---- Layer runtime states ----
 global isNvimLayerActive := false
+
+; Hybrid pause state
+global hybridPauseActive := false
+
 global _tempEditMode := false
 global VisualMode := false
 

@@ -1,5 +1,27 @@
 # Sistema de Configuración de HybridCapsLock
 
+## Nuevos parámetros de pausa híbrida
+
+En `config/configuration.ini` dentro de la sección `[Behavior]`:
+
+```ini
+; Hybrid pause settings
+; Minutes for auto-resume when pausing from Commands → Hybrid Management (default 10)
+hybrid_pause_minutes=10
+; Enable emergency resume hotkey (Ctrl+Alt+Win+R) that always resumes even if Leader is disabled
+enable_emergency_resume_hotkey=true
+```
+
+- `hybrid_pause_minutes`: tiempo en minutos para reanudar automáticamente tras activar la pausa híbrida desde `Leader → c → h → p`. Si está vacío o inválido, usa 10 por defecto.
+- `enable_emergency_resume_hotkey`: habilita un atajo de emergencia `Ctrl+Alt+Win+R` que reanuda el script aunque todos los hotkeys estén suspendidos o el Leader esté deshabilitado.
+
+Comportamiento de la pausa híbrida:
+- Al ejecutar `Pause Hybrid` desde `Hybrid Management`, el script suspende sus hotkeys y arma un auto-resume al cabo de `hybrid_pause_minutes`.
+- Si presionas `CapsLock+Space` (Leader) mientras está suspendido, el script se reanuda al instante y continúa con el flujo normal del Leader.
+- Puedes reanudar manualmente desde el mismo comando (si ya está en pausa) o desde el ícono de la bandeja de AHK.
+- Feedback visual: se muestran mensajes “SUSPENDED Xm — press Leader to resume” y “RESUMED/RESUMED (auto)”.
+
+
 HybridCapsLock utiliza un sistema de configuración modular basado en archivos `.ini` que permite personalizar cada aspecto del comportamiento del script. Esta guía describe las configuraciones actuales del sistema y cómo usarlas. Enfócate en este documento para configurar tu entorno; no se requieren referencias a documentos internos de fases.
 
 ## Estructura de Configuración
