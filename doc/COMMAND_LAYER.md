@@ -1,16 +1,18 @@
 # Capa de Comandos (Líder: leader → `c`)
 
 Navegación y salida
+
 - Esc: salir completamente de la paleta de comandos desde cualquier nivel (EXIT total)
 - Backspace: volver al menú anterior (back inteligente). Si estás en una categoría, regresa a COMMAND PALETTE; si estás en COMMAND PALETTE, regresa al Leader.
 - Backslash (\): reservado para back, pero puede no funcionar en todos los contextos; se estandariza Backspace como tecla de back.
 
 Cómo se logró el back inteligente
+
 - Con tooltips C# deshabilitados para entrada (tooltip_handles_input=false), el router de Leader mantiene un bucle dedicado (LeaderCommandsMenuLoop) que intercepta Esc/Backspace/"\" y retorna "EXIT" o "BACK" según corresponda, evitando que "\" llegue a los ejecutores como opción desconocida.
 - Con tooltips C# habilitados para entrada, la navegación usa una pila (breadcrumb) que permite volver exactamente al menú anterior.
 
-
 > Referencia rápida
+>
 > - Configuración: config/commands.ini
 > - Confirmaciones: ver “Confirmaciones — Modelo de Configuración” en doc/CONFIGURATION.md y “Precedencia de Confirmación (Commands)” en este documento
 > - Tooltips (C#): sección [Tooltips] en config/configuration.ini (CONFIGURATION.md)
@@ -33,74 +35,82 @@ Esta capa proporciona un **command palette jerárquico** que permite ejecutar sc
 ## 📋 Categorías Disponibles
 
 ### 🖥️ System Commands (s)
-| Tecla | Comando | Descripción |
-|-------|---------|-------------|
-| `s` | **System Info** | Información detallada del sistema |
-| `t` | **Task Manager** | Administrador de tareas |
-| `v` | **Services** | Administrador de servicios |
-| `e` | **Event Viewer** | Visor de eventos |
-| `d` | **Device Manager** | Administrador de dispositivos |
-| `c` | **Disk Cleanup** | Limpieza de disco |
+
+| Tecla | Comando            | Descripción                       |
+| ----- | ------------------ | --------------------------------- |
+| `s`   | **System Info**    | Información detallada del sistema |
+| `t`   | **Task Manager**   | Administrador de tareas           |
+| `v`   | **Services**       | Administrador de servicios        |
+| `e`   | **Event Viewer**   | Visor de eventos                  |
+| `d`   | **Device Manager** | Administrador de dispositivos     |
+| `c`   | **Disk Cleanup**   | Limpieza de disco                 |
 
 ### 🌐 Network Commands (n)
-| Tecla | Comando | Descripción |
-|-------|---------|-------------|
-| `i` | **IP Config** | Configuración de red completa |
-| `p` | **Ping Test** | Test de conectividad a Google |
-| `n` | **Network Info** | Información de conexiones activas |
+
+| Tecla | Comando          | Descripción                       |
+| ----- | ---------------- | --------------------------------- |
+| `i`   | **IP Config**    | Configuración de red completa     |
+| `p`   | **Ping Test**    | Test de conectividad a Google     |
+| `n`   | **Network Info** | Información de conexiones activas |
 
 ### 🔧 Git Commands (g)
-| Tecla | Comando | Descripción |
-|-------|---------|-------------|
-| `s` | **Git Status** | Estado del repositorio |
-| `l` | **Git Log** | Historial de commits (últimos 10) |
-| `b` | **Git Branches** | Lista de ramas locales y remotas |
-| `d` | **Git Diff** | Diferencias no confirmadas |
-| `a` | **Git Add All** | Agregar todos los archivos |
-| `p` | **Git Pull** | Actualizar desde remoto |
+
+| Tecla | Comando          | Descripción                       |
+| ----- | ---------------- | --------------------------------- |
+| `s`   | **Git Status**   | Estado del repositorio            |
+| `l`   | **Git Log**      | Historial de commits (últimos 10) |
+| `b`   | **Git Branches** | Lista de ramas locales y remotas  |
+| `d`   | **Git Diff**     | Diferencias no confirmadas        |
+| `a`   | **Git Add All**  | Agregar todos los archivos        |
+| `p`   | **Git Pull**     | Actualizar desde remoto           |
 
 ### 📊 Monitoring Commands (m)
-| Tecla | Comando | Descripción |
-|-------|---------|-------------|
-| `p` | **Process List** | Lista de procesos activos |
-| `s` | **Service List** | Lista de servicios del sistema |
-| `d` | **Disk Space** | Espacio en disco disponible |
-| `m` | **Memory Usage** | Uso de memoria RAM |
-| `c` | **CPU Usage** | Uso del procesador |
+
+| Tecla | Comando          | Descripción                    |
+| ----- | ---------------- | ------------------------------ |
+| `p`   | **Process List** | Lista de procesos activos      |
+| `s`   | **Service List** | Lista de servicios del sistema |
+| `d`   | **Disk Space**   | Espacio en disco disponible    |
+| `m`   | **Memory Usage** | Uso de memoria RAM             |
+| `c`   | **CPU Usage**    | Uso del procesador             |
 
 ### 📁 Folder Access (f)
-| Tecla | Comando | Descripción |
-|-------|---------|-------------|
-| `t` | **Temp Folder** | Carpeta temporal del sistema |
-| `a` | **AppData** | Datos de aplicaciones del usuario |
-| `p` | **Program Files** | Archivos de programa |
-| `u` | **User Profile** | Perfil del usuario actual |
-| `d` | **Desktop** | Escritorio del usuario |
-| `s` | **System32** | Carpeta del sistema Windows |
+
+| Tecla | Comando           | Descripción                       |
+| ----- | ----------------- | --------------------------------- |
+| `t`   | **Temp Folder**   | Carpeta temporal del sistema      |
+| `a`   | **AppData**       | Datos de aplicaciones del usuario |
+| `p`   | **Program Files** | Archivos de programa              |
+| `u`   | **User Profile**  | Perfil del usuario actual         |
+| `d`   | **Desktop**       | Escritorio del usuario            |
+| `s`   | **System32**      | Carpeta del sistema Windows       |
 
 > Nota: "Windows Commands (w)" fue integrado en "System Commands (s)".
 
 ### 🖥️ System Commands (s)
-| Tecla | Comando | Descripción |
-|-------|---------|-------------|
-| `s` | **System Info** | Información del sistema (systeminfo) |
-| `t` | **Task Manager** | Administrador de tareas |
-| `v` | **Services** | Servicios del sistema |
-| `d` | **Device Manager** | Administrador de dispositivos |
-| `c` | **Disk Cleanup** | Liberador de espacio en disco |
-| `h` | **Toggle Hidden Files** | Mostrar/ocultar archivos ocultos |
-| `r` | **Registry Editor** | Editor del registro |
-| `e` | **Event Viewer** | Visor de eventos |
-| `E` | **Environment Variables** | Variables de entorno |
+
+| Tecla | Comando                   | Descripción                          |
+| ----- | ------------------------- | ------------------------------------ |
+| `s`   | **System Info**           | Información del sistema (systeminfo) |
+| `t`   | **Task Manager**          | Administrador de tareas              |
+| `v`   | **Services**              | Servicios del sistema                |
+| `d`   | **Device Manager**        | Administrador de dispositivos        |
+| `c`   | **Disk Cleanup**          | Liberador de espacio en disco        |
+| `h`   | **Toggle Hidden Files**   | Mostrar/ocultar archivos ocultos     |
+| `r`   | **Registry Editor**       | Editor del registro                  |
+| `e`   | **Event Viewer**          | Visor de eventos                     |
+| `E`   | **Environment Variables** | Variables de entorno                 |
 
 ### 🔐 [VaultFlow](https://github.com/Wilberucx/vaultflow) Commands (v)
-| Tecla | Comando | Descripción |
-|-------|---------|-------------|
-| `v` | **Launch VaultFlow** | Ejecutar comando VaultFlow |
+
+| Tecla | Comando              | Descripción                |
+| ----- | -------------------- | -------------------------- |
+| `v`   | **Launch VaultFlow** | Ejecutar comando VaultFlow |
 
 ### ⚡ Power Options (o)
 
 ### 🧩 Hybrid Management (h)
+
 - R - Reload HybridCapsLock (confirma)
 - p - Pause Hybrid (suspende hotkeys, auto-resume configurable; reanuda al pulsar Leader)
 - l - View log file
@@ -108,21 +118,23 @@ Esta capa proporciona un **command palette jerárquico** que permite ejecutar sc
 - v - Show version info
 - s - Show System Status
 - e - Exit Script
-| Tecla | Comando | Descripción |
-|-------|---------|-------------|
-| `s` | **Sleep** | Suspender el sistema |
-| `h` | **Hibernate** | Hibernar el sistema |
-| `r` | **Restart** | Reiniciar el sistema |
-| `u` | **Shutdown** | Apagar el sistema |
+
+| Tecla | Comando       | Descripción          |
+| ----- | ------------- | -------------------- |
+| `s`   | **Sleep**     | Suspender el sistema |
+| `h`   | **Hibernate** | Hibernar el sistema  |
+| `r`   | **Restart**   | Reiniciar el sistema |
+| `u`   | **Shutdown**  | Apagar el sistema    |
 
 ### 📱 ADB Tools (a)
-| Tecla | Comando | Descripción |
-|-------|---------|-------------|
-| `d` | **ADB Devices** | Listar dispositivos conectados |
-| `x` | **ADB Disconnect** | Desconectar todos los dispositivos |
-| `s` | **ADB Shell** | Abrir shell de Android |
-| `l` | **ADB Logcat** | Ver logs del dispositivo |
-| `r` | **ADB Reboot** | Reiniciar dispositivo Android |
+
+| Tecla | Comando            | Descripción                        |
+| ----- | ------------------ | ---------------------------------- |
+| `d`   | **ADB Devices**    | Listar dispositivos conectados     |
+| `x`   | **ADB Disconnect** | Desconectar todos los dispositivos |
+| `s`   | **ADB Shell**      | Abrir shell de Android             |
+| `l`   | **ADB Logcat**     | Ver logs del dispositivo           |
+| `r`   | **ADB Reboot**     | Reiniciar dispositivo Android      |
 
 ## 🔧 Personalización de Tooltips
 
@@ -281,14 +293,14 @@ ShowMiCategoriaCommandsMenu() {
     ToolTipY := A_ScreenHeight // 2 - 90
     MenuText := "MI CATEGORIA`n"
     MenuText .= "`n"
-    
+
     Loop, 10 {
         lineContent := IniRead(CommandsIni, "MenuDisplay", "micategoria_line" . A_Index, "")
         if (lineContent != "ERROR" && lineContent != "") {
             MenuText .= lineContent . "`n"
         }
     }
-    
+
     MenuText .= "`n"
     MenuText .= "[Backspace: Back] [Esc: Exit]"
     ToolTip(MenuText, ToolTipX, ToolTipY)
@@ -334,7 +346,7 @@ Case "x": ; Mi Nueva Categoría
 ih.Start()
 ih.Wait()
 _miCmd := ih.Input
-    
+
     if (ErrorLevel = "Timeout" || ErrorLevel = "EndKey:Escape") {
         _exitLeader := true
     } else if (ErrorLevel = "EndKey:Backspace") {
@@ -348,28 +360,33 @@ _miCmd := ih.Input
 ## 📝 Tipos de Comandos Soportados
 
 ### Comandos CMD
+
 ```autohotkey
 Run("cmd.exe /k ipconfig /all")
 ```
 
 ### Comandos PowerShell
+
 ```autohotkey
 Run("powershell.exe -Command \"Get-Process | Sort-Object CPU\"")
 ```
 
 ### Ejecutables Directos
+
 ```autohotkey
 Run, taskmgr.exe
 Run, notepad.exe
 ```
 
 ### Scripts
+
 ```autohotkey
 Run("C:\\Scripts\\mi_script.bat")
 Run("powershell.exe -File \"C:\\Scripts\\mi_script.ps1\"")
 ```
 
 ### Archivos MSC (Consolas de Windows)
+
 ```autohotkey
 Run, services.msc
 Run, devmgmt.msc
@@ -380,18 +397,20 @@ Run, devmgmt.msc
 ### Precedencia de Confirmación (Commands)
 
 Orden (mayor a menor):
-1) Global: `configuration.ini` → `[Behavior]` → `show_confirmation_global`
-2) Categoría: `commands.ini` → `[CategorySettings]` `<Friendly>_show_confirmation`
+
+1. Global: `configuration.ini` → `[Behavior]` → `show_confirmation_global`
+2. Categoría: `commands.ini` → `[CategorySettings]` `<Friendly>_show_confirmation`
    - `true`: fuerza confirmación para toda la categoría (omite per-command)
    - `false`: delega a per-command
-3) Per-command (listas): `commands.ini` → `[Confirmations.<Friendly>]`
+3. Per-command (listas): `commands.ini` → `[Confirmations.<Friendly>]`
    - `confirm_keys`: teclas que DEBEN confirmar (case-sensitive)
    - `no_confirm_keys`: teclas que NO deben confirmar
    - Compatibilidad extendida: alias `key_ascii_<ord>` → `key_<char>` → clave raw
-4) Default de capa: `commands.ini` → `[Settings]` → `show_confirmation`
-5) Fallback: `power=true`, otros `false`
+4. Default de capa: `commands.ini` → `[Settings]` → `show_confirmation`
+5. Fallback: `power=true`, otros `false`
 
 Ejemplos:
+
 ```ini
 [Behavior]
 show_confirmation_global=false
@@ -419,6 +438,7 @@ no_confirm_keys=s h
 - Variables opcionales (`[CustomVars]`): placeholders `{Var}` en payloads/opciones.
 
 Ejemplo:
+
 ```ini
 [CustomCommands]
 GitStatus=cmd:git status
@@ -437,8 +457,6 @@ g_action=@GitStatus
 ```
 
 Para detalles ver `doc/COMMANDS_CUSTOM.md`.
-
-
 
 ### Archivo commands.ini - Sección [Settings]
 
@@ -464,6 +482,7 @@ feedback_duration=1500   ; Duración del feedback (ms)
 ## 💡 Consejos de Uso
 
 ### 🚀 Flujo Rápido
+
 ```
 leader → c → s → t (Task Manager en 4 teclas)
 leader → c → g → s (Git Status en 4 teclas)
@@ -471,12 +490,15 @@ leader → c → f → t (Temp folder en 4 teclas)
 ```
 
 ### 🎯 Comandos Frecuentes
+
 - **Desarrollo:** `g` (Git), `n` (Network), `f` (Folders)
 - **Administración:** `s` (System), `m` (Monitoring), `w` (Windows)
 - **Utilidades:** `o` (Power), `a` (ADB), `v` (VaultFlow)
 
 ### ⚡ Memoria Muscular
+
 Las teclas siguen patrones mnemotécnicos:
+
 - `s` = **S**ystem
 - `g` = **G**it
 - `n` = **N**etwork
@@ -486,16 +508,19 @@ Las teclas siguen patrones mnemotécnicos:
 ## ⚠️ Solución de Problemas
 
 ### Comando No Aparece en Tooltip
+
 1. **Verificar sintaxis:** Asegúrate de que la línea en `commands.ini` esté bien formateada
 2. **Reiniciar script:** Recarga HybridCapsLock para aplicar cambios
 3. **Verificar numeración:** Las líneas deben ser consecutivas (line1, line2, etc.)
 
 ### Comando No Se Ejecuta
+
 1. **Verificar función:** Asegúrate de que el comando esté en la función Execute correspondiente
 2. **Verificar Input:** La tecla debe estar incluida en el Input de la categoría
 3. **Verificar permisos:** Algunos comandos requieren permisos de administrador
 
 ### Tooltip Se Ve Mal
+
 1. **Longitud de líneas:** Mantén las líneas de tooltip relativamente cortas
 2. **Alineación:** Usa espacios para alinear columnas si es necesario
 3. **Líneas vacías:** Usa `main_line5=` (vacía) para agregar espacios

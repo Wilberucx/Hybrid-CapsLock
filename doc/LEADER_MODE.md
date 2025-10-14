@@ -112,6 +112,13 @@ leader → Menú Principal
 
 ## 💡 Características Especiales
 
+### ⏸️ Pausa Híbrida y Reanudación con Leader
+- Si el script está suspendido (pausa híbrida desde `Commands → Hybrid Management → p`), al presionar `CapsLock+Space` (Leader) se reanuda inmediatamente y continúa el flujo normal del Leader.
+- La pausa híbrida arma un auto-resume tras `hybrid_pause_minutes` (configurable en `config/configuration.ini`, por defecto 10).
+- Opcionalmente existe un hotkey de emergencia `Ctrl+Alt+Win+R` (configurable) que reanuda el script incluso si el Leader estuviera deshabilitado.
+- Feedback visual: “SUSPENDED Xm — press Leader to resume” y “RESUMED/RESUMED (auto)”.
+
+
 ### 🔄 Integración con Capa Nvim
 - Si la Capa Nvim está activa al llamar al líder, se desactiva automáticamente
 - Esto evita conflictos entre modos y proporciona una transición limpia
