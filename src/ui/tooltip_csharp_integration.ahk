@@ -454,8 +454,6 @@ HandleTooltipSelection(key) {
                 ShowMonitoringCommandsMenuCS()
             case "f":
                 ShowFolderCommandsMenuCS()
-            case "w":
-                ShowWindowsCommandsMenuCS()
             case "o":
                 ShowPowerOptionsCommandsMenuCS()
             case "a":
@@ -510,7 +508,6 @@ t::HandleTooltipSelection("t")
 c::HandleTooltipSelection("c")
 
 i::HandleTooltipSelection("i")
-w::HandleTooltipSelection("w")
 n::HandleTooltipSelection("n")
 \::HandleTooltipSelection("\\")
 Esc::HandleTooltipSelection("ESC")
@@ -939,7 +936,7 @@ ShowCommandExecutedCS(category, command) {
 
 ShowNvimHelpCS() {
     global tooltipConfig
-    items := "h:Move left|j:Move down|k:Move up|l:Move right|v:Visual Mode|y:Copy|p:Paste|u:Undo|x:Cut|i:Insert Mode|w:Word right|b:Word left|e:End of word|r:Redo|C-u:Scroll up 6|C-d:Scroll down 6|Esc:Escape/Exit mode|f:Find|::Cmd (w/q/wq)"
+    items := "h:Move left|j:Move down|k:Move up|l:Move right|v:Visual Mode|y:Copy|p:Paste|u:Undo|x:Cut|i:Insert Mode|w:Word right|b:Word left|e:End of word|r:Redo|C-u:Scroll up 6|C-d:Scroll down 6|0:Line start|$:Line end|Esc:Escape/Exit mode|f:Find|::Cmd (w/q/wq)"
     to := (IsSet(tooltipConfig) && tooltipConfig.HasProp("optionsTimeout") && tooltipConfig.optionsTimeout > 0) ? tooltipConfig.optionsTimeout : 8000
     if (to < 8000)
         to := 8000
@@ -949,7 +946,7 @@ ShowNvimHelpCS() {
 ShowVisualHelpCS() {
     global tooltipConfig
     ; Visual mode specific help
-    items := "h:Extend left|j:Extend down|k:Extend up|l:Extend right|w:Extend word right|b:Extend word left|y:Copy selection|d:Delete selection|a:Select all|c:Change -> Insert|Esc:Exit Visual"
+    items := "h:Extend left|j:Extend down|k:Extend up|l:Extend right|w:Extend word right|b:Extend word left|0:Extend to line start|$:Extend to line end|y:Copy selection|d:Delete selection|a:Select all|c:Change -> Insert|Esc:Exit Visual"
     to := (IsSet(tooltipConfig) && tooltipConfig.HasProp("optionsTimeout") && tooltipConfig.optionsTimeout > 0) ? tooltipConfig.optionsTimeout : 8000
     if (to < 8000)
         to := 8000

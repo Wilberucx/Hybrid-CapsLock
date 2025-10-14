@@ -256,7 +256,6 @@ HandleCommandCategory(catKey) {
             case "g": ShowGitCommandsMenuCS()
             case "m": ShowMonitoringCommandsMenuCS()
             case "f": ShowFolderCommandsMenuCS()
-            case "w": ShowWindowsCommandsMenuCS()
             case "o": ShowPowerOptionsCommandsMenuCS()
             case "a": ShowADBCommandsMenuCS()
             case "v": ShowVaultFlowCommandsMenuCS()

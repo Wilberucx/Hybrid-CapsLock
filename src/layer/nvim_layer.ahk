@@ -86,6 +86,10 @@ v:: {
     SetTimer(() => RemoveToolTip(), -1000)
 }
 
+; Line navigation (0: start, $: end)
+0::Send("{Home}")
++4::Send("{End}")
+
 ; Basic navigation (hjkl) wildcard to capture Ctrl/Alt/Shift combinations
 *h::NvimDirectionalSend("Left")
 *j::NvimDirectionalSend("Down")
