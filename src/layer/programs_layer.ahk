@@ -209,8 +209,8 @@ ShowProgramDetails(keyPressed) {
         ShowCenteredToolTip(detailsText)
     }
     userInput := InputHook("L1 T" . GetEffectiveTimeout("programs"))
-    userInput.KeyOpt("{Enter}", "+")
-    userInput.KeyOpt("{Escape}", "+")
+    userInput.KeyOpt("{Enter}", "ES")
+    userInput.KeyOpt("{Escape}", "ES")
     userInput.Start()
     userInput.Wait()
     if (userInput.EndReason = "KeyDown" && userInput.EndKey = "Enter") {

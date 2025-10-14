@@ -46,6 +46,7 @@ TryActivateLeader() {
         if (IsSet(tooltipConfig) && tooltipConfig.enabled && tooltipConfig.handleInput) {
             ; Let tooltip hotkeys handle input; wait for timeout/escape only
             ih := InputHook("T" . GetEffectiveTimeout("leader"), "{Escape}")
+ih.KeyOpt("{Escape}", "S")
             ih.Start()
             ih.Wait()
             if (ih.EndReason = "EndKey" && ih.EndKey = "Escape") {
@@ -59,6 +60,7 @@ TryActivateLeader() {
             continue
         }
         ih := InputHook("L1 T" . GetEffectiveTimeout("leader"), "{Escape}")
+ih.KeyOpt("{Escape}", "S")
         ih.Start()
         ih.Wait()
         if (ih.EndReason = "EndKey" && ih.EndKey = "Escape") {
@@ -89,6 +91,8 @@ TryActivateLeader() {
             ; Timestamps menu with proper Back/Esc handling
             ShowTimeMenu()
             ihTs := InputHook("L1 T" . GetEffectiveTimeout("timestamps"), "{Escape}{Backspace}")
+ihTs.KeyOpt("{Escape}", "S")
+ihTs.KeyOpt("{Backspace}", "S")
             ihTs.Start()
             ihTs.Wait()
             if (ihTs.EndReason = "EndKey") {
@@ -118,6 +122,8 @@ TryActivateLeader() {
             ; Information menu with proper Back/Esc handling
             ShowInformationMenu()
             ihInfo := InputHook("L1 T" . GetEffectiveTimeout("information"), "{Escape}{Backspace}")
+ihInfo.KeyOpt("{Escape}", "S")
+ihInfo.KeyOpt("{Backspace}", "S")
             ihInfo.Start()
             ihInfo.Wait()
             if (ihInfo.EndReason = "EndKey") {
@@ -222,6 +228,8 @@ LeaderWindowsMenuLoop() {
     Loop {
         ShowWindowMenu()
         ih := InputHook("L1 T" . GetEffectiveTimeout("windows"), "{Escape}{Backspace}")
+ih.KeyOpt("{Escape}", "S")
+ih.KeyOpt("{Backspace}", "S")
         ih.Start()
         ih.Wait()
         if (ih.EndReason = "EndKey") {
@@ -272,6 +280,8 @@ LeaderCommandsMenuLoop() {
     Loop {
         ShowCommandsMenu()
         ihCmd := InputHook("L1 T" . GetEffectiveTimeout("commands"), "{Escape}{Backspace}")
+ihCmd.KeyOpt("{Escape}", "S")
+ihCmd.KeyOpt("{Backspace}", "S")
         ihCmd.Start()
         ihCmd.Wait()
         if (ihCmd.EndReason = "EndKey") {
@@ -305,6 +315,8 @@ LeaderProgramsMenuLoop() {
     Loop {
         ShowProgramMenu()
         ih := InputHook("L1 T" . GetEffectiveTimeout("programs"), "{Escape}{Backspace}")
+ih.KeyOpt("{Escape}", "S")
+ih.KeyOpt("{Backspace}", "S")
         ih.Start()
         ih.Wait()
         if (ih.EndReason = "EndKey") {

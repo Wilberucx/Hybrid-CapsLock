@@ -265,6 +265,8 @@ HandleCommandCategory(catKey) {
         }
     }
     ih := InputHook("L1 T" . GetEffectiveTimeout("commands"), "{Escape}{Backspace}")
+ih.KeyOpt("{Escape}", "S")
+ih.KeyOpt("{Backspace}", "S")
     ih.Start()
     ih.Wait()
     if (ih.EndReason = "EndKey") {
