@@ -264,10 +264,10 @@ NvimShowHelp() {
         if (IsSet(tooltipConfig) && tooltipConfig.enabled) {
             ShowNvimHelpCS()
         } else {
-            ShowCenteredToolTip("NVIM HELP: hjkl move | v visual | y copy | p paste | u undo | x cut | i insert")
+            ShowCenteredToolTip("NVIM HELP: hjkl move | v visual | y copy | p paste | u undo | x cut | i insert (no combo) | I insert+^!+i | f find")
         }
     } catch {
-        ShowCenteredToolTip("NVIM HELP: hjkl move | v visual | y copy | p paste | u undo | x cut | i insert")
+        ShowCenteredToolTip("NVIM HELP: hjkl move | v visual | y copy | p paste | u undo | x cut | i insert (no combo) | I insert+^!+i | f find")
     }
 }
 
