@@ -169,15 +169,36 @@ e::Send("^{Right}{Left}")
 ; +y::Send("{WheelUp 3}")
 
 ; Insert mode (temporary disable layer) - manual return with Esc
-; After disabling layer, send Ctrl+Alt+Shift+I (as requested)
+; i: solo desactiva NVIM layer (no envía combinación)
+; Shift+i: desactiva NVIM layer y envía Ctrl+Alt+Shift+I (hereda el comportamiento anterior)
 i:: {
-    global isNvimLayerActive, _tempEditMode
+    global isNvimLayerActive, _tempEditMode, tooltipConfig
     isNvimLayerActive := false
     _tempEditMode := true
-    ShowNvimLayerStatus(false)
+    ; Ocultar/eliminar tooltip persistente según el backend activo
+    if (IsSet(tooltipConfig) && tooltipConfig.enabled) {
+        try ShowNvimLayerToggleCS(false) ; oculta el tooltip C# si estaba mostrado
+    } else {
+        ShowNvimLayerStatus(false) ; tooltip nativo breve
+    }
+    SetTempStatus("INSERT MODE (Esc para volver)", 1500)
+    ; Sin envío de combinación aquí
+    ; Retorno manual con Esc
+}
+
++i:: {
+    global isNvimLayerActive, _tempEditMode, tooltipConfig
+    isNvimLayerActive := false
+    _tempEditMode := true
+    ; Ocultar/eliminar tooltip persistente según el backend activo
+    if (IsSet(tooltipConfig) && tooltipConfig.enabled) {
+        try ShowNvimLayerToggleCS(false)
+    } else {
+        ShowNvimLayerStatus(false)
+    }
     SetTempStatus("INSERT MODE (Esc para volver)", 1500)
     Send("^!+i")
-    ; Ya no programamos auto retorno: se vuelve con Esc
+    ; Retorno manual con Esc
 }
 
 ; Redo (r)
@@ -284,10 +305,15 @@ NvimCloseHelp() {
 ; Quick exit
 ; Send Ctrl+Alt+Shift+2 with f and then deactivate NVIM layer
 f:: {
-    Send("^!+2")
-    global isNvimLayerActive
+    global isNvimLayerActive, tooltipConfig
     isNvimLayerActive := false
-    ShowNvimLayerStatus(false)
+    if (IsSet(tooltipConfig) && tooltipConfig.enabled) {
+        try ShowNvimLayerToggleCS(false)
+    } else {
+        ShowNvimLayerStatus(false)
+    }
+    ; Enviar la combinación después de desactivar la capa
+    Send("^!+2")
 }
 
 ^!+i::Send("^!+i")
