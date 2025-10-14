@@ -95,12 +95,6 @@ ReadTooltipConfig() {
     return config
 }
 
-; Función para recargar configuración de tooltips
-ReloadTooltipConfig() {
-    global tooltipConfig
-    tooltipConfig := ReadTooltipConfig()
-}
-
 ; ===================================================================
 ; ESCRITURA ROBUSTA DEL JSON (ATÓMICA + THROTTLE)
 ; ===================================================================
@@ -1187,7 +1181,7 @@ ShowSystemCommandsMenuCS() {
     if (items = "") {
         BuildCommandItemsFromCategoryKey("s")
         if (items = "")
-            items := "s:System Info|t:Task Manager|v:Services|e:Event Viewer|d:Device Manager|c:Disk Cleanup|h:Toggle Hidden Files|r:Registry Editor|E:Environment Variables"
+            items := "s:System Info|t:Task Manager|v:Services|x:Event Viewer|d:Device Manager|c:Disk Cleanup|h:Toggle Hidden Files|r:Registry Editor|E:Environment Variables"
     }
     ShowCSharpOptionsMenu("SYSTEM COMMANDS", items, "\\: Back|ESC: Exit")
 }
@@ -1247,7 +1241,7 @@ ShowWindowsCommandsMenuCS() {
     if (items = "") {
         BuildCommandItemsFromCategoryKey("w")
         if (items = "")
-            items := "h:Toggle Hidden Files|r:Registry Editor|E:Environment Variables"
+            items := "h:Toggle Hidden Files|r:Registry Editor|e:Environment Variables"
     }
     ShowCSharpOptionsMenu("WINDOWS COMMANDS", items, "\\: Back|ESC: Exit")
 }
@@ -1277,7 +1271,7 @@ ShowHybridManagementMenuCS() {
     TooltipNavPush("CMD_h")
     items := BuildCommandItemsFromCategoryKey("h")
     if (items = "") {
-        items := "R:Reload Script|e:Exit Script|c:Open Config Folder|l:View Log File|v:Show Version Info|r:Reload Config"
+        items := "R:Reload Script|e:Exit Script|c:Open Config Folder|l:View Log File|v:Show Version Info"
     }
     ShowCSharpOptionsMenu("HYBRID MANAGEMENT", items, "\\: Back|ESC: Exit")
 }

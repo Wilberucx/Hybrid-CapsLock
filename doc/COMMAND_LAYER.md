@@ -78,12 +78,20 @@ Esta capa proporciona un **command palette jerárquico** que permite ejecutar sc
 | `d` | **Desktop** | Escritorio del usuario |
 | `s` | **System32** | Carpeta del sistema Windows |
 
-### 🪟 Windows Commands (w)
+> Nota: "Windows Commands (w)" fue integrado en "System Commands (s)".
+
+### 🖥️ System Commands (s)
 | Tecla | Comando | Descripción |
 |-------|---------|-------------|
+| `s` | **System Info** | Información del sistema (systeminfo) |
+| `t` | **Task Manager** | Administrador de tareas |
+| `v` | **Services** | Servicios del sistema |
+| `d` | **Device Manager** | Administrador de dispositivos |
+| `c` | **Disk Cleanup** | Liberador de espacio en disco |
 | `h` | **Toggle Hidden Files** | Mostrar/ocultar archivos ocultos |
 | `r` | **Registry Editor** | Editor del registro |
-| `e` | **Environment Variables** | Variables de entorno |
+| `e` | **Event Viewer** | Visor de eventos |
+| `E` | **Environment Variables** | Variables de entorno |
 
 ### 🔐 [VaultFlow](https://github.com/Wilberucx/vaultflow) Commands (v)
 | Tecla | Comando | Descripción |

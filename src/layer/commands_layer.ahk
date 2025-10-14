@@ -95,8 +95,6 @@ ShowDynamicCommandsMenu(catKey) {
     } else if (catKey = "h") {
         ; Fallback default for Hybrid Management if INI is missing
         menuText .= "R - Reload Script`n"
-        menuText .= "r - Reload Config`n"
-        menuText .= "m - Reload Mappings`n"
         menuText .= "c - Open Config Folder`n"
         menuText .= "l - View Log File`n"
         menuText .= "v - Version Info`n"
@@ -195,23 +193,32 @@ ExecuteSystemCommand(cmd) {
     ; Auto-hide tooltip first if configured
     if (IsSet(tooltipConfig) && tooltipConfig.enabled && tooltipConfig.autoHide)
         HideCSharpTooltip()
-    ; Merge Windows commands into System (uppercase E only for Environment Variables)
-    if (cmd = "h" || cmd = "r" || cmd = "E") {
-        ExecuteWindowsCommand(cmd)
-        return
-    }
     switch cmd {
+        ; Core system
         case "s": Run("cmd.exe /k systeminfo")
         case "t": Run("taskmgr.exe")
         case "v": Run("services.msc")
-        case "x":
+        case "d": Run("devmgmt.msc")
+        case "c": Run("cleanmgr.exe")
+        ; Former Windows commands now native in System
+        case "h":
+            ToggleHiddenFiles()
+            ShowCommandExecuted("System", "Toggle Hidden Files")
+            return
+        case "r":
+            Run("regedit.exe")
+            ShowCommandExecuted("System", "Registry Editor")
+            return
+        case "E":
+            Run("rundll32.exe sysdm.cpl,EditEnvironmentVariables")
+            ShowCommandExecuted("System", "Environment Variables")
+            return
+        case "e":
             try {
                 Run(EnvGet("SystemRoot") . "\\system32\\eventvwr.msc")
             } catch {
                 try Run("eventvwr.msc")
             }
-        case "d": Run("devmgmt.msc")
-        case "c": Run("cleanmgr.exe")
         default:
             ShowCenteredToolTip("Unknown system command: " . cmd)
             SetTimer(() => RemoveToolTip(), -1500)
@@ -444,23 +451,6 @@ ExecuteHybridManagementCommand(cmd) {
         case "v": ; Show Version Info
             ShowCenteredToolTip("HybridCapsLock")
             SetTimer(() => RemoveToolTip(), -1500)
-        case "r": ; Reload Config (flags + tooltip config)
-           LoadLayerFlags()
-           ReloadTooltipConfig()
-           if (IsSet(tooltipConfig) && tooltipConfig.enabled)
-               ShowCSharpStatusNotification("HYBRID", "CONFIG RELOADED")
-           else {
-               ShowCenteredToolTip("CONFIG RELOADED")
-               SetTimer(() => RemoveToolTip(), -1200)
-           }
-       case "m": ; Reload Mappings (modifier/excel/nvim)
-           try ReloadAllMappings()
-           if (IsSet(tooltipConfig) && tooltipConfig.enabled)
-               ShowCSharpStatusNotification("HYBRID", "MAPPINGS RELOADED")
-           else {
-               ShowCenteredToolTip("MAPPINGS RELOADED")
-               SetTimer(() => RemoveToolTip(), -1200)
-           }
        default:
             ShowCenteredToolTip("Unknown hybrid command: " . cmd)
             SetTimer(() => RemoveToolTip(), -1500)
@@ -486,27 +476,6 @@ ExecuteFolderCommand(cmd) {
     ShowCommandExecuted("Folder", cmd)
 }
 
-ExecuteWindowsCommand(cmd) {
-    if (IsSet(tooltipConfig) && tooltipConfig.enabled && tooltipConfig.autoHide)
-        HideCSharpTooltip()
-    ; Normalize only for comparisons that are case-insensitive; preserve case for 'E'
-    if (cmd != "E")
-        cmd := StrLower(cmd)
-    switch cmd {
-        case "h":
-            ToggleHiddenFiles()
-        case "r":
-            Run("regedit.exe")
-            ShowCommandExecuted("Windows", "Registry Editor")
-        case "E":
-            Run("rundll32.exe sysdm.cpl,EditEnvironmentVariables")
-            ShowCommandExecuted("Windows", "Environment Variables")
-        default:
-            ShowCenteredToolTip("Unknown windows command: " . cmd)
-            SetTimer(() => RemoveToolTip(), -1500)
-            return
-    }
-}
 
 ToggleHiddenFiles() {
     try {

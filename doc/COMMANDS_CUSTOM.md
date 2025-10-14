@@ -69,7 +69,7 @@ OpenDocs=url:{DocsUrl}
 Ejemplo categoría nueva:
 ```
 [Categories]
-order=s h g m n f w v o t
+order=s h g m n f v o t  ; w (Windows) fue integrado en System
 t=Tools
 
 [t_category]

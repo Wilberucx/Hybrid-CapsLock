@@ -17,7 +17,7 @@ Al activar el modo líder, aparece un menú visual que muestra las opciones disp
 ```
 LEADER MENU
 
-w - Windows
+(Windows fue integrado en System)
 p - Programs  
 t - Time
 c - Commands
