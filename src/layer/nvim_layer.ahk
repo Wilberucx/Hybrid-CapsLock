@@ -82,6 +82,10 @@ try {
 global ColonLogicActive := false
 global ColonStage := ""
 
+; Estado para mini-capa de 'g'
+global GLogicActive := false
+
+
 ; ---- Context hotkeys ----
 #HotIf (nvimStaticEnabled ? (isNvimLayerActive && !GetKeyState("CapsLock", "P") && NvimLayerAppAllowed()) : false)
 
@@ -96,6 +100,15 @@ v:: {
 ; Line navigation (0: start, $: end)
 0::Send("{Home}")
 +4::Send("{End}")
+
+; Ir a inicio/fin de documento (gg / G)
+; gg -> Top (Ctrl+Home), G (Shift+g) -> Bottom (Ctrl+End)
+; En VisualMode, añadir Shift para extender selección
+
+#HotIf (nvimStaticEnabled ? (isNvimLayerActive && !GetKeyState("CapsLock","P") && NvimLayerAppAllowed() && !GLogicActive) : false)
+g::GLogicStart()
++g::NvimGoToDocEdge(false)
+#HotIf (nvimStaticEnabled ? (isNvimLayerActive && !GetKeyState("CapsLock","P") && NvimLayerAppAllowed()) : false)
 
 ; Basic navigation (hjkl) wildcard to capture Ctrl/Alt/Shift combinations
 *h::NvimDirectionalSend("Left")
@@ -271,10 +284,10 @@ NvimShowHelp() {
         if (IsSet(tooltipConfig) && tooltipConfig.enabled) {
             ShowNvimHelpCS()
         } else {
-            ShowCenteredToolTip("NVIM HELP: hjkl move | v visual | y copy | p paste | u undo | x cut | i insert (no combo) | I insert+^!+i | f find")
+            ShowCenteredToolTip("NVIM HELP: hjkl move | gg/G top/bottom | v visual | y copy | p paste | u undo | x cut | i insert (no combo) | I insert+^!+i | f find")
         }
     } catch {
-        ShowCenteredToolTip("NVIM HELP: hjkl move | v visual | y copy | p paste | u undo | x cut | i insert (no combo) | I insert+^!+i | f find")
+        ShowCenteredToolTip("NVIM HELP: hjkl move | gg/G top/bottom | v visual | y copy | p paste | u undo | x cut | i insert (no combo) | I insert+^!+i | f find")
     }
 }
 
@@ -426,6 +439,12 @@ a:: {
 *Enter::ColonLogicEnter()
 *Esc::ColonLogicCancel()
 #HotIf
+
+; --- Mini capa para 'g' (gg) ---
+#HotIf (nvimStaticEnabled ? (isNvimLayerActive && GLogicActive && !GetKeyState("CapsLock", "P") && NvimLayerAppAllowed()) : false)
+*g::GLogicHandleG()
+*Esc::GLogicCancel()
+#HotIf
 #InputLevel 1
 #HotIf (nvimStaticEnabled ? (isNvimLayerActive && !GetKeyState("CapsLock", "P") && NvimLayerAppAllowed()) : false)
 #HotIf
@@ -511,6 +530,16 @@ NvimWordJumpHelper(dir) {
    arrow := (dir = "Right") ? "Right" : "Left"
    Send(mods . "{" . arrow . "}")
 }
+
+; Go to document edge (top/bottom) with gg/G
+NvimGoToDocEdge(goTop := true) {
+    global VisualMode
+    mods := "^" ; Ctrl for document edge
+    if (VisualMode)
+        mods .= "+" ; Shift to extend selection
+    Send(mods . "{" . (goTop ? "Home" : "End") . "}")
+}
+
 
 DeleteCurrentWord() {
     Send("^{Right}^+{Left}{Delete}")
@@ -615,4 +644,27 @@ ReactivateNvimAfterReplace() {
         ShowNvimLayerStatus(true)
         SetTimer(() => RemoveToolTip(), -1000)
     }
+}
+
+; --- Lógica mini-capa 'g' (gg) ---
+GLogicStart() {
+    global GLogicActive
+    GLogicActive := true
+    to := GetEffectiveTimeout("nvim")
+    ; GetEffectiveTimeout returns seconds; SetTimer expects ms when negative
+    try SetTimer(GLogicTimeout, -to*1000)
+}
+
+GLogicHandleG() {
+    GLogicCancel()
+    NvimGoToDocEdge(true) ; top
+}
+
+GLogicCancel() {
+    global GLogicActive
+    GLogicActive := false
+}
+
+GLogicTimeout() {
+    GLogicCancel()
 }
