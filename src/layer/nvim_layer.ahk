@@ -10,7 +10,7 @@
 
 ; ---- Toggle via CapsLock clean tap (KeyWait-based, Claude-style) ----
 ; Block until release, then decide by duration and whether CapsLock was used as modifier.
-~*CapsLock:: {
+*CapsLock:: {
     global nvimLayerEnabled, isNvimLayerActive, VisualMode
     global capsTapThresholdMs, capsLockUsedAsModifier, debug_mode
     if (!nvimLayerEnabled)
@@ -43,6 +43,13 @@
     }
     try SaveLayerState()
 }
+
+; Swallow CapsLock key-up so OS does not toggle CapsLock when used as modifier chords
+$*CapsLock Up:: {
+   ; Do nothing: prevents OS CapsLock state from changing on release
+   return
+}
+
 
 
 ; Try dynamic mappings if available (Normal mode)

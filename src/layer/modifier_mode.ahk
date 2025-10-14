@@ -21,22 +21,11 @@ try {
 ; Toggle OS CapsLock state with CapsLock+F10 (no script mode changes)
 CapsLock & F10:: {
     MarkCapsLockAsModifier()
+    ; Read current OS CapsLock state and set explicitly to the opposite
+    cur := GetKeyState("CapsLock", "T")
     try {
-        SetCapsLockState("Toggle")
+        SetCapsLockState(cur ? "Off" : "On")
     } catch {
-        ; fallback: send CapsLock key
-        Send("{CapsLock}")
-    }
-    ; Show new state with NVIM/Visual/Excel tooltip design
-    Sleep 30
-    newState := GetKeyState("CapsLock", "T")
-    try {
-        ; Use dedicated C# status tooltip with no navigation
-        ShowCapsLockStatusCS(newState ? "ON" : "OFF")
-    } catch {
-        ; Fallback native centered tooltip
-        ShowCenteredToolTip("CapsLock < " . (newState ? "ON" : "OFF"))
-        SetTimer(() => RemoveToolTip(), -1200)
     }
 }
 
