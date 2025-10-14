@@ -868,6 +868,48 @@ ShowCopyNotificationCS() {
     ShowCSharpStatusNotification("CLIPBOARD", "COPIED")
 }
 
+; Short, navigation-less status tooltip for CapsLock toggle
+ShowCapsLockStatusCS(stateText) {
+    ; Build a tooltip like NVIM/Excel style: title, single item, no navigation
+    theme := ReadTooltipThemeDefaults()
+    cmd := Map()
+    cmd["show"] := true
+    cmd["title"] := "CapsLock"
+    cmd["layout"] := "list"
+    cmd["tooltip_type"] := "bottom_right_list"
+    ; Use configured status timeout if present, otherwise 1200ms
+    to := CleanIniValue(IniRead(ConfigIni, "Tooltips", "status_notification_timeout", ""))
+    if (to = "" || to = "ERROR")
+        to := 1200
+    else
+        to := Integer(Trim(to))
+    cmd["timeout_ms"] := to
+
+    items := []
+    it := Map()
+    it["key"] := "<"
+    it["description"] := stateText
+    items.Push(it)
+    cmd["items"] := items
+
+    ; Apply theme styling and position
+    if (theme.style.Count)
+        cmd["style"] := theme.style
+    if (theme.position.Count)
+        cmd["position"] := theme.position
+    if (theme.window.Has("topmost"))
+        cmd["topmost"] := theme.window["topmost"]
+    if (theme.window.Has("click_through"))
+        cmd["click_through"] := theme.window["click_through"]
+    if (theme.window.Has("opacity"))
+        cmd["opacity"] := theme.window["opacity"]
+
+    ; Intentionally omit navigation to avoid Back/Exit hints
+    StartTooltipApp()
+    json := SerializeJson(cmd)
+    ScheduleTooltipJsonWrite(json)
+}
+
 ShowNvimLayerStatusCS(isActive) {
     if (isActive) {
         ShowNvimStatus()

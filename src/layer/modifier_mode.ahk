@@ -18,6 +18,28 @@ try {
 #HotIf (modifierStaticEnabled ? (modifierLayerEnabled) : false)
 
 ; ----- Window Functions -----
+; Toggle OS CapsLock state with CapsLock+F10 (no script mode changes)
+CapsLock & F10:: {
+    MarkCapsLockAsModifier()
+    try {
+        SetCapsLockState("Toggle")
+    } catch {
+        ; fallback: send CapsLock key
+        Send("{CapsLock}")
+    }
+    ; Show new state with NVIM/Visual/Excel tooltip design
+    Sleep 30
+    newState := GetKeyState("CapsLock", "T")
+    try {
+        ; Use dedicated C# status tooltip with no navigation
+        ShowCapsLockStatusCS(newState ? "ON" : "OFF")
+    } catch {
+        ; Fallback native centered tooltip
+        ShowCenteredToolTip("CapsLock < " . (newState ? "ON" : "OFF"))
+        SetTimer(() => RemoveToolTip(), -1200)
+    }
+}
+
 CapsLock & 1::WinMinimize("A")
 CapsLock & `::Send("#m")  ; Minimize all windows
 CapsLock & q::Send("!{F4}")  ; Close window (Alt+F4)
