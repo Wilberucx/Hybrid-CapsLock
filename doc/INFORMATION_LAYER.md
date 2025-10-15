@@ -1,5 +1,10 @@
 # Capa de Information (Líder: leader → `i`)
 
+> Referencia rápida
+> - Configuración: config/information.ini
+> - Confirmaciones: ver “Confirmaciones — Modelo de Configuración” en doc/CONFIGURATION.md y la sección "Developers — Confirmation configuration (Information)" en doc/CONFIGURATION.md
+> - Tooltips (C#): sección [Tooltips] en config/configuration.ini (CONFIGURATION.md)
+
 La Capa de Information proporciona inserción rápida de información personal, datos comunes y snippets personalizados para evitar escribir repetidamente la misma información.
 
 ## 🎯 Cómo Acceder

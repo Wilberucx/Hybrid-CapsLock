@@ -9,13 +9,17 @@ Este script transforma la tecla `CapsLock` en una potente herramienta de product
 > Nota de terminología: En esta documentación usamos el término "leader" para referirnos a la combinación `CapsLock + Space`. Para simplificar, en el resto de los documentos verás `leader → ...` en lugar de repetir la combinación.
 
 ### 🔧 Modo Modificador (Mantener Pulsado)
+
 Si **mantienes presionada `CapsLock`** y pulsas otra tecla, `CapsLock` actúa como una tecla modificadora (similar a `Ctrl`). Ideal para atajos rápidos y ergonómicos.
 
 ### 📝 Modo "Capa Nvim" (Toque Rápido)
+
 Si **presionas y sueltas `CapsLock` rápidamente**, activas/desactivas la **Capa Nvim**. Un aviso visual te indicará el estado actual. Cuando está activa, muchas teclas adquieren funciones de navegación y edición estilo Vim.
 
 ### 🎯 Modo Líder (leader)
+
 Accede a un menú contextual con sub-capas organizadas:
+
 - **`w`** - Gestión de ventanas y herramientas de zoom
 - **`p`** - Lanzador rápido de programas
 - **`t`** - Herramientas de timestamp
@@ -26,47 +30,53 @@ Accede a un menú contextual con sub-capas organizadas:
 ## 🚀 Atajos Principales
 
 ### Gestión de Ventanas
-| Atajo | Acción |
-|-------|--------|
-| `CapsLock + q` | Cerrar ventana |
-| `CapsLock + f` | Maximizar/Restaurar |
-| `CapsLock + Tab` | Navegador de ventanas mejorado |
+
+| Atajo            | Acción                            |
+| ---------------- | --------------------------------- |
+| `CapsLock + q`   | Cerrar ventana                    |
+| `CapsLock + f`   | Maximizar/Restaurar               |
+| `CapsLock + Tab` | Navegador de ventanas mejorado    |
 | `CapsLock + 6/7` | Ajustar ventana izquierda/derecha |
-| `CapsLock + F12` | Forzar cierre de proceso |
+| `CapsLock + F12` | Forzar cierre de proceso          |
 
 ### Navegación Rápida
-| Atajo | Acción |
-|-------|--------|
-| `CapsLock + h/j/k/l` | Flechas direccionales (estilo Vim) |
-| `CapsLock + e/d` | Scroll suave abajo/arriba |
-| `CapsLock + /` | Scroll con touchpad (modo trackball) |
+
+| Atajo                | Acción                               |
+| -------------------- | ------------------------------------ |
+| `CapsLock + h/j/k/l` | Flechas direccionales (estilo Vim)   |
+| `CapsLock + e/d`     | Scroll suave abajo/arriba            |
+| `CapsLock + /`       | Scroll con touchpad (modo trackball) |
 
 ### Edición de Texto
-| Atajo | Acción |
-|-------|--------|
-| `CapsLock + s` | Guardar (`Ctrl+S`) |
-| `CapsLock + c/v/x` | Copiar/Pegar/Cortar |
-| `CapsLock + z` | Deshacer |
-| `CapsLock + a` | Seleccionar todo |
+
+| Atajo              | Acción                             |
+| ------------------ | ---------------------------------- |
+| `CapsLock + s`     | Guardar (`Ctrl+S`)                 |
+| `CapsLock + c/v/x` | Copiar/Pegar/Cortar                |
+| `CapsLock + z`     | Deshacer                           |
+| `CapsLock + a`     | Seleccionar todo                   |
 | `CapsLock + o/t/w` | Abrir/Nueva pestaña/Cerrar pestaña |
 
 ### Funciones de Mouse
-| Atajo | Acción |
-|-------|--------|
+
+| Atajo          | Acción                    |
+| -------------- | ------------------------- |
 | `CapsLock + ;` | Click izquierdo sostenido |
-| `CapsLock + '` | Click derecho simple |
+| `CapsLock + '` | Click derecho simple      |
 
 ### Utilidades Especiales
-| Atajo | Acción |
-|-------|--------|
-| `CapsLock + 5` | Copiar ruta/URL actual |
-| `CapsLock + 9` | Captura de pantalla |
-| `CapsLock + \` | Insertar email configurado |
-| `CapsLock + F10` | Toggle CapsLock original |
+
+| Atajo            | Acción                     |
+| ---------------- | -------------------------- |
+| `CapsLock + 5`   | Copiar ruta/URL actual     |
+| `CapsLock + 9`   | Captura de pantalla        |
+| `CapsLock + \`   | Insertar email configurado |
+| `CapsLock + F10` | Toggle CapsLock original   |
 
 ## 📚 Documentación Detallada
 
 ### Funcionalidades Principales
+
 - **[Modo Modificador](doc/MODIFIER_MODE.md)** - Todos los atajos con CapsLock mantenido
 - **[Capa Nvim](doc/NVIM_LAYER.md)** - Navegación y edición estilo Vim
 - **[Modo Líder](doc/LEADER_MODE.md)** - Menús contextuales y sub-capas
@@ -78,6 +88,7 @@ Accede a un menú contextual con sub-capas organizadas:
   - **[Capa Excel](doc/EXCEL_LAYER.md)** - Capa especializada para Excel con numpad, navegación y atajos
 
 ### Instalación y Configuración
+
 - **[Sistema de Configuración](doc/CONFIGURATION.md)** - Guía completa del sistema de configuración modular
 - **[Integración de Tooltips](tooltip_csharp/README.md)** - Sistema de tooltips C# + WPF para mejor experiencia visual
 
@@ -86,6 +97,7 @@ Accede a un menú contextual con sub-capas organizadas:
 Requisitos: AutoHotkey v2.x
 
 ### 📋 Versiones Disponibles
+
 - **`HybridCapsLock.ahk`** - **Versión principal (AutoHotkey v2)** - ⭐ **RECOMENDADA**
   - Versión moderna con todas las características actualizadas
   - Mejor rendimiento y compatibilidad
@@ -96,19 +108,37 @@ Requisitos: AutoHotkey v2.x
   - No recomendada para uso nuevo
 
 ### 🚀 Instalación (Recomendada)
+
 1. **Requisito:** [AutoHotkey v2](https://www.autohotkey.com/) (para la versión principal)
 2. **Ejecutar:** Doble click en `HybridCapsLock.ahk`
 3. **Inicio automático:** Crear acceso directo en `shell:startup` para que inicie con Windows
 4. **Configuración:** Los archivos en `config/` se crean automáticamente en la primera ejecución
 
 ### ⚡ Ejecución Directa (Sin Servicio)
+
 - **Funcionamiento:** El script se ejecuta directamente sin necesidad de instalación como servicio
 - **Compatibilidad:** Funciona con la mayoría de aplicaciones
 - **Privilegios:** Para aplicaciones elevadas, ejecutar el script como administrador si es necesario
 
 ## 🔧 Configuración
 
+Mini referencia (para empezar en 2 minutos)
+- Ejecuta HybridCapsLock.ahk
+- Abre config/configuration.ini y ajusta:
+  - [Behavior]: global_timeout_seconds, leader_timeout_seconds, show_confirmation_global
+  - [Layers]: habilita/deshabilita nvim/excel/modifier/leader
+  - [Tooltips]: enable_csharp_tooltips, options_menu_timeout, status_notification_timeout
+- Configura por capa:
+  - Programs: config/programs.ini (ProgramMapping, MenuDisplay). Ver doc/PROGRAM_LAYER.md
+  - Information: config/information.ini (PersonalInfo, InfoMapping, MenuDisplay). Ver doc/INFORMATION_LAYER.md
+  - Timestamps: config/timestamps.ini (Date/Time/DateTime formats, MenuDisplay). Ver doc/TIMESTAMP_LAYER.md
+  - Commands: config/commands.ini (MenuDisplay, Settings, CategorySettings, Confirmations). Ver doc/COMMAND_LAYER.md
+- Confirmaciones: ver doc/CONFIGURATION.md → "Confirmaciones — Modelo de Configuración"
+- Recarga cambios: leader → c → h → R
+
+
 ### 📁 Sistema de Configuración Modular (Carpeta `config/`)
+
 - **`config/configuration.ini`** - Configuración principal con 75+ opciones
   - UI y temas (tooltips, animaciones, posicionamiento)
   - Rendimiento (optimización, memoria, caché)
@@ -133,30 +163,31 @@ Requisitos: AutoHotkey v2.x
   - Soporte para texto multilínea
 
 ### ⚙️ Configuración Avanzada
+
 Cada archivo `.ini` incluye secciones especializadas:
+
 - **`[Settings]`** - Configuración específica de cada capa
 - **`[MenuDisplay]`** - Personalización de tooltips y menús
 - **`[ApplicationProfiles]`** - Comportamiento por aplicación
 - **`[Advanced]`** - Funciones experimentales y optimización
 
 ### 🔧 Personalización
+
 - **Por capa:** Cada archivo en `config/` controla una funcionalidad específica
 - **Global:** `config/configuration.ini` para ajustes del sistema
 - **Aplicaciones:** Perfiles específicos para diferentes programas
 - **Tooltips:** Sistema C# integrado configurable desde `configuration.ini`
 
-
-
 - **NVIM** 📝 - Capa Nvim activa
-- **EXCEL** 📊 - Capa Excel/Accounting activa  
+- **EXCEL** 📊 - Capa Excel/Accounting activa
 - **VIS** 👁️ - Modo Visual activo
 - **LEAD** 🎯 - Modo Líder activo (temporal)
 - **YANK** ✂️ - Modo Yank en espera (temporal)
 
-
 ## 📋 Versión Actual: 6.3
 
-### Novedades v6.3 - MAJOR CONFIGURATION REFACTOR:
+### Novedades v6.3 - MAJOR CONFIGURATION REFACTOR
+
 - **🎨 Sistema de Tooltips Mejorado**: Reemplazo completo con C# + WPF estilo Nvim
   - Tooltips profesionales con colores personalizados y posicionamiento preciso
   - Aplicación independiente con comunicación JSON
@@ -171,13 +202,15 @@ Cada archivo `.ini` incluye secciones especializadas:
 - **🔧 Optimización de Rendimiento**: Gestión de memoria, caché y limpieza automática
 - **🛡️ Configuración de Seguridad**: Controles de privacidad y backup automático
 
-### Características Heredadas v6.1-6.2:
+### Características Heredadas v6.1-6.2
+
 - **📊 Capa Excel/Accounting**: Numpad completo + navegación WASD + atajos específicos
 - **👁️ Modo Visual**: Indicador visual para el modo de selección en capa Nvim
 - **🖱️ Scroll con Touchpad**: Funcionalidad trackball con `CapsLock + /`
 - **🔧 Feedback Visual Mejorado**: Notificaciones consistentes y limpias
 
-### Base Sólida v6.0:
+### Base Sólida v6.0
+
 - **🔍 Búsqueda Automática**: Ejecutables via Windows Registry
 - **🚀 Lanzador Robusto**: Manejo avanzado de errores y permisos
 - **🛡️ Soporte Administrativo**: Ejecución como servicio de Windows
@@ -185,6 +218,7 @@ Cada archivo `.ini` incluye secciones especializadas:
 ## 🚧 Características en Desarrollo
 
 ### 🔧 Sistema de Elevación de Privilegios (En Progreso)
+
 - **Estado**: Implementación parcial disponible
 - **Archivos**: Archivos de servicios elevados (eliminados por no ser necesarios)
 - **Objetivo**: Compatibilidad completa con aplicaciones que requieren permisos de administrador
@@ -195,15 +229,18 @@ Cada archivo `.ini` incluye secciones especializadas:
 - **Funcionalidad actual**: Instalación básica como servicio, requiere refinamiento
 
 ### ⚡ Funciones Experimentales (configuration.ini)
+
 ```ini
 [Advanced]
 hold_capslock_slash_scroll=false    ; Scroll con CapsLock+/ en modo Hold
 nvim_shift_touchpad_scroll=false    ; Scroll con Shift en capa Nvim
 ```
+
 - **Estado**: Implementación básica, puede interferir con funcionalidad normal
 - **Advertencia**: Pueden afectar combinaciones de teclas estándar como Shift+letras
 
 ### 🎯 Próximas Mejoras Planificadas
+
 - **Estabilización del servicio elevado**: Resolver problemas de sincronización
 - **Mejora del scroll con touchpad**: Refinamiento de la detección de gestos
 - **Temas visuales**: Sistema de temas para tooltips y notificaciones
@@ -213,6 +250,7 @@ nvim_shift_touchpad_scroll=false    ; Scroll con Shift en capa Nvim
 
 ## ⚠️ Estado de Desarrollo
 
-### Funcionalidades en Desarrollo:
+### Funcionalidades en Desarrollo
 
 **¿Necesitas ayuda?** Consulta la documentación detallada en la carpeta `doc/` o revisa los comentarios en el código fuente.
+

@@ -1,5 +1,9 @@
 # Capa Excel/Accounting (leader → n)
 
+> Referencia rápida
+> - Confirmaciones: no aplica (acciones inmediatas)
+> - Tooltips (C#): sección [Tooltips] en config/configuration.ini (CONFIGURATION.md)
+
 La Capa Excel es una capa persistente especializada para trabajo con hojas de cálculo y aplicaciones contables. Combina un numpad completo con navegación optimizada y atajos específicos de Excel para máxima productividad.
 
 ## 🎯 Activación

@@ -35,6 +35,59 @@ dotnet run
 .\bin\Release\net6.0-windows\win-x64\publish\TooltipApp.exe
 ```
 
+## 📄 Esquema JSON (Contrato)
+
+La app C# lee `tooltip_commands.json` en el mismo directorio de ejecución (A_ScriptDir en AHK).
+
+Ejemplo completo v2 (personalizable):
+```json
+{
+  "show": true,
+  "tooltip_type": "leader",         
+  "layout": "grid",                 
+  "columns": 3,                      
+  "title": "COMMAND PALETTE",
+  "items": [
+    {"key": "w", "description": "Windows"},
+    {"key": "p", "description": "Programs"}
+  ],
+  "navigation": ["\\: Back", "ESC: Exit"],
+  "timeout_ms": 5000,
+  "style": {
+    "background": "#101014",
+    "text": "#f0f0f0",
+    "border": "#2a2a2a",
+    "accent_options": "#e6d27a",
+    "accent_navigation": "#5fb3b3",
+    "border_thickness": 1,
+    "corner_radius": 6,
+    "padding": [16, 12, 16, 12],
+    "title_font_size": 14,
+    "item_font_size": 12,
+    "navigation_font_size": 10,
+    "max_width": 900,
+    "max_height": 700
+  },
+  "position": {
+    "anchor": "bottom_center",
+    "offset_x": 0,
+    "offset_y": -10
+  },
+  "topmost": true,
+  "click_through": true,
+  "opacity": 0.98
+}
+```
+Notas:
+- `layout`: `grid` o `list`. Si es grid, `columns` define columnas.
+- `tooltip_type` se mantiene para compatibilidad: `leader`, `status_persistent`, `sidebar_right`, `bottom_right_list`. `layout` tiene prioridad.
+- `position.anchor`: `bottom_center` (default), `bottom_right`, `bottom_left`, `top_center`, `top_left`, `top_right`, `center`, `manual`.
+- `position.offset_x/offset_y`: offsets adicionales. Con `manual` se usan `x`/`y` absolutos.
+- `style` permite personalizar colores, tamaños, padding y límites de tamaño. Cualquier campo omitido usa valores por defecto.
+- Timeout 0 hace que el tooltip permanezca visible hasta recibir `show=false`.
+- La ventana se reposiciona automáticamente cuando cambia su tamaño.
+- Escritura recomendada desde AHK: atómica (archivo .tmp + move) y con throttle para evitar parpadeos.
+
 ## 📋 Testing
 
 ### Fase 1 - Tooltip Básico:
@@ -72,7 +125,7 @@ dotnet run
 
 ## 🔗 Integración con AutoHotkey
 
-La aplicación lee comandos desde `tooltip_commands.json` para mostrar/ocultar tooltips dinámicamente.
+La aplicación lee comandos desde `tooltip_commands.json` para mostrar/ocultar tooltips dinámicamente. El archivo debe ubicarse en el mismo directorio donde se ejecuta el script AHK (`A_ScriptDir`).
 
 Ejemplo de integración en HybridCapsLock.ahk (v2):
 ```autohotkey

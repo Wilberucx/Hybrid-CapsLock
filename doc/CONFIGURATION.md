@@ -1,253 +1,284 @@
 # Sistema de Configuración de HybridCapsLock
 
-HybridCapsLock utiliza un sistema de configuración modular basado en archivos `.ini` que permite personalizar cada aspecto del comportamiento del script.
+## Nuevos parámetros de pausa híbrida
 
-## 📁 Estructura de Configuración
+En `config/configuration.ini` dentro de la sección `[Behavior]`:
 
-### 🎛️ Archivo Principal: `configuration.ini`
-Contiene la configuración global y comportamientos generales del script.
-
-#### Secciones Principales:
-
-**`[General]` - Configuración Básica**
 ```ini
-script_version=6.3
-auto_start_with_windows=true
-run_as_service=false
-debug_mode=false
+; Hybrid pause settings
+; Minutes for auto-resume when pausing from Commands → Hybrid Management (default 10)
+hybrid_pause_minutes=10
+; Enable emergency resume hotkey (Ctrl+Alt+Win+R) that always resumes even if Leader is disabled
+enable_emergency_resume_hotkey=true
 ```
 
-**`[UI]` - Interfaz y Feedback Visual**
-```ini
-tooltip_font_size=12
-tooltip_duration_default=1500
-tooltip_position=center
-show_layer_indicators=true
-use_animations=true
-theme=default
-```
+- `hybrid_pause_minutes`: tiempo en minutos para reanudar automáticamente tras activar la pausa híbrida desde `Leader → c → h → p`. Si está vacío o inválido, usa 10 por defecto.
+- `enable_emergency_resume_hotkey`: habilita un atajo de emergencia `Ctrl+Alt+Win+R` que reanuda el script aunque todos los hotkeys estén suspendidos o el Leader esté deshabilitado.
 
-**`[Behavior]` - Comportamiento Global**
-```ini
-caps_lock_acts_normal=false
-global_timeout_seconds=7
-leader_timeout_seconds=7
-enable_smooth_scrolling=true
-scroll_sensitivity=3
-mouse_click_duration=50
-```
+Comportamiento de la pausa híbrida:
+- Al ejecutar `Pause Hybrid` desde `Hybrid Management`, el script suspende sus hotkeys y arma un auto-resume al cabo de `hybrid_pause_minutes`.
+- Si presionas `CapsLock+Space` (Leader) mientras está suspendido, el script se reanuda al instante y continúa con el flujo normal del Leader.
+- Puedes reanudar manualmente desde el mismo comando (si ya está en pausa) o desde el ícono de la bandeja de AHK.
+- Feedback visual: se muestran mensajes “SUSPENDED Xm — press Leader to resume” y “RESUMED/RESUMED (auto)”.
 
-**`[Layers]` - Control de Capas**
-```ini
-nvim_layer_enabled=true
-excel_layer_enabled=true
-modifier_layer_enabled=true
-leader_layer_enabled=true
-enable_layer_persistence=true
-```
 
-### 📋 Archivos de Capa Específicos
+HybridCapsLock utiliza un sistema de configuración modular basado en archivos `.ini` que permite personalizar cada aspecto del comportamiento del script. Esta guía describe las configuraciones actuales del sistema y cómo usarlas. Enfócate en este documento para configurar tu entorno; no se requieren referencias a documentos internos de fases.
 
-#### `programs.ini` - Configuración del Lanzador
+## Estructura de Configuración
+
+### Archivo Principal: `configuration.ini`
+
+Contiene la configuración global del sistema y banderas de capas. Hoy, las secciones con efecto en el script son principalmente `[Behavior]`, `[Layers]` y `[Tooltips]`.
+
+- `[Behavior]` – Comportamiento global
+
+  ```ini
+  caps_lock_acts_normal=false
+  global_timeout_seconds=7
+  leader_timeout_seconds=7
+  enable_smooth_scrolling=true
+  scroll_sensitivity=3
+  mouse_click_duration=50
+  show_confirmation_global=false
+  ```
+
+  Notas:
+  - `show_confirmation_global=true` fuerza confirmación en todas las capas/menús.
+
+- `[Layers]` – Banderas de habilitación por capa
+
+  ```ini
+  nvim_layer_enabled=true
+  excel_layer_enabled=true
+  modifier_layer_enabled=true
+  leader_layer_enabled=true
+  enable_layer_persistence=true
+  ```
+
+- `[Tooltips]` – Configuración de tooltips C# (WPF)
+  Estas claves son leídas por `tooltip_csharp_integration.ahk`.
+
+  ```ini
+  enable_csharp_tooltips=true           ; Usa tooltips C# en lugar de nativos
+  options_menu_timeout=10000            ; Duración (ms) para menús/opciones
+  status_notification_timeout=2000      ; Duración (ms) para notificaciones de estado
+  auto_hide_on_action=true              ; Oculta al seleccionar una opción
+  persistent_menus=false                ; Mantiene menús visibles hasta ESC
+  tooltip_fade_animation=true           ; Animaciones de fade in/out
+  tooltip_click_through=true            ; Permitir click-through
+  ```
+
+- Otras secciones presentes en `configuration.ini` (`[General]`, `[UI]`, `[Performance]`, `[Security]`, `[Advanced]`, `[CustomHotkeys]`, `[ApplicationProfiles]`, `[Troubleshooting]`) están documentadas para futuro o uso organizacional, pero muchas claves NO tienen efecto en el código actual. Ver doc/INI_CONFIG_AUDIT.md para detalles.
+
+## Confirmaciones — Modelo de Configuración
+
+- Global
+  - `configuration.ini` → `[Behavior]` → `show_confirmation_global=true` fuerza confirmación en todas las capas.
+- Programs
+  - `[Settings]` → `show_confirmation` (por defecto `false`).
+  - Listas por tecla en `[ProgramMapping]` → `confirm_keys` / `no_confirm_keys`.
+  - Si `show_confirmation=false` y `auto_launch=true` → lanzamiento inmediato (sin confirmar).
+- Information
+  - `[Settings]` → `show_confirmation` (por defecto `false`).
+  - Listas por tecla en `[InfoMapping]` → `confirm_keys` / `no_confirm_keys`.
+- Timestamps
+  - `[Settings]` → `show_confirmation` (por defecto `false`).
+  - `[CategorySettings]` → `<Friendly>_show_confirmation` para forzar confirmación por categoría (`Date`, `Time`, `DateTime`).
+  - `[Confirmations.<Friendly>]` → `confirm_keys` / `no_confirm_keys` por submenú.
+- Commands
+  - `[Settings]` → `show_confirmation` (default de capa).
+  - `[CategorySettings]` → `<Friendly>_show_confirmation` (categoría domina per-command si `true`).
+  - `[Confirmations.<Friendly>]` → `confirm_keys` / `no_confirm_keys` por comando.
+
+### Archivos de Capa Específicos
+
+#### `programs.ini` – Configuración del Lanzador
+
 ```ini
 [Settings]
 timeout_seconds=7
-show_confirmation=true
+show_confirmation=false
 auto_launch=true
-search_in_path=true
-show_launch_feedback=true
-feedback_duration=2000
+
+[ProgramMapping]
+; confirm_keys: keys that MUST confirm (case-sensitive), e.g.: "d,z"
+confirm_keys=
+; no_confirm_keys: keys that MUST NOT confirm (optional)
+; no_confirm_keys=
 ```
 
-#### `timestamps.ini` - Configuración Temporal
+Developers — Confirmation configuration (Programs)
+
+- Precedencia: Global → [ProgramMapping] lists → [Settings].show_confirmation → default false
+- Función: `ShouldConfirmPrograms(key)`
+- Ejemplo:
+
+```ini
+[Settings]
+show_confirmation=false
+[ProgramMapping]
+confirm_keys=d,z
+```
+
+#### `timestamps.ini` – Configuración de formatos de fecha/hora
+
 ```ini
 [Settings]
 timeout_seconds=20
 show_confirmation=true
-auto_insert=true
-preview_format=true
-remember_last_format=true
-feedback_duration=1500
+; Otros flags documentados (auto_insert/preview_format/remember_last_format/feedback_duration)
+; hoy no alteran el flujo de ejecución.
 ```
 
-#### `commands.ini` - Configuración de Comandos
+Developers — Confirmation configuration (Timestamps)
+
+- Precedencia (mayor a menor):
+  1. Global: `configuration.ini` → `[Behavior]` → `show_confirmation_global`
+  2. Categoría: `timestamps.ini` → `[CategorySettings]` `<Friendly>_show_confirmation`
+  3. Listas por comando: `timestamps.ini` → `[Confirmations.<Friendly>]` (`confirm_keys` / `no_confirm_keys`)
+  4. Default de capa: `timestamps.ini` → `[Settings]` → `show_confirmation`
+  5. Fallback: `false`
+- Función: `ShouldConfirmTimestamp(mode, key)`
+
+#### `commands.ini` – Configuración de Comandos
+
+Ver también: `doc/COMMANDS_CUSTOM.md` para el esquema de Custom Commands (qué ejecutar) y CommandFlag (cómo ejecutar).
+
+
 ```ini
 [Settings]
 show_output=true
 close_on_success=false
 timeout_seconds=30
 enable_custom_commands=true
+show_confirmation=false
 
 [CategorySettings]
-system_timeout=10
-network_timeout=10
-git_timeout=10
-show_execution_feedback=true
-feedback_duration=1500
-auto_close_terminals=false
+; ... timeouts por categoría, feedback, etc. (parte planificada/no funcional en su mayoría)
+
+[Confirmations.<Friendly>]
+; Per-command confirmation (lists): confirm_keys / no_confirm_keys
 ```
 
-#### `information.ini` - Configuración de Información
+Notas:
+- UI (C# Tooltips) se construye desde `[Categories]` y secciones `[<key>_category]` (por ejemplo `s_category`, `n_category`, etc.).
+- `[MenuDisplay]` quedó como legado para la capa de comandos.
+
+Developers — Confirmation configuration (Commands)
+
+- Precedencia (mayor a menor):
+  1. Global: `configuration.ini` → `[Behavior]` → `show_confirmation_global`
+  2. Categoría: `commands.ini` → `[CategorySettings]` `<Friendly>_show_confirmation`
+     - `true`: fuerza confirmación para toda la categoría (no mira per-command)
+     - `false`: delega a per-command
+  3. Listas por comando: `commands.ini` → `[Confirmations.<Friendly>]`
+     - `confirm_keys`: teclas que DEBEN confirmar (case-sensitive)
+     - `no_confirm_keys`: lista opcional de teclas que NO deben confirmar
+  4. Default de capa: `commands.ini` → `[Settings]` → `show_confirmation`
+  5. Fallback: `power=true`, otros `false`
+- Funciones:
+  - `ShouldConfirmCommand(categoryInternal, key)`
+  - Helpers: `ParseKeyList`, `KeyInList`
+
+#### `information.ini` – Configuración de Información
+
 ```ini
 [Settings]
 timeout_seconds=10
 show_confirmation=true
-auto_paste=true
+; auto_paste: si false, muestra detalles y requiere ENTER; si true, inserta directamente.
+
+[Confirmations.Information]
+; confirm_keys: keys that MUST confirm (case-sensitive), e.g.: "e,p"
+confirm_keys=
+; no_confirm_keys: keys that MUST NOT confirm (optional)
+; no_confirm_keys=
 ```
 
-## 🔧 Personalización Avanzada
+Developers — Confirmation configuration (Information)
 
-### ⏱️ Timeouts Personalizables
-Cada capa puede tener su propio timeout:
-- **Global:** `configuration.ini` → `[Behavior]` → `global_timeout_seconds`
-- **Líder:** `configuration.ini` → `[Behavior]` → `leader_timeout_seconds`
-- **Por capa:** Cada archivo `.ini` → `[Settings]` → `timeout_seconds`
+- Precedencia: Global → [InfoMapping] lists → [Settings].show_confirmation → default false
+- Función: `ShouldConfirmInformation(key)`
 
-### 🎨 Feedback Visual Configurable
-- **Duración:** `feedback_duration` en milisegundos
-- **Confirmación:** `show_confirmation` para mostrar/ocultar tooltips
-- **Posición:** `tooltip_position` en `configuration.ini`
+## Personalización Avanzada
 
-### 🚀 Optimización de Rendimiento
-```ini
-[Performance]
-enable_hotkey_optimization=true
-memory_cleanup_interval=300000
-max_tooltip_instances=3
-enable_fast_startup=true
-cache_program_paths=true
-```
+### Timeouts jerárquicos (InputHook)
 
-### 🔒 Configuración de Seguridad
-```ini
-[Security]
-allow_elevated_apps=true
-log_keystrokes=false
-encrypt_personal_info=false
-auto_backup_config=true
-backup_retention_days=30
-```
+El script utiliza `GetEffectiveTimeout(layer)` para calcular timeouts de forma consistente:
 
-## 🎯 Casos de Uso Comunes
+- Por capa (`*.ini` → `[Settings]` → `timeout_seconds`)
+- Líder: `configuration.ini` → `[Behavior]` → `leader_timeout_seconds`
+- Global: `configuration.ini` → `[Behavior]` → `global_timeout_seconds`
+- Fallback por defecto: 10 segundos
 
-### 🏢 Configuración Empresarial
-```ini
-; configuration.ini
-[Security]
-log_keystrokes=false
-encrypt_personal_info=true
-allow_elevated_apps=false
-
-[Behavior]
-global_timeout_seconds=5
-leader_timeout_seconds=5
-
-; programs.ini
-[Settings]
-timeout_seconds=5
-show_launch_feedback=false
-auto_launch=false
-```
-
-### 🏠 Configuración Personal
-```ini
-; configuration.ini
-[UI]
-tooltip_duration_default=2000
-show_layer_indicators=true
-use_animations=true
-
-[Behavior]
-global_timeout_seconds=10
-enable_smooth_scrolling=true
-
-; information.ini
-[Settings]
-timeout_seconds=15
-show_confirmation=true
-auto_paste=true
-```
-
-### 👨‍💻 Configuración de Desarrollador
-```ini
-; configuration.ini
-[Advanced]
-verbose_logging=true
-experimental_features=true
-debug_mode=true
-
-; commands.ini
-[CategorySettings]
-git_timeout=15
-show_execution_feedback=true
-auto_close_terminals=false
-```
-
-## 🔄 Jerarquía de Configuración
-
-El sistema sigue esta jerarquía (de mayor a menor prioridad):
-
-1. **Configuración específica de capa** (`[Settings]` en archivos de capa)
-2. **Configuración global** (`configuration.ini`)
-3. **Valores por defecto** (hardcodeados en el script)
-
-### Ejemplo de Jerarquía:
-```
-Timeout para Programs Layer:
-1. programs.ini → [Settings] → timeout_seconds=7
-2. configuration.ini → [Behavior] → global_timeout_seconds=5
-3. Valor por defecto → 7 segundos
-
-Resultado: 7 segundos (usa el valor específico de la capa)
-```
-
-## 🛠️ Funciones de Configuración en el Script
-
-El script incluye funciones helper para leer configuraciones:
+Ejemplos de uso en código (simplificados):
 
 ```autohotkey
-; Leer valor de configuration.ini
-timeout := ReadConfigValue("Behavior", "global_timeout_seconds", 7)
+; Obtener timeout efectivo para distintos menús
+ih := InputHook("L1 T" . GetEffectiveTimeout("programs"))
+winIH := InputHook("L1 T" . GetEffectiveTimeout("windows"))
 
-; Leer configuración específica de capa
-duration := ReadLayerSettings(ProgramsIni, "feedback_duration", 1500)
+; Timestamps (submenús)
+dateIH := InputHook("L1 T" . GetEffectiveTimeout("timestamps_date"))
+```
 
-; Obtener timeout con jerarquía automática
-layerTimeout := GetLayerTimeout("programs")
+### Tooltips (C#) configurables
 
-; Verificar si una capa está habilitada
-if (IsLayerEnabled("nvim")) {
-    ; Activar funcionalidad Nvim
+Las notificaciones y menús en C# se controlan vía `[Tooltips]`. Ejemplo:
+
+```ini
+[Tooltips]
+enable_csharp_tooltips=true
+options_menu_timeout=10000
+status_notification_timeout=2000
+auto_hide_on_action=true
+persistent_menus=false
+tooltip_fade_animation=true
+tooltip_click_through=true
+```
+
+## Funciones de configuración en el script (referencia)
+
+- Confirmaciones por capa/categoría:
+  - `ShouldConfirmPrograms(key)`
+  - `ShouldConfirmInformation(key)`
+  - `ShouldConfirmTimestamp(mode, key)`
+  - `ShouldConfirmCommand(categoryInternal, key)`
+  - `ShouldConfirmAction(layer)` — envoltura simple por capa (`programs`/`information`/`timestamps`/`power`)
+
+- Helpers:
+  - `ParseKeyList(s)`, `KeyInList(key, listStr)` — listas separadas por coma/espacio, case-sensitive.
+  - `CleanIniBool(value, default)`, `CleanIniNumber(value)` — lectura segura de INI.
+  - `LoadLayerFlags()` — carga banderas globales: `nvimLayerEnabled`, `excelLayerEnabled`, `modifierLayerEnabled`, `leaderLayerEnabled`, `enableLayerPersistence`.
+  - `GetEffectiveTimeout(layer)` — jerarquía de timeouts descrita arriba.
+
+Ejemplo práctico:
+
+```autohotkey
+; Confirmación global
+if (CleanIniBool(IniRead(ConfigIni, "Behavior", "show_confirmation_global", "false"), false))
+    ; forzar confirmación
+
+; Flags de capa
+LoadLayerFlags()
+if (nvimLayerEnabled) {
+    ; Activar navegación Nvim
 }
 ```
 
-## 🔧 Solución de Problemas
+## Solución de Problemas
 
-### ❌ Configuración no se aplica
-1. Verifica la sintaxis del archivo `.ini`
-2. Asegúrate de que la sección existe: `[Settings]`
-3. Reinicia el script para aplicar cambios globales
+- Configuración no se aplica
+  1. Verifica la sintaxis del archivo `.ini`
+  2. Asegúrate de que la sección existe: `[Settings]`
+  3. Usa Reload Script (leader → c → h → R) para aplicar cambios
 
-### ❌ Valores no válidos
-1. Usa solo números para timeouts y duraciones
-2. Usa `true`/`false` para valores booleanos
-3. No uses comillas en los valores
+- Valores no válidos
+  1. Usa solo números para timeouts y duraciones
+  2. Usa `true`/`false` para valores booleanos
+  3. Evita comillas en los valores a menos que sean rutas con espacios
 
-### ❌ Archivo de configuración faltante
-1. El script creará archivos por defecto si no existen
-2. Copia los ejemplos de la documentación
-3. Verifica permisos de escritura en el directorio
-
-## 📋 Lista de Verificación de Configuración
-
-- [ ] `configuration.ini` existe y tiene configuración básica
-- [ ] Cada archivo de capa tiene sección `[Settings]`
-- [ ] Timeouts están en segundos (números enteros)
-- [ ] Duraciones están en milisegundos
-- [ ] Valores booleanos usan `true`/`false`
-- [ ] No hay caracteres especiales en nombres de sección
-- [ ] Backup de configuración realizado antes de cambios
-
----
-
-**¿Necesitas ayuda con la configuración?** Consulta los archivos de ejemplo o revisa la documentación específica de cada capa.
+- Archivo de configuración faltante
+  1. El script creará archivos por defecto si no existen
+  2. Copia los ejemplos de la documentación
+  3. Verifica permisos de escritura en el directorio

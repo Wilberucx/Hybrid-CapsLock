@@ -1,5 +1,9 @@
 # Capa Nvim (Activada con Toque a CapsLock)
 
+> Referencia rápida
+> - Confirmaciones: no aplica (acciones inmediatas)
+> - Tooltips (C#): sección [Tooltips] en config/configuration.ini (CONFIGURATION.md)
+
 La Capa Nvim transforma tu teclado en un entorno de navegación y edición inspirado en Vim, proporcionando control preciso sin necesidad de mantener teclas modificadoras.
 
 ## 🎯 Activación
@@ -7,8 +11,8 @@ La Capa Nvim transforma tu teclado en un entorno de navegación y edición inspi
 **Método:** Presiona y suelta `CapsLock` rápidamente (tap)
 
 Un aviso visual aparecerá indicando el estado:
-- `NVIM LAYER ON` - Capa activada
-- `NVIM LAYER OFF` - Capa desactivada
+- `◉ NVIM` - Capa activada
+- `○ NVIM` - Capa desactivada
 
 > **Nota:** La capa se desactiva automáticamente al activar el Modo Líder (`leader`)
 
@@ -207,6 +211,18 @@ O para eliminar:
 2. u (undo - deshacer)
 3. U (redo - rehacer)
 ```
+
+## 🔄 Actualizaciones recientes (NVIM Layer)
+
+- Indicadores nativos: `◉ NVIM` activado / `○ NVIM` desactivado; Visual: `◉ VISUAL` / `○ VISUAL`.
+- Navegación con modificadores: `Ctrl/Alt/Shift` + `h/j/k/l` envían flechas con esos modificadores.
+- Saltos por palabra: `w` (Ctrl+→), `b` (Ctrl+←). En Visual, extienden selección (Ctrl+Shift+flecha).
+- Edición simplificada: `y` copia (Ctrl+C); `d` borra (Delete). En Visual ambos salen del modo Visual.
+- Guardar: comandos estilo NVIM dentro de la capa (esperan Enter): `:w` (guardar), `:q` (salir), `:wq` (guardar y salir).
+- Insert: `i` desactiva la capa y envía `Ctrl+Alt+Shift+I`; regresas con `Esc`.
+- Find: `f` envía `Ctrl+Shift+Alt+2` y desactiva la capa. Configura en tu herramienta favorita (Fluent Search, Flow Launcher, PowerToys Run, etc.) que esta combinación abra la búsqueda/lanzador.
+- Visual-only: `c` borra selección y entra a “insert” (desactiva capa); `a` selecciona todo (`Ctrl+A`).
+- Scroll: `Ctrl+U` arriba, `Ctrl+D` abajo.
 
 ## ⚙️ Configuración y Estados
 

@@ -1,5 +1,10 @@
 # Capa Timestamp (Líder: leader → `t`)
 
+> Referencia rápida
+> - Configuración: config/timestamps.ini
+> - Confirmaciones: ver “Confirmaciones — Modelo de Configuración” en doc/CONFIGURATION.md y la sección específica en este documento
+> - Tooltips (C#): sección [Tooltips] en config/configuration.ini (CONFIGURATION.md)
+
 Esta capa proporciona un sistema avanzado de 3 niveles para insertar fechas, horas y timestamps con formatos completamente configurables.
 
 ## 🎯 Cómo Acceder
@@ -67,6 +72,28 @@ Separator=
 - **`Esc`** - Salir completamente del modo líder
 - **`Backspace`** - Volver al menú líder principal
 - **Timeout:** 7 segundos de inactividad cierra automáticamente
+
+## ⚙️ Confirmaciones en Timestamps
+
+### Precedencia de Confirmación (Timestamps)
+
+Orden (mayor a menor):
+1) Global: `configuration.ini` → `[Behavior]` → `show_confirmation_global`
+2) Categoría: `timestamps.ini` → `[CategorySettings]` `<Friendly>_show_confirmation`
+3) Per-command (listas): `timestamps.ini` → `[Confirmations.<Friendly>]` → `confirm_keys` / `no_confirm_keys`
+4) Default de capa: `timestamps.ini` → `[Settings]` → `show_confirmation`
+5) Fallback: `false`
+
+Ejemplos:
+```ini
+; Confirmar todo DateTime
+[CategorySettings]
+DateTime_show_confirmation=true
+
+; Confirmar valores individuales en Date
+[Confirmations.Date]
+confirm_keys=1 2 3
+```
 
 ## 📝 Timestamp en Capa Nvim
 

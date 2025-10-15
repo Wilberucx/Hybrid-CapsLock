@@ -1,5 +1,9 @@
 # Modo Líder
 
+> Referencia rápida
+> - Configuración general: ver doc/CONFIGURATION.md (secciones [Behavior], [Layers], [Tooltips])
+> - Configuración por capa: PROGRAM_LAYER.md / TIMESTAMP_LAYER.md / COMMAND_LAYER.md / INFORMATION_LAYER.md / EXCEL_LAYER.md / WINDOWS_LAYER.md
+
 El Modo Líder es un sistema de menús contextuales que organiza funciones avanzadas en sub-capas especializadas. Proporciona acceso rápido a herramientas de gestión de ventanas, lanzamiento de programas y utilidades de timestamp.
 
 ## 🎯 Activación
@@ -13,7 +17,7 @@ Al activar el modo líder, aparece un menú visual que muestra las opciones disp
 ```
 LEADER MENU
 
-w - Windows
+(Windows fue integrado en System)
 p - Programs  
 t - Time
 c - Commands
@@ -85,11 +89,17 @@ Capa persistente especializada para trabajo con hojas de cálculo y aplicaciones
 ## 🎮 Navegación
 
 ### Controles Universales
-- **`Esc`** - Salir completamente del modo líder
-- **`Backspace`** - Volver al menú principal (desde sub-capas)
-- **Timeout:** 7 segundos de inactividad cierra automáticamente
+- Esc: salir completamente del modo líder (EXIT total)
+- Backspace: volver al menú anterior (back inteligente con breadcrumb)
+- Backslash (\): reservado como back, pero no es confiable en todos los contextos; se estandariza Backspace
+- Timeout: 7 segundos de inactividad cierra automáticamente
 
 ### Flujo de Navegación
+
+Nota sobre navegación y back inteligente
+- Se implementó un breadcrumb (pila de navegación) cuando los tooltips C# están habilitados, y un bucle interno en AHK cuando no lo están, para garantizar que Backspace siempre regrese exactamente al menú anterior, no drásticamente al Leader.
+- Backspace es la tecla estándar de retroceso. Backslash (\) se intentó como alternativa, pero puede quedar capturado como entrada normal en ciertos submenús; por ergonomía y consistencia (estilo Vim/Neovim), se privilegia Backspace.
+
 ```
 leader → Menú Principal
                 ↓
@@ -101,6 +111,13 @@ leader → Menú Principal
 ```
 
 ## 💡 Características Especiales
+
+### ⏸️ Pausa Híbrida y Reanudación con Leader
+- Si el script está suspendido (pausa híbrida desde `Commands → Hybrid Management → p`), al presionar `CapsLock+Space` (Leader) se reanuda inmediatamente y continúa el flujo normal del Leader.
+- La pausa híbrida arma un auto-resume tras `hybrid_pause_minutes` (configurable en `config/configuration.ini`, por defecto 10).
+- Opcionalmente existe un hotkey de emergencia `Ctrl+Alt+Win+R` (configurable) que reanuda el script incluso si el Leader estuviera deshabilitado.
+- Feedback visual: “SUSPENDED Xm — press Leader to resume” y “RESUMED/RESUMED (auto)”.
+
 
 ### 🔄 Integración con Capa Nvim
 - Si la Capa Nvim está activa al llamar al líder, se desactiva automáticamente

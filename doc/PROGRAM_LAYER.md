@@ -1,5 +1,10 @@
 # Capa de Programas (Líder: leader → `p`)
 
+> Referencia rápida
+> - Configuración: config/programs.ini
+> - Confirmaciones: ver “Confirmaciones — Modelo de Configuración” en doc/CONFIGURATION.md y la sección "Developers — Confirmation configuration (Programs)" en este documento
+> - Tooltips (C#): sección [Tooltips] en config/configuration.ini (CONFIGURATION.md)
+
 Esta capa proporciona un lanzador rápido de aplicaciones comunes, con búsqueda automática de ejecutables via Windows Registry para mayor compatibilidad.
 
 ## 🎯 Cómo Acceder

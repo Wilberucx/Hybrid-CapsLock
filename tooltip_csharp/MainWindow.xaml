@@ -9,7 +9,8 @@
         ShowInTaskbar="False"
         ResizeMode="NoResize"
         SizeToContent="WidthAndHeight"
-        WindowStartupLocation="Manual">
+        WindowStartupLocation="Manual"
+        Visibility="Hidden">
     
     <Border Name="TooltipBorder"
             Background="#1e1e1e"
@@ -22,7 +23,7 @@
         <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
             <!-- Title -->
             <TextBlock Name="TitleText"
-                       Text="TEST TOOLTIP"
+                       Text=""
                        FontFamily="Consolas"
                        FontSize="14"
                        FontWeight="Bold"
@@ -32,12 +33,7 @@
             
             <!-- Items Grid (4 columns) -->
             <Grid Name="ItemsGrid" Margin="0,0,0,8">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
+                <!-- Column definitions will be generated dynamically in code-behind based on JSON (columns/layout) -->
             </Grid>
             
             <!-- Navigation -->
@@ -45,14 +41,7 @@
                         Orientation="Horizontal" 
                         HorizontalAlignment="Center"
                         Margin="0,8,0,0">
-                <Border Background="#6c958e" 
-                        CornerRadius="2" 
-                        Padding="4,2">
-                    <TextBlock Text="ESC: Exit"
-                               FontFamily="Consolas"
-                               FontSize="10"
-                               Foreground="#ffffff"/>
-                </Border>
+                <!-- Navigation items will be created dynamically -->
             </StackPanel>
         </StackPanel>
     </Border>
