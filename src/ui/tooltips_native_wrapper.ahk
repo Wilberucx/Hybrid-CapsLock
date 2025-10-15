@@ -71,6 +71,21 @@ ShowCopyNotification() {
         ShowCenteredToolTip("COPIED")
         SetTimer(() => RemoveToolTip(), -800)
     }
+    ; Post-copy motion to emulate NVIM yank feedback: move cursor Up when NVIM layer is active
+    try {
+        global isNvimLayerActive, ConfigIni
+        if (IsSet(isNvimLayerActive) && isNvimLayerActive) {
+            Sleep 30
+            Send("{Up}")
+            ; Optionally return cursor with Down after Up (NVIM-like yank feedback)
+            ret := "true"
+            try ret := IniRead(ConfigIni, "Nvim", "yank_feedback_return", "true")
+            if (StrLower(Trim(ret)) = "true") {
+                Sleep 25
+                Send("{Down}")
+            }
+        }
+    }
 }
 
 ShowLeftClickStatus(isActive) {

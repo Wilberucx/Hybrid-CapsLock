@@ -865,7 +865,82 @@ ShowCenteredToolTipCS(text, duration := 0) {
 
 ; Notificaciones específicas mejoradas
 ShowCopyNotificationCS() {
-    ShowCSharpStatusNotification("CLIPBOARD", "COPIED")
+    ; Bottom-right, navigation-less clipboard status with short timeout
+    ; Additionally, if a persistent layer (NVIM/Visual/Excel) is active, restore it after the toast ends
+    global ConfigIni
+    global isNvimLayerActive, VisualMode, excelLayerActive
+
+    to := CleanIniValue(IniRead(ConfigIni, "Tooltips", "status_notification_timeout", ""))
+    if (to = "" || to = "ERROR") {
+        to := 1200
+    } else {
+        to := Integer(Trim(to))
+        if (to > 1200)
+            to := 1200
+        if (to < 400)
+            to := 400
+    }
+
+    ; Build command directly to avoid any default navigation injection
+    theme := ReadTooltipThemeDefaults()
+    cmd := Map()
+    cmd["show"] := true
+    cmd["title"] := "CLIPBOARD"
+    cmd["layout"] := "list"
+    cmd["tooltip_type"] := "bottom_right_list"
+    cmd["timeout_ms"] := to
+
+    items := []
+    it := Map()
+    it["key"] := "<"
+    it["description"] := "COPIED"
+    items.Push(it)
+    cmd["items"] := items
+
+    ; Apply theme styling and position
+    if (theme.style.Count)
+        cmd["style"] := theme.style
+    if (theme.position.Count)
+        cmd["position"] := theme.position
+    if (theme.window.Has("topmost"))
+        cmd["topmost"] := theme.window["topmost"]
+    if (theme.window.Has("click_through"))
+        cmd["click_through"] := theme.window["click_through"]
+    if (theme.window.Has("opacity"))
+        cmd["opacity"] := theme.window["opacity"]
+
+    StartTooltipApp()
+    json := SerializeJson(cmd)
+    ScheduleTooltipJsonWrite(json)
+
+    ; Determine which persistent to restore (if any), then schedule it after the toast
+    active := ""
+    if (IsSet(isNvimLayerActive) && isNvimLayerActive) {
+        if (IsSet(VisualMode) && VisualMode)
+            active := "visual"
+        else
+            active := "nvim"
+    } else if (IsSet(excelLayerActive) && excelLayerActive) {
+        active := "excel"
+    }
+    if (active != "") {
+        delay := to + 120
+        SetTimer(() => RestorePersistentAfterCopy(active), -delay)
+    }
+}
+
+RestorePersistentAfterCopy(which) {
+    try {
+        switch which {
+            case "visual":
+                ShowVisualLayerToggleCS(true)
+            case "nvim":
+                ShowNvimLayerToggleCS(true)
+            case "excel":
+                ShowExcelLayerToggleCS(true)
+        }
+    } catch {
+    }
 }
 
 ; Short, navigation-less status tooltip for CapsLock toggle
