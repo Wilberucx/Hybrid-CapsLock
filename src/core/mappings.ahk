@@ -254,12 +254,6 @@ ReloadNvimMappings() {
     }
 }
 
-ReloadAllMappings() {
-    ReloadModifierMappings()
-    ReloadExcelMappings()
-    ReloadNvimMappings()
-}
-
 ; ---- Excel mappings ----
 _excelRegisteredHotkeys := []
 

@@ -104,16 +104,3 @@ GetEffectiveTimeout(layer) {
     return default
 }
 
-; ---- Compatibility helpers for legacy reads ----
-ReadConfigValue(section, key, defaultValue := "") {
-    if (section = "Hybrid" && key = "tap_timeout") {
-        return "200"
-    }
-    if (section = "Hybrid" && key = "leader_timeout") {
-        return "5000"
-    }
-    if (section = "Advanced" && key = "nvim_shift_touchpad_scroll") {
-        return "false"
-    }
-    return defaultValue
-}

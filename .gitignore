@@ -47,3 +47,5 @@ thumbs.db
 .vscode/
 .idea/
 
+# Release packages
+Releases/

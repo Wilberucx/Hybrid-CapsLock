@@ -335,8 +335,9 @@ StartTooltipApp() {
                 ]
         } else {
             tooltipPaths := [
-                "tooltip_csharp\\bin\\Release\\net6.0-windows\\TooltipApp.exe",
-                A_ScriptDir . "\\TooltipApp.exe"
+                A_ScriptDir . "\\tooltip_csharp\\TooltipApp.exe", ; Release path
+                A_ScriptDir . "\\TooltipApp.exe", ; Custom/lightweight path
+                "tooltip_csharp\\bin\\Release\\net6.0-windows\\TooltipApp.exe" ; Dev path
             ]
         }
         chosenPath := ""
@@ -784,71 +785,6 @@ ShowDateTimeFormatsMenuCS() {
 }
 
 ; ===================================================================
-; FUNCIONES DE ESTADO PERSISTENTE (VENTANA INDEPENDIENTE)
-; ===================================================================
-
-; Función para mostrar estado persistente específico
-ShowPersistentStatus(statusText, statusType) {
-    jsonData := "{"
-    jsonData .= '"show": true,'
-    jsonData .= '"status": "' . statusText . '",'
-    jsonData .= '"type": "' . statusType . '"'
-    jsonData .= "}"
-    
-    ; Escribir archivo JSON específico para cada tipo de estado (atómico)
-    statusFile := A_ScriptDir . "\\status_" . statusType . "_commands.json"
-    try {
-        FileDelete(statusFile . ".tmp")
-    }
-    FileAppend(jsonData, statusFile . ".tmp")
-    FileMove(statusFile . ".tmp", statusFile, 1)
-}
-
-; Función para ocultar estado persistente específico
-HidePersistentStatus(statusType) {
-    jsonData := '{"show": false}'
-    statusFile := A_ScriptDir . "\\status_" . statusType . "_commands.json"
-    try {
-        FileDelete(statusFile . ".tmp")
-    }
-    FileAppend(jsonData, statusFile . ".tmp")
-    FileMove(statusFile . ".tmp", statusFile, 1)
-}
-
-; Funciones específicas para cada estado persistente
-ShowNvimStatus() {
-    ShowPersistentStatus("NVIM", "nvim")
-}
-
-HideNvimStatus() {
-    HidePersistentStatus("nvim")
-}
-
-ShowVisualStatus() {
-    ShowPersistentStatus("VISUAL", "visual")
-}
-
-HideVisualStatus() {
-    HidePersistentStatus("visual")
-}
-
-ShowYankStatus() {
-    ShowPersistentStatus("YANK", "yank")
-}
-
-HideYankStatus() {
-    HidePersistentStatus("yank")
-}
-
-ShowExcelStatus() {
-    ShowPersistentStatus("EXCEL", "excel")
-}
-
-HideExcelStatus() {
-    HidePersistentStatus("excel")
-}
-
-; ===================================================================
 ; FUNCIONES DE NOTIFICACIÓN MEJORADAS (TEMPORALES)
 ; ===================================================================
 
@@ -985,13 +921,6 @@ ShowCapsLockStatusCS(stateText) {
     ScheduleTooltipJsonWrite(json)
 }
 
-ShowNvimLayerStatusCS(isActive) {
-    if (isActive) {
-        ShowNvimStatus()
-    } else {
-        HideNvimStatus()
-    }
-}
 
 ShowExcelLayerToggleCS(isActive) {
     ; Ensure previous tooltip is hidden to avoid overlap
@@ -1030,14 +959,6 @@ ShowExcelLayerToggleCS(isActive) {
         cmd["opacity"] := theme.window["opacity"]
     json := SerializeJson(cmd)
     ScheduleTooltipJsonWrite(json)
-}
-
-ShowExcelLayerStatusCS(isActive) {
-    if (isActive) {
-        ShowExcelStatus()
-    } else {
-        HideExcelStatus()
-    }
 }
 
 ShowProcessTerminatedCS() {
@@ -1756,22 +1677,3 @@ ShowCSharpTooltipAdvanced(title, items, navigation := "", opts := 0) {
     ScheduleTooltipJsonWrite(json)
 }
 
-; ===================================================================
-; INICIALIZACIÓN AUTOMÁTICA
-; ===================================================================
-
-; Iniciar automáticamente la aplicación tooltip al cargar este archivo
-; (Comentar la siguiente línea si prefieres iniciar manualmente)
-; StartTooltipApp()
-
-; Demo hotkey to validate modern tooltip
-InitTooltipDemoHotkey() {
-    Hotkey("^!t", (*) => ShowCSharpTooltipAdvanced(
-        "COMMAND PALETTE",
-        "w:Windows|p:Programs|g:Git",
-        "\\: Back|ESC: Exit"
-    ))
-}
-
-; Register demo hotkey at load
-InitTooltipDemoHotkey()

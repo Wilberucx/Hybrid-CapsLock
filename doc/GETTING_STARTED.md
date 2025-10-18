@@ -6,21 +6,18 @@ Este documento proporciona los atajos esenciales y una guía de configuración r
 
 ### Gestión de Ventanas
 
-| Atajo            | Acción                            |
-| ---------------- | --------------------------------- |
-| `CapsLock + q`   | Cerrar ventana                    |
-| `CapsLock + f`   | Maximizar/Restaurar               |
-| `CapsLock + Tab` | Navegador de ventanas mejorado    |
-| `CapsLock + 6/7` | Ajustar ventana izquierda/derecha |
-| `CapsLock + F12` | Forzar cierre de proceso          |
+| Atajo            | Acción                         |
+| ---------------- | ------------------------------ |
+| `CapsLock + q`   | Cerrar ventana                 |
+| `CapsLock + f`   | Maximizar/Restaurar            |
+| `CapsLock + Tab` | Navegador de ventanas mejorado |
 
 ### Navegación Rápida
 
-| Atajo                | Acción                               |
-| -------------------- | ------------------------------------ |
-| `CapsLock + h/j/k/l` | Flechas direccionales (estilo Vim)   |
-| `CapsLock + e/d`     | Scroll suave abajo/arriba            |
-| `CapsLock + /`       | Scroll con touchpad (modo trackball) |
+| Atajo                | Acción                             |
+| -------------------- | ---------------------------------- |
+| `CapsLock + h/j/k/l` | Flechas direccionales (estilo Vim) |
+| `CapsLock + e/d`     | Scroll suave abajo/arriba          |
 
 ### Edición de Texto
 
@@ -34,19 +31,15 @@ Este documento proporciona los atajos esenciales y una guía de configuración r
 
 ### Funciones de Mouse
 
-| Atajo          | Acción                    |
-| -------------- | ------------------------- |
-| `CapsLock + ;` | Click izquierdo sostenido |
-| `CapsLock + '` | Click derecho simple      |
+(No hay atajos de mouse en el modo modificador actualmente)
 
 ### Utilidades Especiales
 
-| Atajo            | Acción                     |
-| ---------------- | -------------------------- |
-| `CapsLock + 5`   | Copiar ruta/URL actual     |
-| `CapsLock + 9`   | Captura de pantalla        |
-| `CapsLock + \`   | Insertar email configurado |
-| `CapsLock + F10` | Toggle CapsLock original   |
+| Atajo            | Acción                   |
+| ---------------- | ------------------------ |
+| `CapsLock + 5`   | Copiar ruta/URL actual   |
+| `CapsLock + 9`   | Captura de pantalla      |
+| `CapsLock + F10` | Toggle CapsLock original |
 
 ## 🔧 Configuración en 2 Minutos
 
