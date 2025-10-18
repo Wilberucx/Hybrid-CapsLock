@@ -16,49 +16,54 @@ try {
 #HotIf (excelStaticEnabled ? (excelLayerActive && !GetKeyState("CapsLock", "P") && ExcelLayerAppAllowed()) : false)
 
 ; === NUMPAD SECTION ===
-; Top row (7, 8, 9)
-7::Send("{Numpad7}")
-8::Send("{Numpad8}")
-9::Send("{Numpad9}")
+; New numeric pad: 123 (top), QWE (middle), ASD (bottom), X as 0
+1::Send("{Numpad1}")
+2::Send("{Numpad2}")
+3::Send("{Numpad3}")
 
-; Middle row (4, 5, 6)
-u::Send("{Numpad4}")
-i::Send("{Numpad5}")
-o::Send("{Numpad6}")
+q::Send("{Numpad4}")
+w::Send("{Numpad5}")
+e::Send("{Numpad6}")
 
-; Bottom row (1, 2, 3)
-j::Send("{Numpad1}")
-k::Send("{Numpad2}")
-l::Send("{Numpad3}")
+a::Send("{Numpad7}")
+s::Send("{Numpad8}")
+d::Send("{Numpad9}")
 
 ; Zero
-m::Send("{Numpad0}")
+x::Send("{Numpad0}")
 
 ; Decimal and comma
 ,::Send("{NumpadComma}")
 .::Send("{NumpadDot}")
 
 ; Operations
-p::Send("{NumpadAdd}")
+o::Send("{NumpadAdd}")  ; Moved from p to o
 `;::Send("{NumpadSub}")
 /::Send("{NumpadDiv}")
 
 ; === NAVIGATION SECTION ===
-; Arrow keys (WASD)
-w::Send("{Up}")
-a::Send("{Left}")
-s::Send("{Down}")
-d::Send("{Right}")
+; Arrow keys (Vim HJKL)
+h::Send("{Left}")
+j::Send("{Down}")
+k::Send("{Up}")
+l::Send("{Right}")
 
 ; Tab navigation
 [::Send("+{Tab}")
 ]::Send("{Tab}")
 
 ; === EXCEL FUNCTIONS ===
-Enter::Send("^{Enter}")  ; Fill down
-Space::Send("{F2}")      ; Edit cell
+i::Send("{F2}")         ; Edit cell
 f::Send("^f")           ; Find
-r::Send("^r")           ; Fill right
+u::Send("^z")           ; Undo
+r::Send("^y")           ; Redo
+g::Send("^{Home}")      ; Go to beginning
+; Capital G handled in main context
++g::Send("^{End}")      ; Go to end (Shift+g = G)
+m::Send("^g")           ; Go to specific cell
+y::Send("^c")           ; Yank (copy)
+p::Send("^v")           ; Paste
+; c removed - duplicates y (yank)
 
 ; === EXIT EXCEL LAYER ===
 +n:: {
@@ -68,11 +73,65 @@ r::Send("^r")           ; Fill right
     SetTempStatus("EXCEL LAYER OFF", 2000)
 }
 
+; === SELECTION FUNCTIONS (MINICAPAS) ===
+; v prefix for selection functions (like GLogic in nvim)
+#HotIf (excelStaticEnabled ? (excelLayerActive && !GetKeyState("CapsLock", "P") && ExcelLayerAppAllowed() && !VLogicActive) : false)
+v::VLogicStart()
+#HotIf (excelStaticEnabled ? (excelLayerActive && !GetKeyState("CapsLock", "P") && ExcelLayerAppAllowed()) : false)
+
 ; === HELP (toggle with ?) ===
 +vkBF:: (ExcelHelpActive ? ExcelCloseHelp() : ExcelShowHelp())
 +SC035:: (ExcelHelpActive ? ExcelCloseHelp() : ExcelShowHelp())
 ?:: (ExcelHelpActive ? ExcelCloseHelp() : ExcelShowHelp())
 
+; === MINICAPA V LOGIC (vr, vc, vv) ===
+#HotIf (excelStaticEnabled ? (excelLayerActive && !GetKeyState("CapsLock", "P") && ExcelLayerAppAllowed() && VLogicActive) : false)
+r:: {
+    VLogicCancel()
+    Send("+{Space}") ; Shift+Space = select entire row
+    ToolTip("ROW SELECTED")
+    SetTimer(() => ToolTip(), -1000)
+}
+
+c:: {
+    VLogicCancel()
+    Send("^{Space}") ; Ctrl+Space = select entire column
+    ToolTip("COLUMN SELECTED")
+    SetTimer(() => ToolTip(), -1000)
+}
+
+v:: {
+    global VVModeActive
+    VLogicCancel()
+    VVModeActive := true
+    ToolTip("VISUAL SELECTION MODE (hjkl to select, Esc/Enter to exit)")
+    ; No timeout for VV mode
+}
+
+Esc::VLogicCancel()
+#HotIf
+
+; === VV MODE (visual selection with arrows) ===
+#HotIf (excelStaticEnabled ? (excelLayerActive && !GetKeyState("CapsLock", "P") && ExcelLayerAppAllowed() && VVModeActive) : false)
+h::Send("+{Left}")     ; Shift+Left (select while moving)
+j::Send("+{Down}")     ; Shift+Down (select while moving)
+k::Send("+{Up}")       ; Shift+Up (select while moving)
+l::Send("+{Right}")    ; Shift+Right (select while moving)
+
+; Exit VV mode
+Esc:: {
+    global VVModeActive
+    VVModeActive := false
+    ToolTip("VISUAL SELECTION OFF")
+    SetTimer(() => ToolTip(), -1000)
+}
+
+Enter:: {
+    global VVModeActive
+    VVModeActive := false
+    ToolTip("VISUAL SELECTION OFF")
+    SetTimer(() => ToolTip(), -1000)
+}
 #HotIf
 
 ; === Status helper ===
@@ -98,6 +157,8 @@ ExcelAppAllowedGuard() {
 }
 
 global ExcelHelpActive := false
+global VLogicActive := false
+global VVModeActive := false
 
 ExcelShowHelp() {
     global tooltipConfig, ExcelHelpActive
@@ -134,4 +195,21 @@ ShowExcelLayerStatus(isActive) {
         ToolTip(isActive ? "EXCEL LAYER ON" : "EXCEL LAYER OFF")
         SetTimer(() => ToolTip(), -1200)
     }
+}
+
+; === V LOGIC FUNCTIONS ===
+VLogicStart() {
+    global VLogicActive
+    VLogicActive := true
+    to := 3000 ; 3 segundos timeout
+    SetTimer(VLogicTimeout, -to)
+}
+
+VLogicTimeout() {
+    VLogicCancel()
+}
+
+VLogicCancel() {
+    global VLogicActive
+    VLogicActive := false
 }
