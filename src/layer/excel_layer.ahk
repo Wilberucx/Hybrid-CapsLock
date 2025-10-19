@@ -13,7 +13,8 @@ try {
 } catch {
 }
 
-#HotIf (excelStaticEnabled ? (excelLayerActive && !GetKeyState("CapsLock", "P") && ExcelLayerAppAllowed()) : false)
+#InputLevel 1
+#HotIf (excelStaticEnabled ? (excelLayerActive && !GetKeyState("CapsLock", "P") && ExcelLayerAppAllowed() && !VVModeActive) : false)
 
 ; === NUMPAD SECTION ===
 ; New numeric pad: 123 (top), QWE (middle), ASD (bottom), X as 0
@@ -42,7 +43,7 @@ o::Send("{NumpadAdd}")  ; Moved from p to o
 /::Send("{NumpadDiv}")
 
 ; === NAVIGATION SECTION ===
-; Arrow keys (Vim HJKL)
+; Arrow keys (Vim HJKL) - disabled when VVModeActive
 h::Send("{Left}")
 j::Send("{Down}")
 k::Send("{Up}")
@@ -61,9 +62,10 @@ g::Send("^{Home}")      ; Go to beginning
 ; Capital G handled in main context
 +g::Send("^{End}")      ; Go to end (Shift+g = G)
 m::Send("^g")           ; Go to specific cell
-y::Send("^c")           ; Yank (copy)
-p::Send("^v")           ; Paste
+y::Send("^c")           ; Yank (copy) - disabled when VVModeActive
+p::Send("^v")           ; Paste - disabled when VVModeActive
 ; c removed - duplicates y (yank)
+; Note: y, p are also defined in VV mode with different behavior
 
 ; === EXIT EXCEL LAYER ===
 +n:: {
@@ -75,64 +77,128 @@ p::Send("^v")           ; Paste
 
 ; === SELECTION FUNCTIONS (MINICAPAS) ===
 ; v prefix for selection functions (like GLogic in nvim)
-#HotIf (excelStaticEnabled ? (excelLayerActive && !GetKeyState("CapsLock", "P") && ExcelLayerAppAllowed() && !VLogicActive) : false)
+#HotIf (excelStaticEnabled ? (excelLayerActive && !GetKeyState("CapsLock", "P") && ExcelLayerAppAllowed() && !VLogicActive && !VVModeActive) : false)
 v::VLogicStart()
-#HotIf (excelStaticEnabled ? (excelLayerActive && !GetKeyState("CapsLock", "P") && ExcelLayerAppAllowed()) : false)
+#HotIf (excelStaticEnabled ? (excelLayerActive && !GetKeyState("CapsLock", "P") && ExcelLayerAppAllowed() && !VVModeActive) : false)
 
 ; === HELP (toggle with ?) ===
 +vkBF:: (ExcelHelpActive ? ExcelCloseHelp() : ExcelShowHelp())
 +SC035:: (ExcelHelpActive ? ExcelCloseHelp() : ExcelShowHelp())
 ?:: (ExcelHelpActive ? ExcelCloseHelp() : ExcelShowHelp())
 
+#HotIf
+
 ; === MINICAPA V LOGIC (vr, vc, vv) ===
+#InputLevel 2
 #HotIf (excelStaticEnabled ? (excelLayerActive && !GetKeyState("CapsLock", "P") && ExcelLayerAppAllowed() && VLogicActive) : false)
-r:: {
+*r:: {
     VLogicCancel()
-    Send("+{Space}") ; Shift+Space = select entire row
-    ToolTip("ROW SELECTED")
-    SetTimer(() => ToolTip(), -1000)
+    ; Alternative approach for row selection
+    Send("{Home}")      ; Go to beginning of row first
+    Send("+{Space}")    ; Then select entire row
+    ToolTip("ROW SELECTED - Home+Shift+Space")
+    SetTimer(() => ToolTip(), -2000)
 }
 
-c:: {
+*c:: {
     VLogicCancel()
     Send("^{Space}") ; Ctrl+Space = select entire column
     ToolTip("COLUMN SELECTED")
     SetTimer(() => ToolTip(), -1000)
 }
 
-v:: {
+*v:: {
     global VVModeActive
     VLogicCancel()
     VVModeActive := true
-    ToolTip("VISUAL SELECTION MODE (hjkl to select, Esc/Enter to exit)")
-    ; No timeout for VV mode
+    ToolTip("VISUAL SELECTION MODE ON - VVModeActive=" . VVModeActive . "`nPress hjkl to select, Esc/Enter to exit")
+    OutputDebug("VV Mode Activated: VVModeActive=" . VVModeActive)
+    ; No timeout for VV mode - tooltip stays until action
 }
 
-Esc::VLogicCancel()
+*Esc::VLogicCancel()
+
+; Debug hotkey: Check VV state with F9
+*F9:: {
+    global VVModeActive, excelLayerActive, excelStaticEnabled
+    msg := "DEBUG STATUS:`n"
+    msg .= "VVModeActive: " . VVModeActive . "`n"
+    msg .= "excelLayerActive: " . excelLayerActive . "`n"
+    msg .= "excelStaticEnabled: " . excelStaticEnabled . "`n"
+    msg .= "CapsLock: " . GetKeyState("CapsLock", "P") . "`n"
+    msg .= "ExcelLayerAppAllowed: " . ExcelLayerAppAllowed()
+    ToolTip(msg)
+    OutputDebug(msg)
+    SetTimer(() => ToolTip(), -5000)
+}
+
 #HotIf
+#InputLevel 1
 
 ; === VV MODE (visual selection with arrows) ===
+#InputLevel 2
 #HotIf (excelStaticEnabled ? (excelLayerActive && !GetKeyState("CapsLock", "P") && ExcelLayerAppAllowed() && VVModeActive) : false)
-h::Send("+{Left}")     ; Shift+Left (select while moving)
-j::Send("+{Down}")     ; Shift+Down (select while moving)
-k::Send("+{Up}")       ; Shift+Up (select while moving)
-l::Send("+{Right}")    ; Shift+Right (select while moving)
+
+; Debug: Test if hotkeys are being registered
+h:: {
+    OutputDebug("h pressed in VV context")
+    ExcelVVDirectionalSend("Left")
+}
+j:: {
+    OutputDebug("j pressed in VV context")
+    ExcelVVDirectionalSend("Down")
+}
+k:: {
+    OutputDebug("k pressed in VV context")
+    ExcelVVDirectionalSend("Up")
+}
+l:: {
+    OutputDebug("l pressed in VV context")
+    ExcelVVDirectionalSend("Right")
+}
 
 ; Exit VV mode
-Esc:: {
+*Esc:: {
     global VVModeActive
     VVModeActive := false
     ToolTip("VISUAL SELECTION OFF")
     SetTimer(() => ToolTip(), -1000)
 }
 
-Enter:: {
+*Enter:: {
     global VVModeActive
     VVModeActive := false
     ToolTip("VISUAL SELECTION OFF")
     SetTimer(() => ToolTip(), -1000)
 }
+
+; Opciones adicionales en VV mode
+*y:: {
+    global VVModeActive
+    Send("^c")  ; Copy selection
+    VVModeActive := false
+    ToolTip("COPIED - VV MODE OFF")
+    SetTimer(() => ToolTip(), -1000)
+}
+
+*d:: {
+    global VVModeActive
+    Send("{Delete}")  ; Delete selection
+    VVModeActive := false
+    ToolTip("DELETED - VV MODE OFF")
+    SetTimer(() => ToolTip(), -1000)
+}
+
+*p:: {
+    global VVModeActive
+    Send("^v")  ; Paste over selection
+    VVModeActive := false
+    ToolTip("PASTED - VV MODE OFF")
+    SetTimer(() => ToolTip(), -1000)
+}
+
 #HotIf
+#InputLevel 1
 
 ; === Status helper ===
 ExcelLayerAppAllowed() {
@@ -212,4 +278,29 @@ VLogicTimeout() {
 VLogicCancel() {
     global VLogicActive
     VLogicActive := false
+}
+
+; === VV MODE HELPER FUNCTION ===
+; Similar to NvimDirectionalSend but for Excel VV mode
+; Always adds Shift to extend selection, and respects other modifiers
+ExcelVVDirectionalSend(dir) {
+    global VVModeActive
+    mods := ""
+    if GetKeyState("Ctrl", "P")
+        mods .= "^"
+    if GetKeyState("Alt", "P")
+        mods .= "!"
+    if GetKeyState("Shift", "P")
+        mods .= "+"
+    ; En VVModeActive, siempre asegurar que Shift esté presente para extender selección
+    if (VVModeActive && !InStr(mods, "+"))
+        mods .= "+"
+    
+    ; Debug output - both OutputDebug and visible tooltip
+    OutputDebug("ExcelVV: VVMode=" . VVModeActive . " | mods='" . mods . "' | dir=" . dir)
+    ToolTip("VV: " . mods . "{" . dir . "}")
+    SetTimer(() => ToolTip(), -800)
+    
+    ; Use SendInput for more reliable delivery in Excel
+    SendInput(mods . "{" . dir . "}")
 }

@@ -6,7 +6,8 @@
 #Warn All
 
 ; Orquestador que incluye módulos modulares en src/
-; Nota: Los módulos están vacíos inicialmente como parte del scaffolding.
+; Nota: Los módulos están vacíos inicialmente como 
+; parte del scaffolding.
 
 ; --------------------
 ; Core
