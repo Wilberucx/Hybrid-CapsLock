@@ -14,7 +14,7 @@ try {
 }
 
 #InputLevel 1
-#HotIf (excelStaticEnabled ? (excelLayerActive && !GetKeyState("CapsLock", "P") && ExcelLayerAppAllowed() && !VVModeActive) : false)
+#HotIf (excelStaticEnabled ? (excelLayerActive && !GetKeyState("CapsLock", "P") && ExcelLayerAppAllowed() && !VVModeActive && !VLogicActive) : false)
 
 ; === NUMPAD SECTION ===
 ; New numeric pad: 123 (top), QWE (middle), ASD (bottom), X as 0
@@ -93,45 +93,49 @@ v::VLogicStart()
 #HotIf (excelStaticEnabled ? (excelLayerActive && !GetKeyState("CapsLock", "P") && ExcelLayerAppAllowed() && VLogicActive) : false)
 *r:: {
     VLogicCancel()
-    ; Alternative approach for row selection
-    Send("{Home}")      ; Go to beginning of row first
-    Send("+{Space}")    ; Then select entire row
-    ToolTip("ROW SELECTED - Home+Shift+Space")
-    SetTimer(() => ToolTip(), -2000)
+    ; Select entire row with Shift+Space
+    OutputDebug("VR: Sending Shift+Space")
+    Send("+{Space}")
+    OutputDebug("VR: Sent Shift+Space")
+    if (IsSet(tooltipConfig) && tooltipConfig.enabled) {
+        try {
+            ShowCSharpStatusNotification("EXCEL", "ROW SELECTED")
+            SetTimer(() => ShowExcelLayerToggleCS(true), -1200)
+        }
+    } else {
+        ToolTip("ROW SELECTED - DEBUG")
+        SetTimer(() => ToolTip(), -2000)
+    }
 }
 
 *c:: {
     VLogicCancel()
     Send("^{Space}") ; Ctrl+Space = select entire column
-    ToolTip("COLUMN SELECTED")
-    SetTimer(() => ToolTip(), -1000)
+    if (IsSet(tooltipConfig) && tooltipConfig.enabled) {
+        try {
+            ShowCSharpStatusNotification("EXCEL", "COLUMN SELECTED")
+            SetTimer(() => ShowExcelLayerToggleCS(true), -1200)
+        }
+    } else {
+        ToolTip("COLUMN SELECTED")
+        SetTimer(() => ToolTip(), -1000)
+    }
 }
 
 *v:: {
     global VVModeActive
     VLogicCancel()
     VVModeActive := true
-    ToolTip("VISUAL SELECTION MODE ON - VVModeActive=" . VVModeActive . "`nPress hjkl to select, Esc/Enter to exit")
-    OutputDebug("VV Mode Activated: VVModeActive=" . VVModeActive)
+    ; Show modern C# tooltip for VV mode
+    if (IsSet(tooltipConfig) && tooltipConfig.enabled) {
+        try ShowExcelVVModeToggleCS(true)
+    } else {
+        ToolTip("VISUAL SELECTION MODE (hjkl to select, Esc/Enter to exit)")
+    }
     ; No timeout for VV mode - tooltip stays until action
 }
 
 *Esc::VLogicCancel()
-
-; Debug hotkey: Check VV state with F9
-*F9:: {
-    global VVModeActive, excelLayerActive, excelStaticEnabled
-    msg := "DEBUG STATUS:`n"
-    msg .= "VVModeActive: " . VVModeActive . "`n"
-    msg .= "excelLayerActive: " . excelLayerActive . "`n"
-    msg .= "excelStaticEnabled: " . excelStaticEnabled . "`n"
-    msg .= "CapsLock: " . GetKeyState("CapsLock", "P") . "`n"
-    msg .= "ExcelLayerAppAllowed: " . ExcelLayerAppAllowed()
-    ToolTip(msg)
-    OutputDebug(msg)
-    SetTimer(() => ToolTip(), -5000)
-}
-
 #HotIf
 #InputLevel 1
 
@@ -139,37 +143,34 @@ v::VLogicStart()
 #InputLevel 2
 #HotIf (excelStaticEnabled ? (excelLayerActive && !GetKeyState("CapsLock", "P") && ExcelLayerAppAllowed() && VVModeActive) : false)
 
-; Debug: Test if hotkeys are being registered
-h:: {
-    OutputDebug("h pressed in VV context")
-    ExcelVVDirectionalSend("Left")
-}
-j:: {
-    OutputDebug("j pressed in VV context")
-    ExcelVVDirectionalSend("Down")
-}
-k:: {
-    OutputDebug("k pressed in VV context")
-    ExcelVVDirectionalSend("Up")
-}
-l:: {
-    OutputDebug("l pressed in VV context")
-    ExcelVVDirectionalSend("Right")
-}
+h::ExcelVVDirectionalSend("Left")
+j::ExcelVVDirectionalSend("Down")
+k::ExcelVVDirectionalSend("Up")
+l::ExcelVVDirectionalSend("Right")
 
 ; Exit VV mode
 *Esc:: {
     global VVModeActive
     VVModeActive := false
-    ToolTip("VISUAL SELECTION OFF")
-    SetTimer(() => ToolTip(), -1000)
+    ; Restore Excel layer tooltip
+    if (IsSet(tooltipConfig) && tooltipConfig.enabled) {
+        try ShowExcelVVModeToggleCS(false)
+    } else {
+        ToolTip("VISUAL SELECTION OFF")
+        SetTimer(() => ToolTip(), -1000)
+    }
 }
 
 *Enter:: {
     global VVModeActive
     VVModeActive := false
-    ToolTip("VISUAL SELECTION OFF")
-    SetTimer(() => ToolTip(), -1000)
+    ; Restore Excel layer tooltip
+    if (IsSet(tooltipConfig) && tooltipConfig.enabled) {
+        try ShowExcelVVModeToggleCS(false)
+    } else {
+        ToolTip("VISUAL SELECTION OFF")
+        SetTimer(() => ToolTip(), -1000)
+    }
 }
 
 ; Opciones adicionales en VV mode
@@ -177,24 +178,59 @@ l:: {
     global VVModeActive
     Send("^c")  ; Copy selection
     VVModeActive := false
-    ToolTip("COPIED - VV MODE OFF")
-    SetTimer(() => ToolTip(), -1000)
+    ; Show copy notification and restore Excel layer
+    if (IsSet(tooltipConfig) && tooltipConfig.enabled) {
+        try {
+            ShowCopyNotificationCS()
+            SetTimer(() => ShowExcelLayerToggleCS(true), -1200)
+        }
+    } else {
+        ToolTip("COPIED - VV MODE OFF")
+        SetTimer(() => ToolTip(), -1000)
+    }
 }
 
 *d:: {
     global VVModeActive
     Send("{Delete}")  ; Delete selection
     VVModeActive := false
-    ToolTip("DELETED - VV MODE OFF")
-    SetTimer(() => ToolTip(), -1000)
+    ; Show delete notification and restore Excel layer
+    if (IsSet(tooltipConfig) && tooltipConfig.enabled) {
+        try {
+            ShowCSharpStatusNotification("EXCEL VV", "DELETED")
+            SetTimer(() => ShowExcelLayerToggleCS(true), -1200)
+        }
+    } else {
+        ToolTip("DELETED - VV MODE OFF")
+        SetTimer(() => ToolTip(), -1000)
+    }
 }
 
 *p:: {
     global VVModeActive
     Send("^v")  ; Paste over selection
     VVModeActive := false
-    ToolTip("PASTED - VV MODE OFF")
-    SetTimer(() => ToolTip(), -1000)
+    ; Show paste notification and restore Excel layer
+    if (IsSet(tooltipConfig) && tooltipConfig.enabled) {
+        try {
+            ShowCSharpStatusNotification("EXCEL VV", "PASTED")
+            SetTimer(() => ShowExcelLayerToggleCS(true), -1200)
+        }
+    } else {
+        ToolTip("PASTED - VV MODE OFF")
+        SetTimer(() => ToolTip(), -1000)
+    }
+}
+
+; Help in VV mode
++/:: {
+    ; Shift+/ = ? (question mark)
+    if (IsSet(tooltipConfig) && tooltipConfig.enabled) {
+        try ShowExcelVVHelpCS()
+    } else {
+        ToolTip("VV HELP:`nh:Select left | j:Select down | k:Select up | l:Select right`ny:Copy & exit | d:Delete & exit | p:Paste & exit | Esc:Exit")
+        SetTimer(() => ToolTip(), -5000)
+    }
 }
 
 #HotIf
@@ -295,11 +331,6 @@ ExcelVVDirectionalSend(dir) {
     ; En VVModeActive, siempre asegurar que Shift esté presente para extender selección
     if (VVModeActive && !InStr(mods, "+"))
         mods .= "+"
-    
-    ; Debug output - both OutputDebug and visible tooltip
-    OutputDebug("ExcelVV: VVMode=" . VVModeActive . " | mods='" . mods . "' | dir=" . dir)
-    ToolTip("VV: " . mods . "{" . dir . "}")
-    SetTimer(() => ToolTip(), -800)
     
     ; Use SendInput for more reliable delivery in Excel
     SendInput(mods . "{" . dir . "}")

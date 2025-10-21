@@ -231,3 +231,126 @@ This implementation was developed to provide a consistent Vim-like experience ac
 
 **Date:** 2024
 **Version:** HybridCapsLock v2.0+
+
+## Modern Tooltip Integration (Update)
+
+### C# Tooltip System Integration
+
+The VV mode now uses the modern C# tooltip system for a consistent visual experience across all layers.
+
+#### New Functions Added to `tooltip_csharp_integration.ahk`
+
+1. **`ShowExcelVVModeToggleCS(isActive)`** - Shows/hides the VV mode indicator
+   - When active: Displays "Excel VV" with help hint (?)
+   - When inactive: Restores the Excel layer tooltip
+   - Uses "warning" accent color to distinguish from normal Excel mode
+   - Persistent (timeout_ms: 0) while VV mode is active
+
+2. **`ShowExcelVVHelpCS()`** - Displays VV mode help menu
+   - Lists all available commands (h/j/k/l for selection, y/d/p for actions)
+   - Uses bottom-right list layout for consistency
+   - Auto-dismisses after configured timeout (default 8000ms)
+
+3. **Updated `ShowExcelHelpCS()`** - Added "vv:Visual mode" to Excel help
+
+#### VV Mode Tooltip Behavior
+
+**Activation (`vv`):**
+```autohotkey
+if (IsSet(tooltipConfig) && tooltipConfig.enabled) {
+    try ShowExcelVVModeToggleCS(true)
+} else {
+    ToolTip("VISUAL SELECTION MODE (hjkl to select, Esc/Enter to exit)")
+}
+```
+
+**Exit (Esc/Enter):**
+```autohotkey
+if (IsSet(tooltipConfig) && tooltipConfig.enabled) {
+    try ShowExcelVVModeToggleCS(false)  // Restores Excel layer tooltip
+} else {
+    ToolTip("VISUAL SELECTION OFF")
+}
+```
+
+**Copy Action (`y`):**
+```autohotkey
+if (IsSet(tooltipConfig) && tooltipConfig.enabled) {
+    try ShowCopyNotificationCS()  // Uses standard copy notification
+} else {
+    ToolTip("COPIED - VV MODE OFF")
+}
+```
+
+**Delete Action (`d`):**
+```autohotkey
+if (IsSet(tooltipConfig) && tooltipConfig.enabled) {
+    try {
+        ShowCSharpStatusNotification("EXCEL VV", "DELETED")
+        SetTimer(() => ShowExcelLayerToggleCS(true), -1200)
+    }
+}
+```
+
+**Paste Action (`p`):**
+```autohotkey
+if (IsSet(tooltipConfig) && tooltipConfig.enabled) {
+    try {
+        ShowCSharpStatusNotification("EXCEL VV", "PASTED")
+        SetTimer(() => ShowExcelLayerToggleCS(true), -1200)
+    }
+}
+```
+
+**Help (`?` / Shift+/):**
+```autohotkey
+if (IsSet(tooltipConfig) && tooltipConfig.enabled) {
+    try ShowExcelVVHelpCS()
+} else {
+    ToolTip("VV HELP:...")
+}
+```
+
+### Visual Consistency
+
+The VV mode tooltips maintain visual consistency with:
+- **Nvim Layer** - Same bottom-right list layout and help hint (?)
+- **Visual Mode** - Similar activation/deactivation pattern
+- **Excel Layer** - Seamless transition between Excel and VV tooltips
+- **System Notifications** - Copy/Delete/Paste use standard notification style
+
+### Fallback Support
+
+All tooltip functions include native fallback when C# tooltips are disabled:
+- Simple `ToolTip()` calls with centered positioning
+- Automatic cleanup with `SetTimer(() => ToolTip(), -duration)`
+- Same functionality, different visual presentation
+
+### Configuration
+
+VV mode tooltips respect the global tooltip configuration from `config/configuration.ini`:
+- `[Tooltips] enabled` - Enable/disable C# tooltips
+- `[Tooltips] status_notification_timeout` - Duration for status messages
+- `[Tooltips] options_timeout` - Duration for help menus
+- `[TooltipTheme]` - Colors, positioning, opacity, etc.
+
+### Benefits of Modern Tooltips
+
+✅ **Professional appearance** - Consistent with Nvim/Visual layers
+✅ **Better visibility** - Themed colors and configurable positioning
+✅ **Reduced clutter** - Smart tooltip replacement instead of overlap
+✅ **User-friendly** - Integrated help system with `?` key
+✅ **Configurable** - Respects user theme and timeout preferences
+✅ **Graceful degradation** - Falls back to native tooltips if C# app unavailable
+
+### Updated User Experience Flow
+
+1. User activates Excel Layer → Sees "Excel" tooltip with (? help)
+2. User presses `vv` → Tooltip changes to "Excel VV" with warning accent
+3. User presses `?` → Full help menu appears temporarily
+4. User selects cells with `hjkl` → No tooltip spam, clean experience
+5. User presses `y` → "COPIED" notification appears briefly
+6. VV mode exits → Excel layer tooltip automatically restored
+
+This creates a smooth, professional experience that feels like a unified system rather than disconnected features.
+

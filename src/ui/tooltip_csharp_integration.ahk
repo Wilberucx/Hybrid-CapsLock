@@ -1128,11 +1128,72 @@ ShowNvimLayerToggleCS(isActive) {
 ShowExcelHelpCS() {
     global tooltipConfig
     ; Basic Excel layer help (can be later read from excel_layer.ini)
-    items := "7:Numpad7|8:Numpad8|9:Numpad9|u:Numpad4|i:Numpad5|o:Numpad6|j:Numpad1|k:Numpad2|l:Numpad3|m:Numpad0|,:Decimal|.:Dot|p:NumpadAdd|;:NumpadSub|/:NumpadDiv|w:Up|a:Left|s:Down|d:Right|[:Prev Tab|]:Next Tab|Enter:Fill down|Space:Edit cell|f:Find|r:Fill right|N:Exit Excel layer"
+    items := "7:Numpad7|8:Numpad8|9:Numpad9|u:Numpad4|i:Numpad5|o:Numpad6|j:Numpad1|k:Numpad2|l:Numpad3|m:Numpad0|,:Decimal|.:Dot|p:NumpadAdd|;:NumpadSub|/:NumpadDiv|w:Up|a:Left|s:Down|d:Right|[:Prev Tab|]:Next Tab|Enter:Fill down|Space:Edit cell|f:Find|r:Fill right|vv:Visual mode|N:Exit Excel layer"
     to := (IsSet(tooltipConfig) && tooltipConfig.HasProp("optionsTimeout") && tooltipConfig.optionsTimeout > 0) ? tooltipConfig.optionsTimeout : 8000
     if (to < 8000)
         to := 8000
     ShowBottomRightListTooltip("EXCEL HELP", items, "?: Close", to)
+}
+
+; Excel VV Mode Toggle (Visual Selection)
+ShowExcelVVModeToggleCS(isActive) {
+    ; Ensure app is running
+    StartTooltipApp()
+    if (!ProcessExist("TooltipApp.exe")) {
+        ; Fallback to native tooltip
+        ToolTip(isActive ? "◉ VISUAL (EXCEL)" : "○ VISUAL (EXCEL)")
+        SetTimer(() => ToolTip(), -900)
+        return
+    }
+    if (!isActive) {
+        ; When exiting VV mode, restore Excel layer tooltip
+        try ShowExcelLayerToggleCS(true)
+        return
+    }
+    theme := ReadTooltipThemeDefaults()
+    cmd := Map()
+    cmd["show"] := true
+    cmd["title"] := "Visual (Excel)"
+    cmd["layout"] := "list"
+    cmd["tooltip_type"] := "bottom_right_list"
+    cmd["timeout_ms"] := 0 ; persistent while VV mode is active
+    
+    ; Show help hint
+    items := []
+    it := Map()
+    it["key"] := "?"
+    it["description"] := "help"
+    items.Push(it)
+    cmd["items"] := items
+    
+    ; Apply theme with visual accent
+    if (theme.style.Count) {
+        style := theme.style
+        if (style.Has("warning"))
+            style["accent_options"] := style["warning"]
+        cmd["style"] := style
+    }
+    if (theme.position.Count)
+        cmd["position"] := theme.position
+    if (theme.window.Has("topmost"))
+        cmd["topmost"] := theme.window["topmost"]
+    if (theme.window.Has("click_through"))
+        cmd["click_through"] := theme.window["click_through"]
+    if (theme.window.Has("opacity"))
+        cmd["opacity"] := theme.window["opacity"]
+    
+    json := SerializeJson(cmd)
+    ScheduleTooltipJsonWrite(json)
+}
+
+; Excel VV Mode Help
+ShowExcelVVHelpCS() {
+    global tooltipConfig
+    items := "h:Select left|j:Select down|k:Select up|l:Select right|y:Copy & exit|d:Delete & exit|p:Paste & exit|Esc:Exit Visual mode"
+    to := (IsSet(tooltipConfig) && tooltipConfig.HasProp("optionsTimeout") && tooltipConfig.optionsTimeout > 0) ? tooltipConfig.optionsTimeout : 8000
+    if (to < 8000)
+        to := 8000
+    ShowBottomRightListTooltip("VISUAL (EXCEL) HELP", items, "?: Close", to)
 }
 
 ; Menú de opciones Visual (v)
