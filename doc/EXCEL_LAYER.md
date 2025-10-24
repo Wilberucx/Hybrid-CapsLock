@@ -96,13 +96,20 @@ i, f, u, r, g, m, y, p, c, v (minicapas), etc.
 
 #### 🎯 Funciones de Selección Avanzadas (Minicapas)
 
+La tecla `v` activa una **mini-capa temporal** (V Logic) que permite acceder a comandos de selección sin ocupar teclas individuales. La mini-capa permanece activa ~3 segundos (configurable) esperando el siguiente comando.
+
 | Comando | Función                  | Descripción                           |
 | ------- | ------------------------ | ------------------------------------- |
 | `vr`    | Shift + Space           | Seleccionar fila completa             |
 | `vc`    | Ctrl + Space            | Seleccionar columna completa           |
 | `vv`    | Modo selección visual   | hjkl con Shift+flechas para seleccionar múltiples celdas, Esc/Enter para salir|
 
-**Nota:** Presiona `v` para activar la minicapa (3s timeout), luego `r`, `c` o `v` para la acción deseada.
+**Cómo usar:**
+1. Presiona `v` → Se activa V Logic (mini-capa temporal)
+2. Presiona `r`, `c` o `v` → Ejecuta la acción y sale de la mini-capa
+3. Si no presionas nada en ~3s, la mini-capa se cancela automáticamente
+
+**Nota técnica:** Esta mini-capa usa InputLevel 2 para tener prioridad sobre los hotkeys normales de Excel. Ver [implementación técnica](develop/excel_v_logic_mini_layer.md) para detalles.
 
 *Nota: Enter y Space mantienen su comportamiento normal*
 
