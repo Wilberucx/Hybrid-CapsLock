@@ -582,11 +582,6 @@ ReactivateNvimAfterInsert() {
         SetTimer(() => RemoveToolTip(), -1000)
     }
 }
-NvimCapsHoldGuard() {
-    global capsHoldDetected
-    if GetKeyState("CapsLock", "P")
-        capsHoldDetected := true
-}
 
 NvimHandleDeleteMenu() {
     global VisualMode
@@ -633,16 +628,6 @@ NvimHandleYankMenu() {
         case "w": CopyCurrentWord()
         case "a": Send("^a^c"), ShowCopyNotification()
         case "p": CopyCurrentParagraph()
-    }
-}
-
-ReactivateNvimAfterReplace() {
-    global isNvimLayerActive, _tempEditMode
-    if (_tempEditMode) {
-        isNvimLayerActive := true
-        _tempEditMode := false
-        ShowNvimLayerStatus(true)
-        SetTimer(() => RemoveToolTip(), -1000)
     }
 }
 

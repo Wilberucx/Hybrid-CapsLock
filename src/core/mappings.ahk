@@ -254,12 +254,6 @@ ReloadNvimMappings() {
     }
 }
 
-ReloadAllMappings() {
-    ReloadModifierMappings()
-    ReloadExcelMappings()
-    ReloadNvimMappings()
-}
-
 ; ---- Excel mappings ----
 _excelRegisteredHotkeys := []
 
@@ -302,6 +296,8 @@ ApplyExcelMappings(mappings) {
     ; disable static
     global excelStaticEnabled
     excelStaticEnabled := false
+    ; Use InputLevel 1 to match static Excel hotkeys and allow minicapa V Logic (InputLevel 2) to override
+    #InputLevel 1
     ; context: excelLayerActive and CapsLock not physically pressed
     HotIf((*) => (excelLayerActive && !GetKeyState("CapsLock", "P") && ExcelAppAllowedGuard()))
     for key, action in mappings.OwnProps() {
@@ -310,6 +306,7 @@ ApplyExcelMappings(mappings) {
         _excelRegisteredHotkeys.Push(hk)
     }
     HotIf()
+    #InputLevel 0
 }
 
 UnregisterExcelMappings() {

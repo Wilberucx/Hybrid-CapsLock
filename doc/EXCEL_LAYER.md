@@ -20,25 +20,27 @@ La capa Excel está organizada en tres secciones principales para máxima eficie
 
 ```
 Teclas físicas:    Función numpad:
-7  8  9           →    7  8  9
-u  i  o           →    4  5  6
-j  k  l           →    1  2  3
-   m              →       0
+1  2  3           →    1  2  3
+q  w  e           →    4  5  6
+a  s  d           →    7  8  9
+   x              →       0
+,  .              →    ,  .
+8  9  ;  /        →    *  () -  ÷
 ```
 
 ### 🧭 Sección Navegación
 
 ```
 Teclas físicas:    Función navegación:
-   w              →       ↑
-a  s  d           →    ←  ↓  →
+   k              →       ↑
+h  j  l           →    ←  ↓  →
 ```
 
 ### 📈 Sección Excel
 
 ```
 Funciones especializadas para hojas de cálculo
-Enter, Space, f, r, h, g, t, etc.
+i, f, u, r, g, m, y, p, c, v (minicapas), etc.
 ```
 
 ### 📊 Mapa Completo de Teclas
@@ -47,55 +49,74 @@ Enter, Space, f, r, h, g, t, etc.
 
 | Tecla Física | Función Numpad | Descripción |
 | ------------ | -------------- | ----------- |
-| `7`          | Numpad 7       | Número 7    |
-| `8`          | Numpad 8       | Número 8    |
-| `9`          | Numpad 9       | Número 9    |
-| `u`          | Numpad 4       | Número 4    |
-| `i`          | Numpad 5       | Número 5    |
-| `o`          | Numpad 6       | Número 6    |
-| `j`          | Numpad 1       | Número 1    |
-| `k`          | Numpad 2       | Número 2    |
-| `l`          | Numpad 3       | Número 3    |
-| `m`          | Numpad 0       | Número 0    |
+| `1`          | Numpad 1       | Número 1    |
+| `2`          | Numpad 2       | Número 2    |
+| `3`          | Numpad 3       | Número 3    |
+| `q`          | Numpad 4       | Número 4    |
+| `w`          | Numpad 5       | Número 5    |
+| `e`          | Numpad 6       | Número 6    |
+| `a`          | Numpad 7       | Número 7    |
+| `s`          | Numpad 8       | Número 8    |
+| `d`          | Numpad 9       | Número 9    |
+| `x`          | Numpad 0       | Número 0    |
 
 #### 🔣 Símbolos y Operaciones
 
-| Tecla Física       | Función      | Descripción     |
-| ------------------ | ------------ | --------------- |
-| `,` (coma)         | Numpad Comma | Coma del numpad |
-| `.` (punto)        | Numpad Dot   | Punto decimal   |
-| `p`                | Numpad +     | Suma            |
-| `;` (punto y coma) | Numpad -     | Resta           |
-| `/` (barra)        | Numpad /     | División        |
+| Tecla Física       | Función      | Descripción         |
+| ------------------ | ------------ | ------------------- |
+| `,` (coma)         | , (coma)     | Coma (sin mapeo)    |
+| `.` (punto)        | Numpad Dot   | Punto decimal       |
+| `8`                | *            | Multiplicación      |
+| `9`                | ()           | Paréntesis (función)|
+| `;` (punto y coma) | Numpad -     | Resta               |
+| `/` (barra)        | Numpad /     | División            |
 
 #### 🧭 Navegación
 
 | Tecla Física | Función     | Descripción               |
 | ------------ | ----------- | ------------------------- |
-| `w`          | ↑           | Flecha arriba             |
-| `a`          | ←           | Flecha izquierda          |
-| `s`          | ↓           | Flecha abajo              |
-| `d`          | →           | Flecha derecha            |
+| `h`          | ←           | Flecha izquierda (Vim)    |
+| `j`          | ↓           | Flecha abajo (Vim)        |
+| `k`          | ↑           | Flecha arriba (Vim)       |
+| `l`          | →           | Flecha derecha (Vim)      |
 | `[`          | Shift + Tab | Navegación hacia atrás    |
 | `]`          | Tab         | Navegación hacia adelante |
 
 #### 📈 Funciones Excel
 
-| Tecla Física | Función      | Descripción               |
-| ------------ | ------------ | ------------------------- |
-| `Enter`      | Ctrl + Enter | Rellenar hacia abajo      |
-| `Space`      | F2           | Editar celda              |
-| `f`          | Ctrl + F     | Buscar                    |
-| `r`          | Ctrl + R     | Rellenar hacia la derecha |
-| `h`          | Ctrl + H     | Buscar y reemplazar       |
-| `g`          | Ctrl + G     | Ir a                      |
-| `t`          | Ctrl + T     | Crear tabla               |
-| `n`          | Ctrl + N     | Nuevo libro               |
-| `v`          | Ctrl + V     | Pegar                     |
-| `c`          | Ctrl + C     | Copiar                    |
-| `x`          | Ctrl + X     | Cortar                    |
-| `z`          | Ctrl + Z     | Deshacer                  |
-| `y`          | Ctrl + Y     | Rehacer                   |
+| Tecla Física | Función         | Descripción                    |
+| ------------ | --------------- | ------------------------------ |
+| `i`          | F2              | Editar celda                   |
+| `I`          | F2 + Exit       | Editar celda y salir de capa   |
+| `f`          | Ctrl + F        | Buscar                         |
+| `u`          | Ctrl + Z        | Deshacer (Undo)                |
+| `r`          | Ctrl + Y        | Rehacer (Redo)                 |
+| `g`          | Ctrl + Home     | Ir al inicio de la hoja        |
+| `G`          | Ctrl + End      | Ir al final de datos           |
+| `m`          | Ctrl + G        | Ir a celda específica          |
+| `y`          | Ctrl + C        | Copiar (Yank)                  |
+| `p`          | Ctrl + V        | Pegar                          |
+| `o`          | Enter           | Confirmar/Bajar celda          |
+| `O`          | Shift + Enter   | Subir celda                    |
+
+#### 🎯 Funciones de Selección Avanzadas (Minicapas)
+
+La tecla `v` activa una **mini-capa temporal** (V Logic) que permite acceder a comandos de selección sin ocupar teclas individuales. La mini-capa permanece activa ~3 segundos (configurable) esperando el siguiente comando.
+
+| Comando | Función                  | Descripción                           |
+| ------- | ------------------------ | ------------------------------------- |
+| `vr`    | Shift + Space           | Seleccionar fila completa             |
+| `vc`    | Ctrl + Space            | Seleccionar columna completa           |
+| `vv`    | Modo selección visual   | hjkl con Shift+flechas para seleccionar múltiples celdas, Esc/Enter para salir|
+
+**Cómo usar:**
+1. Presiona `v` → Se activa V Logic (mini-capa temporal)
+2. Presiona `r`, `c` o `v` → Ejecuta la acción y sale de la mini-capa
+3. Si no presionas nada en ~3s, la mini-capa se cancela automáticamente
+
+**Nota técnica:** Esta mini-capa usa InputLevel 2 para tener prioridad sobre los hotkeys normales de Excel. Ver [implementación técnica](develop/excel_v_logic_mini_layer.md) para detalles.
+
+*Nota: Enter y Space mantienen su comportamiento normal*
 
 #### 🚪 Control de Capa
 
@@ -164,9 +185,11 @@ leader → Menú Principal
 
 ### 🎯 Memoria Muscular
 
-- La distribución sigue el patrón estándar de numpad para facilitar la adaptación
-- Las teclas `u`, `i`, `o` están naturalmente alineadas con `4`, `5`, `6`
-- Las teclas `j`, `k`, `l` siguen la secuencia lógica para `1`, `2`, `3`
+- La distribución numpad sigue un orden natural de arriba hacia abajo (1-9)
+- Las teclas `1`, `2`, `3` representan directamente los números 1, 2, 3
+- Las teclas `q`, `w`, `e` están naturalmente alineadas con `4`, `5`, `6`
+- Las teclas `a`, `s`, `d` siguen la secuencia lógica para `7`, `8`, `9`
+- La navegación con `h`, `j`, `k`, `l` sigue el estándar de Vim para máxima familiaridad
 
 ### ⚡ Flujo de Trabajo
 

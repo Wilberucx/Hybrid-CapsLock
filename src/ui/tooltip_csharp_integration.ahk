@@ -335,8 +335,9 @@ StartTooltipApp() {
                 ]
         } else {
             tooltipPaths := [
-                "tooltip_csharp\\bin\\Release\\net6.0-windows\\TooltipApp.exe",
-                A_ScriptDir . "\\TooltipApp.exe"
+                A_ScriptDir . "\\tooltip_csharp\\TooltipApp.exe", ; Release path
+                A_ScriptDir . "\\TooltipApp.exe", ; Custom/lightweight path
+                "tooltip_csharp\\bin\\Release\\net6.0-windows\\TooltipApp.exe" ; Dev path
             ]
         }
         chosenPath := ""
@@ -784,71 +785,6 @@ ShowDateTimeFormatsMenuCS() {
 }
 
 ; ===================================================================
-; FUNCIONES DE ESTADO PERSISTENTE (VENTANA INDEPENDIENTE)
-; ===================================================================
-
-; Función para mostrar estado persistente específico
-ShowPersistentStatus(statusText, statusType) {
-    jsonData := "{"
-    jsonData .= '"show": true,'
-    jsonData .= '"status": "' . statusText . '",'
-    jsonData .= '"type": "' . statusType . '"'
-    jsonData .= "}"
-    
-    ; Escribir archivo JSON específico para cada tipo de estado (atómico)
-    statusFile := A_ScriptDir . "\\status_" . statusType . "_commands.json"
-    try {
-        FileDelete(statusFile . ".tmp")
-    }
-    FileAppend(jsonData, statusFile . ".tmp")
-    FileMove(statusFile . ".tmp", statusFile, 1)
-}
-
-; Función para ocultar estado persistente específico
-HidePersistentStatus(statusType) {
-    jsonData := '{"show": false}'
-    statusFile := A_ScriptDir . "\\status_" . statusType . "_commands.json"
-    try {
-        FileDelete(statusFile . ".tmp")
-    }
-    FileAppend(jsonData, statusFile . ".tmp")
-    FileMove(statusFile . ".tmp", statusFile, 1)
-}
-
-; Funciones específicas para cada estado persistente
-ShowNvimStatus() {
-    ShowPersistentStatus("NVIM", "nvim")
-}
-
-HideNvimStatus() {
-    HidePersistentStatus("nvim")
-}
-
-ShowVisualStatus() {
-    ShowPersistentStatus("VISUAL", "visual")
-}
-
-HideVisualStatus() {
-    HidePersistentStatus("visual")
-}
-
-ShowYankStatus() {
-    ShowPersistentStatus("YANK", "yank")
-}
-
-HideYankStatus() {
-    HidePersistentStatus("yank")
-}
-
-ShowExcelStatus() {
-    ShowPersistentStatus("EXCEL", "excel")
-}
-
-HideExcelStatus() {
-    HidePersistentStatus("excel")
-}
-
-; ===================================================================
 ; FUNCIONES DE NOTIFICACIÓN MEJORADAS (TEMPORALES)
 ; ===================================================================
 
@@ -985,13 +921,6 @@ ShowCapsLockStatusCS(stateText) {
     ScheduleTooltipJsonWrite(json)
 }
 
-ShowNvimLayerStatusCS(isActive) {
-    if (isActive) {
-        ShowNvimStatus()
-    } else {
-        HideNvimStatus()
-    }
-}
 
 ShowExcelLayerToggleCS(isActive) {
     ; Ensure previous tooltip is hidden to avoid overlap
@@ -1030,14 +959,6 @@ ShowExcelLayerToggleCS(isActive) {
         cmd["opacity"] := theme.window["opacity"]
     json := SerializeJson(cmd)
     ScheduleTooltipJsonWrite(json)
-}
-
-ShowExcelLayerStatusCS(isActive) {
-    if (isActive) {
-        ShowExcelStatus()
-    } else {
-        HideExcelStatus()
-    }
 }
 
 ShowProcessTerminatedCS() {
@@ -1206,12 +1127,73 @@ ShowNvimLayerToggleCS(isActive) {
 ; Excel Help
 ShowExcelHelpCS() {
     global tooltipConfig
-    ; Basic Excel layer help (can be later read from excel_layer.ini)
-    items := "7:Numpad7|8:Numpad8|9:Numpad9|u:Numpad4|i:Numpad5|o:Numpad6|j:Numpad1|k:Numpad2|l:Numpad3|m:Numpad0|,:Decimal|.:Dot|p:NumpadAdd|;:NumpadSub|/:NumpadDiv|w:Up|a:Left|s:Down|d:Right|[:Prev Tab|]:Next Tab|Enter:Fill down|Space:Edit cell|f:Find|r:Fill right|N:Exit Excel layer"
+    ; Excel layer help with all current mappings
+    items := "1:Numpad1|2:Numpad2|3:Numpad3|q:Numpad4|w:Numpad5|e:Numpad6|a:Numpad7|s:Numpad8|d:Numpad9|x:Numpad0|,:Comma|.:NumpadDot|8:Multiply (*)|9:Parentheses ()|;:NumpadSub|/:NumpadDiv|h:Left|j:Down|k:Up|l:Right|[:Prev Tab|]:Next Tab|i:Edit (F2)|I:Edit & Exit|f:Find|u:Undo|r:Redo|g:Go to top|G:Go to bottom|m:Go to cell|y:Copy|p:Paste|o:Enter|O:Shift+Enter|vr:Select row|vc:Select column|vv:Visual mode|N:Exit Excel layer"
     to := (IsSet(tooltipConfig) && tooltipConfig.HasProp("optionsTimeout") && tooltipConfig.optionsTimeout > 0) ? tooltipConfig.optionsTimeout : 8000
     if (to < 8000)
         to := 8000
     ShowBottomRightListTooltip("EXCEL HELP", items, "?: Close", to)
+}
+
+; Excel VV Mode Toggle (Visual Selection)
+ShowExcelVVModeToggleCS(isActive) {
+    ; Ensure app is running
+    StartTooltipApp()
+    if (!ProcessExist("TooltipApp.exe")) {
+        ; Fallback to native tooltip
+        ToolTip(isActive ? "◉ VISUAL (EXCEL)" : "○ VISUAL (EXCEL)")
+        SetTimer(() => ToolTip(), -900)
+        return
+    }
+    if (!isActive) {
+        ; When exiting VV mode, restore Excel layer tooltip
+        try ShowExcelLayerToggleCS(true)
+        return
+    }
+    theme := ReadTooltipThemeDefaults()
+    cmd := Map()
+    cmd["show"] := true
+    cmd["title"] := "Visual (Excel)"
+    cmd["layout"] := "list"
+    cmd["tooltip_type"] := "bottom_right_list"
+    cmd["timeout_ms"] := 0 ; persistent while VV mode is active
+    
+    ; Show help hint
+    items := []
+    it := Map()
+    it["key"] := "?"
+    it["description"] := "help"
+    items.Push(it)
+    cmd["items"] := items
+    
+    ; Apply theme with visual accent
+    if (theme.style.Count) {
+        style := theme.style
+        if (style.Has("warning"))
+            style["accent_options"] := style["warning"]
+        cmd["style"] := style
+    }
+    if (theme.position.Count)
+        cmd["position"] := theme.position
+    if (theme.window.Has("topmost"))
+        cmd["topmost"] := theme.window["topmost"]
+    if (theme.window.Has("click_through"))
+        cmd["click_through"] := theme.window["click_through"]
+    if (theme.window.Has("opacity"))
+        cmd["opacity"] := theme.window["opacity"]
+    
+    json := SerializeJson(cmd)
+    ScheduleTooltipJsonWrite(json)
+}
+
+; Excel VV Mode Help
+ShowExcelVVHelpCS() {
+    global tooltipConfig
+    items := "h:Select left|j:Select down|k:Select up|l:Select right|y:Copy & exit|d:Delete & exit|p:Paste & exit|Esc:Exit Visual mode"
+    to := (IsSet(tooltipConfig) && tooltipConfig.HasProp("optionsTimeout") && tooltipConfig.optionsTimeout > 0) ? tooltipConfig.optionsTimeout : 8000
+    if (to < 8000)
+        to := 8000
+    ShowBottomRightListTooltip("VISUAL (EXCEL) HELP", items, "?: Close", to)
 }
 
 ; Menú de opciones Visual (v)
@@ -1756,22 +1738,3 @@ ShowCSharpTooltipAdvanced(title, items, navigation := "", opts := 0) {
     ScheduleTooltipJsonWrite(json)
 }
 
-; ===================================================================
-; INICIALIZACIÓN AUTOMÁTICA
-; ===================================================================
-
-; Iniciar automáticamente la aplicación tooltip al cargar este archivo
-; (Comentar la siguiente línea si prefieres iniciar manualmente)
-; StartTooltipApp()
-
-; Demo hotkey to validate modern tooltip
-InitTooltipDemoHotkey() {
-    Hotkey("^!t", (*) => ShowCSharpTooltipAdvanced(
-        "COMMAND PALETTE",
-        "w:Windows|p:Programs|g:Git",
-        "\\: Back|ESC: Exit"
-    ))
-}
-
-; Register demo hotkey at load
-InitTooltipDemoHotkey()

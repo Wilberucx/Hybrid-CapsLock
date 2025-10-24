@@ -1,73 +1,35 @@
-# 📚 Documentación de HybridCapsLock
+# 📚 Portal de Documentación de HybridCapsLock
 
-Esta carpeta contiene toda la documentación detallada de HybridCapsLock.
+Bienvenido al centro de documentación de HybridCapsLock. Aquí encontrarás toda la información detallada para dominar y personalizar el script.
 
-## 🎯 Funcionalidades Principales
+## 🚀 Primeros Pasos
 
-### Modos de Operación
+- **[Guía de Inicio Rápido](GETTING_STARTED.md)**: ¿Nuevo aquí? Empieza con los atajos esenciales y una guía de configuración de 2 minutos.
 
-- **[Modo Modificador](MODIFIER_MODE.md)** - Todos los atajos con CapsLock mantenido
-- **[Capa Nvim](NVIM_LAYER.md)** - Navegación y edición estilo Vim
-- **[Modo Líder](LEADER_MODE.md)** - Menús contextuales y sub-capas
+## 🎯 Guías de Funcionalidades (Capas)
 
-### Capas Especializadas
+Cada capa tiene un propósito específico. Aprende a usarlas y configurarlas en sus documentos dedicados:
 
-- **[Capa Windows](WINDOWS_LAYER.md)** - Gestión de ventanas y zoom
-- **[Capa Programas](PROGRAM_LAYER.md)** - Lanzador de aplicaciones
-- **[Capa Timestamp](TIMESTAMP_LAYER.md)** - Herramientas de fecha/hora
-- **[Capa Excel](EXCEL_LAYER.md)** - Capa especializada para Excel con numpad, navegación y atajos
+### Modos de Operación Principales
+- **[Modo Modificador](MODIFIER_MODE.md)**: Atajos disponibles al *mantener* `CapsLock`.
+- **[Capa Nvim](NVIM_LAYER.md)**: Navegación y edición estilo Vim al *pulsar* `CapsLock`.
+- **[Modo Líder](LEADER_MODE.md)**: Menús contextuales que se activan con `CapsLock + Space`.
 
-## ⚙️ Instalación y Configuración
+### Sub-Capas del Modo Líder
+- **[Capa Windows](WINDOWS_LAYER.md)**: Gestión de ventanas, escritorios virtuales y zoom.
+- **[Capa Programas](PROGRAM_LAYER.md)**: Lanzador de aplicaciones configurable.
+- **[Capa Timestamp](TIMESTAMP_LAYER.md)**: Inserción de fechas y horas en múltiples formatos.
+- **[Capa Comandos](COMMAND_LAYER.md)**: Paleta de comandos de sistema (CMD/PowerShell).
+- **[Capa Información](INFORMATION_LAYER.md)**: Snippets de texto e información personal.
+- **[Capa Excel](EXCEL_LAYER.md)**: Capa especializada para Microsoft Excel.
 
-### Instalación Avanzada
+## ⚙️ Configuración y Desarrollo
 
-- Instalación como servicio: próximamente (documento en preparación)
+- **[Guía Completa de Configuración](CONFIGURATION.md)**: Una referencia exhaustiva de los 5 archivos `.ini` y más de 75 opciones de personalización.
+- **[Integración de Tooltips (C#)](../tooltip_csharp/README.md)**: Detalles técnicos sobre el sistema de notificaciones visuales.
+- **[Pruebas Manuales](MANUAL_TESTS.md)**: Checklist para verificar que todo funciona correctamente.
 
-## 🔗 Enlaces Rápidos
+## 🔗 Enlaces Globales
 
-- [Pruebas Manuales](MANUAL_TESTS.md) - Checklist de pruebas manuales
-
-- [README Principal](../README.md) - Documentación principal del proyecto
-- [Changelog](../CHANGELOG.md) - Historial de cambios y versiones
-- [Configuración de Programas](../config/programs.ini) - Configurar aplicaciones del lanzador
-- [Configuración General](../config/configuration.ini) - Configuraciones generales
-- [Configuración de Timestamps](../config/timestamps.ini) - Configurar herramientas de fecha/hora
-
-## 🛠️ Cómo configurar
-
-1) Configuración global
-- Abre config/configuration.ini y ajusta:
-  - [Behavior]: timeouts globales (global_timeout_seconds, leader_timeout_seconds), smooth scrolling, confirmación global (show_confirmation_global)
-  - [Layers]: activar/desactivar capas (nvim/excel/modifier/leader) y persistencia
-  - [Tooltips]: enable_csharp_tooltips, options_menu_timeout, status_notification_timeout, persistent_menus, tooltip_fade_animation, tooltip_click_through
-- Guía: ver doc/CONFIGURATION.md (secciones [Behavior], [Layers], [Tooltips])
-
-2) Configuración por capa
-- Programs: doc/PROGRAM_LAYER.md → editar config/programs.ini (Settings, ProgramMapping, MenuDisplay)
-  - Confirmaciones: ver “Confirmaciones — Modelo de Configuración” en doc/CONFIGURATION.md
-- Information: doc/INFORMATION_LAYER.md → editar config/information.ini (PersonalInfo, InfoMapping, MenuDisplay)
-  - Confirmaciones: ver “Confirmaciones — Modelo de Configuración” en doc/CONFIGURATION.md
-- Timestamps: doc/TIMESTAMP_LAYER.md → editar config/timestamps.ini (DateFormats/TimeFormats/DateTimeFormats, MenuDisplay, Settings)
-  - Confirmaciones: ver sección “Confirmaciones en Timestamps” y el modelo en CONFIGURATION.md
-- Commands: doc/COMMAND_LAYER.md → editar config/commands.ini (MenuDisplay, Settings, CategorySettings, Confirmations)
-  - Confirmaciones: ver “Precedencia de Confirmación (Commands)” y el modelo en CONFIGURATION.md
-- Windows/Nvim/Excel: ver docs de capa; confirmaciones no aplican
-
-3) Timeouts y Tooltips
-- Timeouts jerárquicos: por capa en cada *.ini (Settings.timeout_seconds), líder y global en configuration.ini. Ver doc/CONFIGURATION.md → “Timeouts jerárquicos (InputHook)”
-- Tooltips C#: ajustar [Tooltips] en configuration.ini; ver doc/CONFIGURATION.md → “Tooltips (C#) configurables”. Navegación: Esc sale completamente; Backspace hace back inteligente; Backslash (\\) es opcional y puede no funcionar en todos los contextos.
-
-4) Aplicar cambios
-- Recarga desde el propio script (sin reiniciar Windows): leader → c → h → R (Hybrid Management → Reload Script)
-- Alternativamente, recarga configuración ligera con la opción de reload correspondiente si está disponible
-
-5) Verificar
-- Abre el menú líder y recorre cada capa para validar tooltips, timeouts y confirmaciones según tu configuración
-
-## 🚀 Inicio Rápido
-
-1. **Instalación básica**: Ejecutar `HybridCapsLock.ahk`
-2. **Instalación**: Ejecutar directamente el script principal
-3. **Personalización**: Editar archivos `.ini` según necesidades
-4. **Documentación específica**: Consultar archivos individuales para cada funcionalidad
-
+- **[README Principal](../README.md)**: Volver a la página principal del proyecto.
+- **[Historial de Cambios](../CHANGELOG.md)**: Ver las novedades de cada versión.
