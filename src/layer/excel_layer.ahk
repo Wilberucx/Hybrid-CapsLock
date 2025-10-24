@@ -38,7 +38,7 @@ x::Send("{Numpad0}")
 .::Send("{NumpadDot}")
 
 ; Operations
-o::Send("{NumpadAdd}")  ; Moved from p to o
+8::Send("*")  ; Multiplication (asterisk)
 `;::Send("{NumpadSub}")
 /::Send("{NumpadDiv}")
 
@@ -55,6 +55,12 @@ l::Send("{Right}")
 
 ; === EXCEL FUNCTIONS ===
 i::Send("{F2}")         ; Edit cell
++i:: {                  ; Shift+I: Edit cell and exit Excel layer
+    global excelLayerActive
+    Send("{F2}")
+    excelLayerActive := false
+    ShowExcelLayerStatus(false)
+}
 f::Send("^f")           ; Find
 u::Send("^z")           ; Undo
 r::Send("^y")           ; Redo
@@ -64,6 +70,8 @@ g::Send("^{Home}")      ; Go to beginning
 m::Send("^g")           ; Go to specific cell
 y::Send("^c")           ; Yank (copy) - disabled when VVModeActive
 p::Send("^v")           ; Paste - disabled when VVModeActive
+o::Send("{Enter}")      ; Enter (confirm/move down)
++o::Send("+{Enter}")    ; Shift+Enter (move up)
 ; c removed - duplicates y (yank)
 ; Note: y, p are also defined in VV mode with different behavior
 

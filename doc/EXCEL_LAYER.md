@@ -24,7 +24,8 @@ Teclas físicas:    Función numpad:
 q  w  e           →    4  5  6
 a  s  d           →    7  8  9
    x              →       0
-   o              →       +
+,  .              →    ,  .
+8  ;  /           →    *  -  ÷
 ```
 
 ### 🧭 Sección Navegación
@@ -61,13 +62,13 @@ i, f, u, r, g, m, y, p, c, v (minicapas), etc.
 
 #### 🔣 Símbolos y Operaciones
 
-| Tecla Física       | Función      | Descripción     |
-| ------------------ | ------------ | --------------- |
-| `,` (coma)         | Numpad Comma | Coma del numpad |
-| `.` (punto)        | Numpad Dot   | Punto decimal   |
-| `p`                | Numpad +     | Suma            |
-| `;` (punto y coma) | Numpad -     | Resta           |
-| `/` (barra)        | Numpad /     | División        |
+| Tecla Física       | Función      | Descripción         |
+| ------------------ | ------------ | ------------------- |
+| `,` (coma)         | Numpad Comma | Coma del numpad     |
+| `.` (punto)        | Numpad Dot   | Punto decimal       |
+| `8`                | *            | Multiplicación      |
+| `;` (punto y coma) | Numpad -     | Resta               |
+| `/` (barra)        | Numpad /     | División            |
 
 #### 🧭 Navegación
 
@@ -85,6 +86,7 @@ i, f, u, r, g, m, y, p, c, v (minicapas), etc.
 | Tecla Física | Función         | Descripción                    |
 | ------------ | --------------- | ------------------------------ |
 | `i`          | F2              | Editar celda                   |
+| `I`          | F2 + Exit       | Editar celda y salir de capa   |
 | `f`          | Ctrl + F        | Buscar                         |
 | `u`          | Ctrl + Z        | Deshacer (Undo)                |
 | `r`          | Ctrl + Y        | Rehacer (Redo)                 |
@@ -93,6 +95,8 @@ i, f, u, r, g, m, y, p, c, v (minicapas), etc.
 | `m`          | Ctrl + G        | Ir a celda específica          |
 | `y`          | Ctrl + C        | Copiar (Yank)                  |
 | `p`          | Ctrl + V        | Pegar                          |
+| `o`          | Enter           | Confirmar/Bajar celda          |
+| `O`          | Shift + Enter   | Subir celda                    |
 
 #### 🎯 Funciones de Selección Avanzadas (Minicapas)
 

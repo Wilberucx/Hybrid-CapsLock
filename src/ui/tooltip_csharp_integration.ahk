@@ -1128,7 +1128,7 @@ ShowNvimLayerToggleCS(isActive) {
 ShowExcelHelpCS() {
     global tooltipConfig
     ; Excel layer help with all current mappings
-    items := "1:Numpad1|2:Numpad2|3:Numpad3|q:Numpad4|w:Numpad5|e:Numpad6|a:Numpad7|s:Numpad8|d:Numpad9|x:Numpad0|,:NumpadComma|.:NumpadDot|o:NumpadAdd|;:NumpadSub|/:NumpadDiv|h:Left|j:Down|k:Up|l:Right|[:Prev Tab|]:Next Tab|i:Edit (F2)|f:Find|u:Undo|r:Redo|g:Go to top|G:Go to bottom|m:Go to cell|y:Copy|p:Paste|vr:Select row|vc:Select column|vv:Visual mode|N:Exit Excel layer"
+    items := "1:Numpad1|2:Numpad2|3:Numpad3|q:Numpad4|w:Numpad5|e:Numpad6|a:Numpad7|s:Numpad8|d:Numpad9|x:Numpad0|,:NumpadComma|.:NumpadDot|8:Multiply (*)|;:NumpadSub|/:NumpadDiv|h:Left|j:Down|k:Up|l:Right|[:Prev Tab|]:Next Tab|i:Edit (F2)|I:Edit & Exit|f:Find|u:Undo|r:Redo|g:Go to top|G:Go to bottom|m:Go to cell|y:Copy|p:Paste|o:Enter|O:Shift+Enter|vr:Select row|vc:Select column|vv:Visual mode|N:Exit Excel layer"
     to := (IsSet(tooltipConfig) && tooltipConfig.HasProp("optionsTimeout") && tooltipConfig.optionsTimeout > 0) ? tooltipConfig.optionsTimeout : 8000
     if (to < 8000)
         to := 8000
