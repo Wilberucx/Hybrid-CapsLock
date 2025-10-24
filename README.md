@@ -21,9 +21,9 @@ Este script transforma la tecla `CapsLock` en una potente herramienta de product
 
 ## ⚙️ Instalación y Uso
 
-1.  **Requisito:** Instalar [AutoHotkey v2](https://www.autohotkey.com/).
-2.  **Ejecutar:** Doble click en `HybridCapsLock.ahk`.
-3.  **Inicio automático (Opcional):** Crear un acceso directo al script en la carpeta de inicio de Windows (`shell:startup`).
+1. **Requisito:** Instalar [AutoHotkey v2](https://www.autohotkey.com/).
+2. **Ejecutar:** Doble click en `HybridCapsLock.ahk`.
+3. **Inicio automático (Opcional):** Crear un acceso directo al script en la carpeta de inicio de Windows (`shell:startup`).
 
 ## 📚 Documentación Completa
 

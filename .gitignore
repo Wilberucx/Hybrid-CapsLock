@@ -49,3 +49,4 @@ thumbs.db
 
 # Release packages
 Releases/
+.markdownlint.json
