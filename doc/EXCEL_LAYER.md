@@ -25,7 +25,7 @@ q  w  e           →    4  5  6
 a  s  d           →    7  8  9
    x              →       0
 ,  .              →    ,  .
-8  ;  /           →    *  -  ÷
+8  9  ;  /        →    *  () -  ÷
 ```
 
 ### 🧭 Sección Navegación
@@ -64,9 +64,10 @@ i, f, u, r, g, m, y, p, c, v (minicapas), etc.
 
 | Tecla Física       | Función      | Descripción         |
 | ------------------ | ------------ | ------------------- |
-| `,` (coma)         | Numpad Comma | Coma del numpad     |
+| `,` (coma)         | , (coma)     | Coma (sin mapeo)    |
 | `.` (punto)        | Numpad Dot   | Punto decimal       |
 | `8`                | *            | Multiplicación      |
+| `9`                | ()           | Paréntesis (función)|
 | `;` (punto y coma) | Numpad -     | Resta               |
 | `/` (barra)        | Numpad /     | División            |
 

@@ -29,16 +29,18 @@ e::Send("{Numpad6}")
 a::Send("{Numpad7}")
 s::Send("{Numpad8}")
 d::Send("{Numpad9}")
++d::Send("{Delete}")    ; Shift+d: Delete key
 
 ; Zero
-x::Send("{Numpad0}")
+z::Send("{Numpad0}")
 
 ; Decimal and comma
-,::Send("{NumpadComma}")
+; , (comma) - not mapped, sends comma naturally
 .::Send("{NumpadDot}")
 
 ; Operations
 8::Send("*")  ; Multiplication (asterisk)
+9::Send("(){Left}")  ; Parentheses with cursor inside for functions
 `;::Send("{NumpadSub}")
 /::Send("{NumpadDiv}")
 
