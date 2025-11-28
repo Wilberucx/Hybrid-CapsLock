@@ -2,6 +2,9 @@
 
 ![HybridCapsLock logo](img/Logo%20HybridCapsLock.png)
 
+> [!NOTE]
+> Este proyecto no está siendo matenido activamente. Para una solución más moderna y mantenida, considera usar [Kanata + AutoHotkey v2](https://github.com/Wilberucx/Hybrid-CapsLock-fork)
+
 Este script transforma la tecla `CapsLock` en una potente herramienta de productividad con un comportamiento híbrido, inspirado en la eficiencia de editores como Vim. Ofrece un entorno de trabajo completamente personalizable para navegar, editar y gestionar tu sistema con una ergonomía mejorada.
 
 ## 🤔 ¿Por qué HybridCapsLock?
