@@ -38,3 +38,20 @@ Para una guía detallada sobre todos los atajos, capas, configuración avanzada 
 
 - Para ver el historial de cambios y versiones, revisa el archivo **[CHANGELOG.md](CHANGELOG.md)**.
 - Las características en desarrollo y planes futuros se detallan en la documentación.
+
+
+
+Copyright (C) 2025 Wilberucx
+
+Este programa es software libre; puedes redistribuirlo y/o modificarlo
+bajo los términos de la GNU General Public License tal como está publicada por
+la Free Software Foundation; ya sea la versión 2 de la Licencia, o
+(a tu elección) cualquier versión posterior.
+
+Este programa se distribuye con la esperanza de que sea útil,
+pero SIN NINGUNA GARANTÍA; ni siquiera la garantía implícita de
+COMERCIABILIDAD o APTITUD PARA UN PROPÓSITO PARTICULAR. Consulta la
+GNU General Public License para más detalles.
+
+Deberías haber recibido una copia de la GNU General Public License junto
+con este programa; si no, consulta <https://www.gnu.org/licenses/>.
